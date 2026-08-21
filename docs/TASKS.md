@@ -21,10 +21,13 @@ Last updated: 2026-08-21
 - [x] AB-020b Refuse batch apply when a target exists or collides.
 - [ ] AB-020c Add and verify the QuickAdd/custom Obsidian plugin shell.
 - [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
+- [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.
+- [x] AB-030b Add RSS feed/rule preview, safe defaults, and conflict refusal.
+- [ ] AB-030c Discover approved per-anime RSS sources and generate rule drafts.
+- [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
 
 ## Next
 
-- [ ] AB-030 Add qBittorrent WebUI version negotiation and RSS preview tools.
 - [ ] AB-040 Add deterministic MCP tools and AI-assisted low-confidence review.
 - [ ] AB-050 Add the desktop GUI, packaging, and migration assistant.
 

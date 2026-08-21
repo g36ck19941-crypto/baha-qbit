@@ -7,6 +7,7 @@ from .obsidian_import import (
     apply_import_plan,
     plan_checked_import,
 )
+from .rss_plan import RSSPlan, RSSPlanConflict, apply_rss_plan, plan_rss
 
 __all__ = [
     "BahamutDifferenceResult",
@@ -15,5 +16,9 @@ __all__ = [
     "ObsidianImportConflict",
     "apply_import_plan",
     "plan_checked_import",
+    "RSSPlan",
+    "RSSPlanConflict",
+    "apply_rss_plan",
+    "plan_rss",
     "subtract_bahamut_favorites",
 ]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anime-bridge"
-version = "0.1.0"
+version = "0.4.0.dev0"
 description = "Local-first seasonal anime bridge for Bangumi, Bahamut, Obsidian, and qBittorrent"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,4 +20,3 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import sys
 from datetime import date
@@ -16,13 +17,18 @@ from anime_bridge.adapters.candidate_markdown import (
     CandidateParseError,
     parse_candidate_markdown,
 )
+from anime_bridge.adapters.qbittorrent import QBittorrentAPIError, QBittorrentClient
+from anime_bridge.domain import RSSFeedDraft, RSSRuleDraft
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.storage import write_text_atomic
 from anime_bridge.workflows import (
     CurrentQuarterScanner,
     ObsidianImportConflict,
     apply_import_plan,
+    apply_rss_plan,
     plan_checked_import,
+    plan_rss,
+    RSSPlanConflict,
 )
 
 
@@ -89,7 +95,52 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="write notes after preview; existing targets still cause full refusal",
     )
+    qbit_check = subparsers.add_parser(
+        "qbittorrent-check", help="read local qBittorrent and report API versions"
+    )
+    _add_qbittorrent_connection_args(qbit_check)
+
+    rss = subparsers.add_parser(
+        "qbittorrent-rss", help="preview or apply one local RSS feed and rule"
+    )
+    _add_qbittorrent_connection_args(rss)
+    rss.add_argument("--feed-url", required=True)
+    rss.add_argument("--feed-path", required=True, help="qBittorrent-relative RSS path")
+    rss.add_argument("--rule-name", required=True)
+    rss.add_argument("--must-contain", default="")
+    rss.add_argument("--must-not-contain", default="")
+    rss.add_argument("--regex", action="store_true")
+    rss.add_argument("--episode-filter", default="")
+    rss.add_argument("--smart-filter", action="store_true")
+    rss.add_argument("--category", default="")
+    rss.add_argument("--save-path", default="")
+    rss.add_argument(
+        "--enable-rule", action="store_true", help="enable the new rule immediately"
+    )
+    rss.add_argument(
+        "--start-downloads",
+        action="store_true",
+        help="allow matched downloads to start instead of adding them paused",
+    )
+    rss.add_argument("--plan-output", type=Path, default=None)
+    rss.add_argument("--apply", action="store_true")
     return parser
+
+
+def _add_qbittorrent_connection_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--base-url", default="http://127.0.0.1:8080")
+    parser.add_argument(
+        "--username",
+        default=None,
+        help="WebUI username; if supplied, password is prompted without echo",
+    )
+
+
+def _qbit_client(args: argparse.Namespace) -> QBittorrentClient:
+    client = QBittorrentClient(args.base_url)
+    if args.username is not None:
+        client.login(args.username, getpass.getpass("qBittorrent WebUI password: "))
+    return client
 
 
 def _run_scan(args: argparse.Namespace) -> int:
@@ -175,11 +226,54 @@ def main(argv: Sequence[str] | None = None) -> int:
             written = apply_import_plan(plans, args.vault.resolve())
             print(f"Wrote {len(written)} formal Obsidian notes.")
             return 0
+        if args.command == "qbittorrent-check":
+            version, api_version = _qbit_client(args).versions()
+            print(f"Connected to qBittorrent {version}; WebUI API {api_version}.")
+            return 0
+        if args.command == "qbittorrent-rss":
+            client = _qbit_client(args)
+            feed = RSSFeedDraft(args.feed_url, args.feed_path)
+            rule = RSSRuleDraft(
+                name=args.rule_name,
+                affected_feeds=(args.feed_url,),
+                must_contain=args.must_contain,
+                must_not_contain=args.must_not_contain,
+                use_regex=args.regex,
+                episode_filter=args.episode_filter,
+                smart_filter=args.smart_filter,
+                add_paused=not args.start_downloads,
+                assigned_category=args.category,
+                save_path=args.save_path,
+                enabled=args.enable_rule,
+            )
+            plan = plan_rss(client, feed, rule)
+            payload = {
+                "feed": {"url": feed.url, "path": feed.path},
+                "rule": {"name": rule.name, **rule.to_qbittorrent_definition()},
+                "feed_conflict": plan.feed_conflict,
+                "rule_conflict": plan.rule_conflict,
+            }
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            if args.plan_output is not None:
+                write_text_atomic(
+                    args.plan_output,
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                )
+                print(f"RSS preview written to: {args.plan_output.resolve()}")
+            if not args.apply:
+                print("Preview only: no qBittorrent RSS state changed. Use --apply explicitly.")
+                return 0
+            apply_rss_plan(client, plan)
+            print("RSS feed and rule created.")
+            return 0
     except BangumiAPIError as exc:
         print(f"Bangumi scan failed: {exc}", file=sys.stderr)
         return 2
     except (CandidateParseError, ObsidianImportConflict) as exc:
         print(f"Obsidian import refused: {exc}", file=sys.stderr)
         return 3
+    except (QBittorrentAPIError, RSSPlanConflict, ValueError) as exc:
+        print(f"qBittorrent RSS operation refused: {exc}", file=sys.stderr)
+        return 4
     parser.error(f"Unknown command: {args.command}")
     return 2

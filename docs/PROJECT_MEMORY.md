@@ -90,6 +90,15 @@ entire apply operation if any target already exists or collides within the
 batch. The importer never edits `.base`; a new Markdown note enters the existing
 view through the compatible `tags: bangumi` frontmatter.
 
+### D-009: qBittorrent control safety
+
+The built-in WebUI client accepts loopback URLs only. Credentials, when needed,
+are prompted without echo and never stored. Feed/rule operations read and show a
+plan first, refuse known name/path conflicts, and require explicit `--apply`.
+New rules default disabled and add matches paused; enabling or starting downloads
+requires separate explicit flags. The API has no atomic feed-plus-rule operation,
+so a connection failure after feed creation can leave a feed without its rule.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

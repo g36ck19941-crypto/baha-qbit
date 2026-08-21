@@ -1,4 +1,4 @@
-# User guide — v0.1.0
+# User guide — v0.4.0 development
 
 ## Runtime note
 
@@ -56,6 +56,34 @@ Even with `--apply`, any existing or duplicate target refuses the full batch.
 
 The QuickAdd/custom Obsidian plugin shell is not yet included, so this command
 is currently a developer-facing interface rather than the final one-click UX.
+
+## Preview a qBittorrent RSS feed and rule
+
+In qBittorrent, enable Web User Interface under `Tools > Options > Web UI` and
+bind it to `127.0.0.1`. Confirm the local connection without changing state:
+
+```powershell
+python launcher.py qbittorrent-check
+```
+
+Build a feed/rule preview with an RSS URL you are authorized to use:
+
+```powershell
+python launcher.py qbittorrent-rss `
+  --feed-url "https://example.com/authorized-feed.xml" `
+  --feed-path "AnimeBridge/Title" `
+  --rule-name "Title 1080p" `
+  --must-contain "1080" `
+  --plan-output out/rss-plan.json
+```
+
+This only reads qBittorrent. `--apply` is required to create anything. A new
+rule remains disabled and adds matches paused unless `--enable-rule` and
+`--start-downloads` are also explicitly supplied. If WebUI authentication is
+enabled, add `--username NAME`; the password is prompted and never saved.
+
+The feed and rule are two WebUI API writes rather than one atomic transaction.
+If the connection fails after feed creation, inspect qBittorrent before retrying.
 
 ## Troubleshooting
 

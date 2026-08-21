@@ -14,7 +14,7 @@ Last updated: 2026-08-21
 | Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
 | Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
 | Obsidian formal import | Core and live preview complete | Real Vault apply and QuickAdd shell pending |
-| qBittorrent RSS | Planned | WebUI configuration and version negotiation required |
+| qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
 | AI/MCP and GUI | Planned | Built on stable deterministic workflows |
 | GitHub remote | Blocked on login | `gh auth status` reports no authenticated host |
 
@@ -22,7 +22,7 @@ Last updated: 2026-08-21
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 5 representative tests passed; compile and CLI version checks passed.
+- Local execution: 21 representative tests passed; compile and CLI version checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
@@ -34,6 +34,9 @@ Last updated: 2026-08-21
 - Obsidian planner: 17 total tests pass. A live Bangumi detail read planned one
   checked title to `C/bangumi/2026/07月新番/LV999的村民.md` with zero conflicts and
   stopped in preview-only mode. No file was written to the real Vault.
+- qBittorrent: a live read connected to installed version 4.5.5 and WebUI API
+  2.8.19, then read the existing RSS feed/rule state and produced a conflict-free
+  disabled/paused preview. No RSS state was changed.
 
 ## Current demonstration
 

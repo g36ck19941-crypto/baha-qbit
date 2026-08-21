@@ -15,7 +15,9 @@ external integration remains replaceable and testable.
 
 ## Current milestone
 
-`v0.1.0` implements the Bangumi current-quarter discovery slice. See
+`v0.4.0.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
+conflict-safe Obsidian import core, and preview-first local qBittorrent RSS
+control. Authenticated Bahamut automation and the final GUI remain pending. See
 [the user guide](docs/USER_GUIDE.md), [live demo record](docs/DEMO.md),
 [project status](docs/STATUS.md),
 [tasks](docs/TASKS.md), and [change log](docs/CHANGELOG.md).

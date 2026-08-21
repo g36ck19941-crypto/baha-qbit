@@ -23,6 +23,18 @@ All notable changes are recorded here. The project follows semantic versioning.
 - 11 local tests pass. Authenticated Bahamut access remains unverified and is
   not represented as complete.
 
+### qBittorrent RSS core
+
+- Loopback-only standard-library WebUI client with optional interactive login,
+  installed-version/API negotiation, and existing RSS state reads.
+- Validated feed/rule drafts, live conflict preview, explicit apply gate, and a
+  second state check immediately before writes.
+- Safe defaults keep new rules disabled and matched downloads paused; separate
+  flags are required to relax either behavior.
+- Live read connected to qBittorrent 4.5.5 / WebUI API 2.8.19 and produced a
+  preview without changing RSS or download state.
+- 21 local tests pass after this addition. Real RSS apply remains unverified.
+
 ### Obsidian import core
 
 - Candidate Markdown parser that rejects checked tasks without valid machine

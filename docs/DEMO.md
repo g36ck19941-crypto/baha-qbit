@@ -74,3 +74,20 @@ real Vault path without applying changes.
 
 Observed output explicitly stated `Preview only: no Obsidian files written`.
 This establishes the read/plan path, not a real Vault write or plugin UX.
+
+## v0.4 development — qBittorrent RSS live preview
+
+```powershell
+python launcher.py qbittorrent-check
+python launcher.py qbittorrent-rss `
+  --feed-url "https://example.invalid/anime.xml" `
+  --feed-path "AnimeBridge/Preview" `
+  --rule-name "AnimeBridge Preview" `
+  --must-contain "1080" `
+  --plan-output out/qbittorrent-rss-preview.json
+```
+
+The first command connected to qBittorrent 4.5.5 / WebUI API 2.8.19. The second
+read the real existing RSS state, reported no conflicts for the proposed names,
+and wrote a preview whose rule was disabled with `addPaused: true`. It explicitly
+stopped in preview-only mode. No feed, rule, torrent, or download state changed.

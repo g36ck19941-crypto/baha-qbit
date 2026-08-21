@@ -1,7 +1,7 @@
 [bangumi]
 base_url = "https://api.bgm.tv"
 # Bangumi requires an identifiable User-Agent. Replace the contact before live use.
-user_agent = "AnimeBridge/0.1.0 (contact: replace-with-your-github-profile)"
+user_agent = "AnimeBridge/0.4.0.dev0 (contact: replace-with-your-github-profile)"
 timeout_seconds = 20
 
 [scan]
@@ -16,3 +16,8 @@ candidate_directory = "out"
 obsidian_vault = "C:/PersonalBlog/Obsidian Vault"
 obsidian_integration_folder = "bangumi1"
 formal_anime_folder = "C/bangumi"
+
+[qbittorrent]
+# Only a WebUI bound to this computer is accepted. Credentials are prompted
+# interactively when needed and must never be stored in this file.
+base_url = "http://127.0.0.1:8080"

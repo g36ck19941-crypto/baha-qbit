@@ -43,6 +43,8 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
 - `ObsidianImporter`: implemented checked-marker parser, detail refresh, formal
   renderer, preview plan, and conflict-safe apply core. The QuickAdd/custom
   plugin shell and an approved real-Vault apply remain pending.
-- `QbittorrentRSS`: negotiates Web API version, previews feeds/rules, and only
-  mutates after explicit confirmation.
+- `QbittorrentRSS`: implemented loopback-only Web API client, version probe,
+  existing-state reader, feed/rule preview, conflict refusal, and explicit
+  apply. Rules default disabled and add matches paused. RSS-source discovery
+  and higher-level per-anime rule generation remain pending.
 - MCP exposes the same workflows and safety gates; it does not bypass them.
