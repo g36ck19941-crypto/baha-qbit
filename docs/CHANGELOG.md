@@ -8,6 +8,21 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 - Interactive Bahamut login, favorite export, and confidence-aware difference.
 
+### Added
+
+- Pure standard-library parser for user-exported Bahamut `mygather.php` HTML,
+  including theme-list scoping, title extraction, SN parsing, deduplication, and
+  empty-collection detection.
+- Bangumi infobox alias extraction and normalized title variants.
+- Conservative cross-site matcher and difference workflow: normalized exact
+  matches may be excluded; fuzzy matches remain candidates for manual review.
+- Offline `parse-bahamut-html` diagnostic command and representative fixtures.
+
+### Verification
+
+- 11 local tests pass. Authenticated Bahamut access remains unverified and is
+  not represented as complete.
+
 ## [0.1.0] - 2026-08-21
 
 ### Added

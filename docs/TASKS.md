@@ -12,9 +12,11 @@ Last updated: 2026-08-21
 
 ## In progress
 
-- [ ] AB-010 Add interactive Bahamut browser login and `mygather.php` reader.
-- [ ] AB-011 Add title normalization, confidence scoring, and manual overrides.
-- [ ] AB-012 Subtract only high-confidence Bahamut favorites.
+- [x] AB-010a Add a pure, replaceable `mygather.php` HTML parser.
+- [ ] AB-010b Add interactive Bahamut browser login and paginated live reader.
+- [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
+- [x] AB-012a Implement exact-only subtraction and fuzzy-review retention.
+- [ ] AB-012b Connect authenticated favorites to the live seasonal workflow.
 
 ## Next
 

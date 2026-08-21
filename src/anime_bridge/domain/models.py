@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 
 class AnimeCategory(Enum):
@@ -103,6 +103,7 @@ class AnimeSubject:
     episodes: int | None = None
     score: float | None = None
     meta_tags: tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()
     raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     @property
@@ -112,6 +113,10 @@ class AnimeSubject:
     @property
     def bangumi_url(self) -> str:
         return f"https://bgm.tv/subject/{self.bangumi_id}"
+
+    @property
+    def title_variants(self) -> tuple[str, ...]:
+        return _unique_texts((self.name_cn, self.name, *self.aliases))
 
     @classmethod
     def from_bangumi_payload(
@@ -148,6 +153,7 @@ class AnimeSubject:
             if isinstance(meta_tags_raw, list)
             else ()
         )
+        aliases = _extract_bangumi_aliases(payload.get("infobox"))
 
         return cls(
             bangumi_id=int(payload["id"]),
@@ -161,5 +167,43 @@ class AnimeSubject:
             episodes=episodes,
             score=score,
             meta_tags=meta_tags,
+            aliases=aliases,
             raw=payload,
         )
+
+
+def _unique_texts(values: Iterable[str]) -> tuple[str, ...]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        cleaned = str(value or "").strip()
+        if cleaned and cleaned not in seen:
+            seen.add(cleaned)
+            result.append(cleaned)
+    return tuple(result)
+
+
+def _flatten_infobox_value(value: Any) -> Iterable[str]:
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, Mapping):
+        if "v" in value:
+            yield from _flatten_infobox_value(value["v"])
+        else:
+            for nested in value.values():
+                yield from _flatten_infobox_value(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            yield from _flatten_infobox_value(nested)
+
+
+def _extract_bangumi_aliases(infobox: Any) -> tuple[str, ...]:
+    if not isinstance(infobox, list):
+        return ()
+    alias_keys = {"别名", "別名", "中文名", "英文名", "其它名称", "其他名称"}
+    values: list[str] = []
+    for row in infobox:
+        if not isinstance(row, Mapping) or str(row.get("key") or "") not in alias_keys:
+            continue
+        values.extend(_flatten_infobox_value(row.get("value")))
+    return _unique_texts(values)

@@ -27,6 +27,19 @@ v0.1.0 is the Bangumi discovery slice only. Its candidate file has not yet had
 the user's Bahamut favorites removed. The note says this explicitly and is not
 tagged for the formal animation Base.
 
+## Offline Bahamut parser diagnostic
+
+Until interactive login is implemented, a UTF-8 HTML file exported from the
+logged-in `mygather.php` page can be parsed without transmitting credentials:
+
+```powershell
+python launcher.py parse-bahamut-html mygather.html `
+  --json-output out/bahamut-favorites.json
+```
+
+This command proves the parser interface only. It does not claim that the
+application has connected to the user's account.
+
 ## Troubleshooting
 
 - A network or HTTP failure exits with code `2` and does not replace an existing

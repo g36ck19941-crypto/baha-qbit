@@ -31,12 +31,15 @@ The v0.1.0 output carries an explicit warning because Bahamut subtraction is a
 later milestone. It is deliberately tagged `anime-bridge-candidates`, not
 `bangumi`, so it cannot enter the existing formal Base accidentally.
 
-## Planned integration boundaries
+## Integration boundaries
 
-- `BahamutFavoritesSource`: interactive browser session and paginated read-only
-  access to `mygather.php`.
-- `TitleMatcher`: deterministic aliases and confidence scores; AI may suggest
-  low-confidence matches but cannot silently approve them.
+- `bahamut_html`: implemented pure parser for `mygather.php`; interactive browser
+  session acquisition and paginated live reads remain pending.
+- `TitleMatcher`: implemented deterministic aliases and confidence scores.
+  Exact normalized equality is the only automatic exclusion; AI may later
+  suggest low-confidence matches but cannot silently approve them.
+- `BahamutDifference`: implemented safe core that retains fuzzy review matches
+  in the candidate list; live favorites are not wired yet.
 - `ObsidianImporter`: parses checked markers, previews target paths, and creates
   compatible notes without overwriting user sections.
 - `QbittorrentRSS`: negotiates Web API version, previews feeds/rules, and only

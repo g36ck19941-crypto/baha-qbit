@@ -19,6 +19,10 @@ def subject(subject_id: int, air_date: str) -> dict[str, Any]:
         "eps": 12,
         "rating": {"score": 7.5},
         "meta_tags": ["TV", "日本"],
+        "infobox": [
+            {"key": "别名", "value": [{"v": f"Alias {subject_id}"}]},
+            {"key": "放送开始", "value": "2026-07-01"},
+        ],
     }
 
 
@@ -41,6 +45,7 @@ class BangumiClientTests(unittest.TestCase):
         self.assertEqual([item.bangumi_id for item in results], [1, 2, 3])
         self.assertTrue(all(item.category is AnimeCategory.TV for item in results))
         self.assertTrue(all("日本" in item.meta_tags for item in results))
+        self.assertEqual(results[0].aliases, ("Alias 1",))
         self.assertEqual([call["offset"] for call in transport.calls], [0, 2])
         self.assertTrue(all(call["cat"] == 1 for call in transport.calls))
 

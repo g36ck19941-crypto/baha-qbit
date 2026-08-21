@@ -11,7 +11,8 @@ Last updated: 2026-08-21
 | Project skeleton | Complete | Python 3.11+ package, CLI, docs, tests, snapshot tool |
 | Bangumi current-quarter scanner | Complete for v0.1.0 | Live official API read on 2026-08-21 |
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
-| Bahamut favorites | Planned | Logged-in `mygather.php` route identified; live account gate pending |
+| Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
+| Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
 | Obsidian formal import | Planned | Preview and idempotency required |
 | qBittorrent RSS | Planned | WebUI configuration and version negotiation required |
 | AI/MCP and GUI | Planned | Built on stable deterministic workflows |
@@ -25,6 +26,11 @@ Last updated: 2026-08-21
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
+- Bahamut parser/matcher: 11 local tests pass, including fixture HTML, aliases,
+  exact subtraction, and fuzzy-review retention. This is interface evidence only;
+  the user's authenticated `mygather.php` has not been read.
+- GitHub publishing remains blocked until the user finishes sign-in. The browser
+  reached a Google account page that automation is not permitted to inspect.
 
 ## Current demonstration
 

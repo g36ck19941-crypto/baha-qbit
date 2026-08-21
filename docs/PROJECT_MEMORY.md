@@ -74,6 +74,14 @@ notes. A private GitHub repository named `baha-qbit` is the default because the
 project will contain machine-specific integration documentation. Publishing is
 pending local GitHub CLI authentication.
 
+### D-007: Cross-site matching safety
+
+Only exact equality after Unicode width/case/punctuation normalization is
+eligible for automatic Bahamut subtraction. Bangumi Chinese, Japanese, and
+infobox aliases are all considered. Similar but non-exact titles remain in the
+candidate list and are reported for manual review. AI may later assist that
+review but cannot lower the deterministic auto-exclusion boundary.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

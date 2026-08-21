@@ -41,3 +41,19 @@ and a machine-readable item marker.
 - The live output is ignored by Git because seasonal results are generated data.
   Re-run the command to regenerate it.
 
+## v0.2 development — Bahamut parser and safe difference core
+
+### Fixture command
+
+```powershell
+python launcher.py parse-bahamut-html `
+  tests/fixtures/bahamut_mygather_page.html `
+  --json-output out/bahamut-fixture.json
+```
+
+Observed: two fixture favorites were parsed with titles, canonical absolute
+links, and SN values. Eleven total local tests passed. Exact normalized aliases
+were subtracted; a similar but non-exact title remained a candidate and was
+reported for review.
+
+This section is fixture evidence, not authenticated Bahamut evidence.

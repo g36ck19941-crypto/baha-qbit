@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import date
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Sequence
 
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
+from anime_bridge.adapters.bahamut_html import parse_mygather_html
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.storage import write_text_atomic
 from anime_bridge.workflows import CurrentQuarterScanner
@@ -53,6 +55,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=f"AnimeBridge/{__version__} (local application)",
         help="identifiable User-Agent sent to Bangumi",
     )
+    parse_bahamut = subparsers.add_parser(
+        "parse-bahamut-html",
+        help="offline diagnostic: parse a user-exported mygather.php HTML file",
+    )
+    parse_bahamut.add_argument("input", type=Path, help="UTF-8 HTML file to parse")
+    parse_bahamut.add_argument(
+        "--json-output", type=Path, default=None, help="optional parsed JSON path"
+    )
     return parser
 
 
@@ -88,6 +98,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "scan":
             return _run_scan(args)
+        if args.command == "parse-bahamut-html":
+            html = args.input.read_text(encoding="utf-8")
+            page = parse_mygather_html(html)
+            payload = [
+                {"title": item.title, "href": item.href, "sn": item.sn}
+                for item in page.items
+            ]
+            print(
+                f"Parsed {len(payload)} Bahamut favorites; "
+                f"empty marker={page.empty_collection_marker}."
+            )
+            if args.json_output is not None:
+                write_text_atomic(
+                    args.json_output,
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                )
+                print(f"Parsed JSON written to: {args.json_output.resolve()}")
+            return 0
     except BangumiAPIError as exc:
         print(f"Bangumi scan failed: {exc}", file=sys.stderr)
         return 2
