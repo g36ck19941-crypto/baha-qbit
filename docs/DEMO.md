@@ -8,7 +8,9 @@
 - Plan evidence: one draft, zero conflicts, `enabled=false`, `addPaused=true`.
 - Browser verification showed Cloudflare challenges on Comicat, public RSSHub,
   and Bahamut; no CAPTCHA was solved and no authenticated data was read.
-- Source regression: 41 tests passed.
+- Added and parsed a project-level Codex MCP configuration; live discovery is
+  deferred until Codex Desktop restarts.
+- Source regression: 42 tests passed.
 
 ## v0.8.0.dev0 portable build
 

@@ -14,6 +14,13 @@ All notable changes are recorded here. The project follows semantic versioning.
   verification and may need an accessible or self-hosted replacement.
 - Expanded the verified suite from 35 to 41 tests.
 
+### Codex host connection
+
+- Added a project-scoped Codex MCP configuration for the packaged stdio server.
+- Kept host-side approval prompts for write tools in addition to Anime Bridge's
+  per-call confirmation token.
+- Added a configuration contract test and Codex Desktop/CLI/IDE setup guidance.
+
 ### Portable Windows package
 
 - Added one-file Windows GUI/CLI/MCP launcher and reproducible build script.

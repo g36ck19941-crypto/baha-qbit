@@ -14,6 +14,9 @@ Last updated: 2026-08-21
   downloader until the user supplies an accessible/self-hosted endpoint.
 - Bahamut `mygather.php` is likewise waiting for the user to complete the
   visible Cloudflare challenge and login personally.
+- Added a project-scoped Codex MCP configuration with write-tool prompts. The
+  TOML contract is locally verified; Codex must be restarted before live tool
+  discovery can be claimed.
 
 ## v0.8.0.dev0 packaging milestone
 
@@ -39,15 +42,15 @@ Last updated: 2026-08-21
 | Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Batch source/rule preview complete | Accessible source endpoint and approved apply pending |
-| AI/MCP | MCP core verified | Real host connection and AI review pending |
+| AI/MCP | Codex project config added | Restart-time discovery and AI review pending |
 | GUI | Packaged and visually verified | Frozen HTTP smoke and screenshot passed |
-| GitHub remote | Complete | Private `origin/main` matches local HEAD |
+| GitHub remote | Draft PR open | `feature/v0.9-rss-batch` is pushed; merge awaits approval |
 
 ## Verification levels
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 32 representative tests passed; compile and CLI version checks passed.
+- Local execution: 42 representative tests passed; compile and CLI version checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
@@ -68,9 +71,12 @@ Last updated: 2026-08-21
   exposes preview and confirmed-apply commands backed by the existing CLI, but
   has not yet been installed, enabled, or executed inside Obsidian.
 - MCP: official SDK 2.0.0 was installed in the ignored project virtual
-  environment. Its in-memory client discovered exactly four tools in default
-  read-only mode, six in explicitly write-enabled mode, and successfully called
-  the structured Bangumi tool. No real write tool was invoked.
+  environment. Its in-memory client discovered exactly five tools in default
+  read-only mode, eight in explicitly write-enabled mode, and successfully
+  called the structured Bangumi tool. No real write tool was invoked.
+- Codex MCP host configuration: `.codex/config.toml` parses as TOML and uses
+  `default_tools_approval_mode = "writes"`. It has not yet been loaded by a
+  restarted Codex Desktop process, so host discovery is not established.
 - GUI: Tkinter was rejected after its real smoke test found the bundled runtime
   lacked Tcl/Tk. The replacement loopback web UI passed page/API/security smoke
   tests, Edge console inspection, 1440×900 and 720px screenshots, and a no-

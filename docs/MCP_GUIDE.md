@@ -4,6 +4,25 @@ Anime Bridge uses the [official MCP Python SDK v2](https://py.sdk.modelcontextpr
 and local stdio transport. The
 AI host starts the process; no HTTP port, cloud service, or AI API key is needed.
 
+## Codex Desktop / CLI / IDE
+
+This repository includes a project-scoped `.codex/config.toml`. For a trusted
+checkout, Codex starts `./dist/anime-bridge.exe` as a local stdio server. The
+configuration is shared by Codex Desktop, CLI, and the IDE extension. Restart
+the client after building or downloading the executable, then use `/mcp` (or
+the MCP servers settings page) to confirm that `anime_bridge` is connected.
+
+The checked-in configuration exposes the write-capable tools but sets Codex's
+approval mode to `writes`. Anime Bridge independently requires the exact
+`CONFIRM_LOCAL_WRITE` confirmation value for every apply call. To make the
+connection read-only, remove `--allow-writes` from `.codex/config.toml`.
+
+The project config uses the current machine's Vault path. On another computer,
+change the value after `--vault`; keep forward slashes in TOML paths. The
+portable ZIP puts `anime-bridge.exe` at its root, so either place it under this
+checkout's `dist/` directory or use the host UI/manual configuration shown in
+the packaged-mode section below.
+
 ## Source-mode installation
 
 From the repository root:
