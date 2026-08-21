@@ -4,6 +4,17 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### AI/MCP core
+
+- Official MCP Python SDK v2 optional dependency and local stdio launcher.
+- Four default read-only tools for Bangumi details, Obsidian batch planning,
+  qBittorrent status, and RSS-rule planning.
+- Two write tools registered only with an explicit process startup gate, plus a
+  required per-call confirmation and the existing Vault/loopback/conflict gates.
+- AI-facing service layer remains independent of the MCP SDK and model provider.
+- Official in-memory MCP client verified tool discovery and a structured call;
+  27 total tests pass. A real AI-host connection remains pending.
+
 ### Obsidian command shell
 
 - Installable, dependency-free desktop plugin package with commands to preview

@@ -99,3 +99,17 @@ its manifest parsed as JSON with plugin ID `anime-bridge`. Source inspection
 establishes that it uses `spawn(..., { shell: false })`, validates the active
 candidate marker, and requires a confirmation modal for apply. This is static
 package evidence only; no real Obsidian installation or command run is claimed.
+
+## v0.6 development — official MCP client verification
+
+The project-local virtual environment installed `mcp==2.0.0`. The official
+in-memory `Client(server)` test established:
+
+| Server mode | Tool count | Write tools visible |
+|---|---:|---|
+| default | 4 | no |
+| `--allow-writes` | 6 | yes |
+
+The client called `bangumi_get_subject` and received structured content with the
+expected title. Twenty-seven total tests passed. This verifies MCP discovery and
+in-process tool execution; connection to the user's chosen AI host remains open.

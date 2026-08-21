@@ -107,6 +107,15 @@ source launcher with an argument array and `shell: false`. Preview is a separate
 command. Apply requires an Obsidian confirmation, then remains subject to the
 CLI's own conflict gate.
 
+### D-011: AI and MCP boundary
+
+The project uses the official MCP Python SDK v2 over local stdio. The deterministic
+service layer does not depend on MCP or an AI provider. Default startup registers
+read/plan tools only. Write tools require both `--allow-writes` at process startup
+and the exact per-call confirmation value; host auto-approval must remain off.
+MCP cannot bypass Vault containment, target conflict checks, loopback-only
+qBittorrent access, or disabled/add-paused RSS defaults.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

@@ -1,7 +1,7 @@
 [bangumi]
 base_url = "https://api.bgm.tv"
 # Bangumi requires an identifiable User-Agent. Replace the contact before live use.
-user_agent = "AnimeBridge/0.5.0.dev0 (contact: replace-with-your-github-profile)"
+user_agent = "AnimeBridge/0.6.0.dev0 (contact: replace-with-your-github-profile)"
 timeout_seconds = 20
 
 [scan]

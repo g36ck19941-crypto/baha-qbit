@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anime-bridge"
-version = "0.5.0.dev0"
+version = "0.6.0.dev0"
 description = "Local-first seasonal anime bridge for Bangumi, Bahamut, Obsidian, and qBittorrent"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,8 +12,12 @@ license = { text = "MIT" }
 authors = [{ name = "g36ck19941-crypto" }]
 dependencies = []
 
+[project.optional-dependencies]
+mcp = ["mcp>=2,<3"]
+
 [project.scripts]
 anime-bridge = "anime_bridge.cli:main"
+anime-bridge-mcp = "anime_bridge.mcp_server:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

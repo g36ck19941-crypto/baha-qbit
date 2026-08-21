@@ -1,4 +1,4 @@
-# User guide — v0.5.0 development
+# User guide — v0.6.0 development
 
 ## Runtime note
 
@@ -115,3 +115,6 @@ From a source checkout, run:
 ```powershell
 python scripts/run_tests.py
 ```
+
+MCP installation, host configuration, exposed tools, and write-mode safeguards
+are documented separately in `docs/MCP_GUIDE.md`.

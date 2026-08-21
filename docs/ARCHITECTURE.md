@@ -49,4 +49,7 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
   existing-state reader, feed/rule preview, conflict refusal, and explicit
   apply. Rules default disabled and add matches paused. RSS-source discovery
   and higher-level per-anime rule generation remain pending.
-- MCP exposes the same workflows and safety gates; it does not bypass them.
+- MCP uses the official SDK v2 over local stdio and exposes the same workflows.
+  The default server registers four read-only tools. Two write tools are absent
+  unless the process starts with `--allow-writes`; individual write calls still
+  require confirmation and retain all underlying conflict/safe-default gates.

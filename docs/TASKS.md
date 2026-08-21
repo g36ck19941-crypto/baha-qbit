@@ -26,10 +26,14 @@ Last updated: 2026-08-21
 - [x] AB-030b Add RSS feed/rule preview, safe defaults, and conflict refusal.
 - [ ] AB-030c Discover approved per-anime RSS sources and generate rule drafts.
 - [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
+- [x] AB-040a Add an official-SDK local stdio MCP server.
+- [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.
+- [x] AB-040c Gate Obsidian/qBittorrent write tools at startup and per call.
+- [ ] AB-040d Connect the MCP server to the user's chosen AI host.
 
 ## Next
 
-- [ ] AB-040 Add deterministic MCP tools and AI-assisted low-confidence review.
+- [ ] AB-041 Add AI-assisted low-confidence title review without auto-approval.
 - [ ] AB-050 Add the desktop GUI, packaging, and migration assistant.
 
 ## Blocked

@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 .venv/
+*.egg-info/
 dist/
 build/
 out/
@@ -10,4 +11,3 @@ backups/*.zip
 config.toml
 *.log
 .env
-
