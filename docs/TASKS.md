@@ -30,11 +30,14 @@ Last updated: 2026-08-21
 - [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.
 - [x] AB-040c Gate Obsidian/qBittorrent write tools at startup and per call.
 - [ ] AB-040d Connect the MCP server to the user's chosen AI host.
+- [x] AB-050a Add the loopback-only operational web interface.
+- [x] AB-050b Add visible write confirmation, activity log, themes, and density controls.
+- [ ] AB-050c Package the GUI, CLI, MCP runtime, and Obsidian plugin for migration.
 
 ## Next
 
 - [ ] AB-041 Add AI-assisted low-confidence title review without auto-approval.
-- [ ] AB-050 Add the desktop GUI, packaging, and migration assistant.
+- [ ] AB-051 Add the migration assistant and self-contained Windows package.
 
 ## Blocked
 

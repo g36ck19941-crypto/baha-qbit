@@ -1,0 +1,147 @@
+"use strict";
+
+const TOKEN = document.querySelector('meta[name="anime-bridge-token"]').content;
+const root = document.documentElement;
+const logEl = document.getElementById("activity-log");
+let busyCount = 0;
+
+function setChoice(kind, value) {
+  root.dataset[kind] = value;
+  localStorage.setItem(`anime-bridge-${kind}`, value);
+  document.querySelectorAll(`[data-${kind}-choice]`).forEach((button) => {
+    button.classList.toggle("is-active", button.dataset[`${kind}Choice`] === value);
+  });
+}
+
+function restoreDisplay() {
+  setChoice("theme", localStorage.getItem("anime-bridge-theme") || "workbench");
+  setChoice("density", localStorage.getItem("anime-bridge-density") || "standard");
+}
+
+function addLog(label, value, isError = false) {
+  const entry = document.createElement("article");
+  entry.className = `log-entry${isError ? " error" : ""}`;
+  const stamp = document.createElement("time");
+  stamp.textContent = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+  const body = document.createElement("pre");
+  body.textContent = `${label}\n${typeof value === "string" ? value : JSON.stringify(value, null, 2)}`;
+  entry.append(stamp, body);
+  logEl.prepend(entry);
+}
+
+function setBusy(delta, label = "") {
+  busyCount = Math.max(0, busyCount + delta);
+  document.body.classList.toggle("is-busy", busyCount > 0);
+  document.querySelectorAll("button").forEach((button) => {
+    if (!button.closest("dialog")) button.disabled = busyCount > 0;
+  });
+  const status = document.getElementById("global-status");
+  const dot = document.getElementById("status-dot");
+  status.textContent = busyCount ? label : "本机服务就绪";
+  dot.classList.toggle("ready", busyCount === 0);
+}
+
+async function api(path, payload = {}, label = "执行操作") {
+  setBusy(1, label);
+  addLog(label, "请求已发送");
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Anime-Bridge-Token": TOKEN },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    addLog(`${label}完成`, data.result);
+    return data.result;
+  } catch (error) {
+    addLog(`${label}被拒绝`, error.message, true);
+    throw error;
+  } finally {
+    setBusy(-1);
+  }
+}
+
+function formObject(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("is-active", view.id === `view-${name}`));
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("is-active", item.dataset.view === name));
+}
+
+function renderStatus(status) {
+  document.getElementById("version").textContent = `V${status.version} · LOCAL WORKBENCH`;
+  const list = document.getElementById("milestones");
+  list.replaceChildren(...status.milestones.map((item, index) => {
+    const row = document.createElement("div");
+    row.className = "milestone";
+    row.innerHTML = `<span class="index">${String(index + 1).padStart(2, "0")}</span><span></span><span class="state"></span>`;
+    row.children[1].textContent = item.name;
+    row.children[2].textContent = item.state === "ready" ? "已建立" : "等待登录";
+    row.children[2].classList.add(item.state);
+    return row;
+  }));
+  const settings = document.getElementById("settings-form");
+  Object.entries(status.settings).forEach(([key, value]) => { settings.elements[key].value = value; });
+}
+
+function askConfirmation(title, copy) {
+  const dialog = document.getElementById("confirm-dialog");
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-copy").textContent = copy;
+  dialog.showModal();
+  return new Promise((resolve) => {
+    dialog.addEventListener("close", () => resolve(dialog.returnValue === "confirm"), { once: true });
+  });
+}
+
+document.querySelectorAll("[data-theme-choice]").forEach((button) => button.addEventListener("click", () => setChoice("theme", button.dataset.themeChoice)));
+document.querySelectorAll("[data-density-choice]").forEach((button) => button.addEventListener("click", () => setChoice("density", button.dataset.densityChoice)));
+document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
+document.getElementById("clear-log").addEventListener("click", () => logEl.replaceChildren());
+
+document.getElementById("scan-button").addEventListener("click", async () => {
+  try {
+    const result = await api("/api/scan", {}, "扫描当前季度");
+    document.getElementById("candidate-path").value = result.output;
+    showView("obsidian");
+  } catch (_) {}
+});
+
+document.getElementById("obsidian-plan").addEventListener("click", async () => {
+  try { await api("/api/obsidian/plan", formObject(document.getElementById("obsidian-form")), "预览 Obsidian 入库"); } catch (_) {}
+});
+document.getElementById("obsidian-apply").addEventListener("click", async () => {
+  const confirmed = await askConfirmation("正式归入动画库？", "将重新读取所有已勾选条目。任何目标冲突都会拒绝整批写入。此操作会创建 Markdown 文件。");
+  if (!confirmed) return;
+  try { await api("/api/obsidian/apply", { ...formObject(document.getElementById("obsidian-form")), confirmed: true }, "正式归入 Obsidian"); } catch (_) {}
+});
+
+document.getElementById("qbit-check").addEventListener("click", async () => {
+  try { await api("/api/qbit/status", {}, "读取 qBittorrent RSS 状态"); } catch (_) {}
+});
+document.getElementById("rss-plan").addEventListener("click", async () => {
+  try { await api("/api/qbit/plan", formObject(document.getElementById("rss-form")), "预览 RSS 规则"); } catch (_) {}
+});
+document.getElementById("rss-apply").addEventListener("click", async () => {
+  const confirmed = await askConfirmation("创建 RSS 订阅与规则？", "这会改变 qBittorrent。新规则保持禁用，匹配任务保持暂停；创建过程不是原子事务。");
+  if (!confirmed) return;
+  try { await api("/api/qbit/apply", { ...formObject(document.getElementById("rss-form")), confirmed: true }, "创建 RSS 订阅和规则"); } catch (_) {}
+});
+
+document.getElementById("settings-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try { await api("/api/settings", formObject(event.currentTarget), "保存本机设置"); } catch (_) {}
+});
+document.getElementById("shutdown").addEventListener("click", async () => {
+  if (!confirm("结束 Anime Bridge 本机界面服务？")) return;
+  try {
+    await api("/api/shutdown", {}, "结束本机界面服务");
+    document.getElementById("global-status").textContent = "服务已结束，可以关闭此页面";
+  } catch (_) {}
+});
+
+restoreDisplay();
+api("/api/status", {}, "读取项目状态").then(renderStatus).catch(() => {});

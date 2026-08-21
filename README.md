@@ -15,10 +15,11 @@ external integration remains replaceable and testable.
 
 ## Current milestone
 
-`v0.6.0.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
+`v0.7.0.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
 conflict-safe Obsidian import core, and preview-first local qBittorrent RSS
-control, an installable Obsidian command shell, and a tested local MCP server.
-Authenticated Bahamut automation and the final GUI remain pending. See
+control, an installable Obsidian command shell, a tested local MCP server, and a
+loopback-only browser interface. Authenticated Bahamut automation and portable
+packaging remain pending. See
 [the user guide](docs/USER_GUIDE.md), [live demo record](docs/DEMO.md),
 [project status](docs/STATUS.md),
 [tasks](docs/TASKS.md), and [change log](docs/CHANGELOG.md).
@@ -27,6 +28,12 @@ Source-checkout example:
 
 ```powershell
 python launcher.py scan --date 2026-08-21
+```
+
+Launch the local interface from the development environment:
+
+```powershell
+.\.venv\Scripts\python.exe gui_launcher.py
 ```
 
 The candidate output is deliberately not a formal Obsidian library entry until

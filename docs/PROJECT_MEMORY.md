@@ -116,6 +116,15 @@ and the exact per-call confirmation value; host auto-approval must remain off.
 MCP cannot bypass Vault containment, target conflict checks, loopback-only
 qBittorrent access, or disabled/add-paused RSS defaults.
 
+### D-012: Local interface and portability
+
+The operational GUI uses a local web interface instead of Tkinter because the
+available bundled Python failed a real Tcl/Tk startup smoke test. It binds only
+to `127.0.0.1`, chooses a random port, and requires a high-entropy per-process
+token for the page and API calls. Browser write actions require a visible dialog
+and remain subject to service-layer gates. Static assets have no CDN dependency
+and are included as Python package data.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

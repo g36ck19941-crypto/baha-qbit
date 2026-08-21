@@ -16,14 +16,14 @@ Last updated: 2026-08-21
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
 | AI/MCP | MCP core verified | Real host connection and AI review pending |
-| GUI | Planned | Built on stable deterministic workflows |
+| GUI | Core and visual verification complete | Packaged executable pending |
 | GitHub remote | Blocked on login | `gh auth status` reports no authenticated host |
 
 ## Verification levels
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 27 representative tests passed; compile and CLI version checks passed.
+- Local execution: 32 representative tests passed; compile and CLI version checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
@@ -45,6 +45,10 @@ Last updated: 2026-08-21
   environment. Its in-memory client discovered exactly four tools in default
   read-only mode, six in explicitly write-enabled mode, and successfully called
   the structured Bangumi tool. No real write tool was invoked.
+- GUI: Tkinter was rejected after its real smoke test found the bundled runtime
+  lacked Tcl/Tk. The replacement loopback web UI passed page/API/security smoke
+  tests, Edge console inspection, 1440×900 and 720px screenshots, and a no-
+  horizontal-overflow check. No scan or write action was triggered visually.
 
 ## Current demonstration
 

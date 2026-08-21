@@ -53,3 +53,7 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
   The default server registers four read-only tools. Two write tools are absent
   unless the process starts with `--allow-writes`; individual write calls still
   require confirmation and retain all underlying conflict/safe-default gates.
+- The desktop UX is a dependency-free local web server bound to `127.0.0.1` on
+  a random port. A high-entropy session token gates the page and every API call;
+  CSP/no-store headers reduce browser attack surface. The browser UI delegates
+  to the same service layer and adds a visible dialog before write requests.

@@ -113,3 +113,20 @@ in-memory `Client(server)` test established:
 The client called `bangumi_get_subject` and received structured content with the
 expected title. Twenty-seven total tests passed. This verifies MCP discovery and
 in-process tool execution; connection to the user's chosen AI host remains open.
+
+## v0.7 development — operational web interface
+
+An initial Tkinter smoke test failed because the bundled runtime had no usable
+Tcl/Tk installation. The uncommitted implementation was replaced rather than
+carrying an unverified portability dependency.
+
+The replacement interface passed its real HTTP page/status smoke test, session-
+token refusal, remote-qBittorrent refusal, unconfirmed-write refusal, JavaScript
+syntax, and full 32-test regression. Headless installed Edge rendered desktop
+1440×900 and narrow 720px screenshots with no console error or horizontal
+overflow. The visual run did not trigger Bangumi scanning or any write action.
+
+Generated demonstration images (ignored by Git):
+
+- `out/gui-workbench.png`
+- `out/gui-narrow.png`

@@ -4,6 +4,19 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Local operational interface
+
+- Loopback-only browser interface with random-port startup, per-process session
+  token, restrictive response headers, and no external frontend dependencies.
+- Current-quarter scan, Obsidian plan/confirmed apply, qBittorrent status, RSS
+  plan/confirmed apply, settings, progress panel, and activity ledger.
+- Three restrained themes and three persisted type-density choices, with
+  responsive desktop/narrow layouts.
+- Replaced the initial Tkinter approach after real smoke evidence showed Tcl/Tk
+  was absent from the available runtime.
+- 32 tests, HTTP smoke test, Edge desktop/narrow rendering, console check, and
+  horizontal-overflow check pass. No real scan/write was performed in visual QA.
+
 ### AI/MCP core
 
 - Official MCP Python SDK v2 optional dependency and local stdio launcher.

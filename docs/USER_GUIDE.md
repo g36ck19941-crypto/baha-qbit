@@ -1,10 +1,26 @@
-# User guide — v0.6.0 development
+# User guide — v0.7.0 development
 
 ## Runtime note
 
 This source milestone requires Python 3.11 or newer. The current computer has no
 system Python installation, so development checks use the Codex bundled runtime.
 A later packaging milestone will ship a self-contained executable.
+
+## Start the local interface
+
+In the project development environment:
+
+```powershell
+.\.venv\Scripts\python.exe gui_launcher.py
+```
+
+Anime Bridge binds to `127.0.0.1` on a random port and opens the session-token
+URL in the default browser. The interface provides current-quarter scanning,
+Obsidian plan/confirmed apply, qBittorrent status, RSS plan/confirmed apply, and
+non-secret settings. Use **结束本机界面服务** before closing the page.
+
+Three restrained visual themes and compact/standard/large type sizes are
+available in the header; the browser remembers the choice locally.
 
 ## Scan the current quarter
 
