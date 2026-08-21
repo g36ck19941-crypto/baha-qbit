@@ -31,6 +31,16 @@ class CandidateMarkdownTests(unittest.TestCase):
         )
         self.assertTrue(document.bahamut_subtracted)
 
+    def test_reads_machine_fuzzy_review_evidence(self) -> None:
+        document = parse_candidate_markdown(
+            "---\nbahamut_subtraction: true\n---\n"
+            '- [ ] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
+            '  <!-- anime-bridge:bahamut-review {"bangumi_id":10,"favorite_href":"https://ani.gamer.com.tw/animeRef.php?sn=9","favorite_title":"测试 第二季","score":0.78,"subject_title":"测试"} -->\n'
+        )
+        self.assertEqual(len(document.reviews), 1)
+        self.assertEqual(document.reviews[0].bangumi_id, 10)
+        self.assertAlmostEqual(document.reviews[0].score, 0.78)
+
     def test_refuses_task_without_marker(self) -> None:
         with self.assertRaises(CandidateParseError):
             parse_candidate_markdown("- [x] **损坏的候选项**\n")

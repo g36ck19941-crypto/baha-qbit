@@ -50,7 +50,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
             resolved = resolve_runtime_settings(None, profile_path, None, None)
             self.assertEqual(resolved, (vault, "Library/anime", "http://localhost:9090"))
 
-    async def test_read_only_server_lists_and_calls_five_tools(self):
+    async def test_read_only_server_lists_and_calls_six_tools(self):
         from mcp import Client
 
         with tempfile.TemporaryDirectory() as directory:
@@ -65,6 +65,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                     names,
                     {
                         "bangumi_get_subject",
+                        "obsidian_analyze_candidate_note",
                         "obsidian_plan_checked_import",
                         "qbittorrent_get_rss_status",
                         "qbittorrent_plan_rss",
@@ -94,7 +95,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("obsidian_apply_checked_import", names)
                 self.assertIn("qbittorrent_apply_rss", names)
                 self.assertIn("qbittorrent_apply_candidate_rss", names)
-                self.assertEqual(len(names), 8)
+                self.assertEqual(len(names), 9)
 
 
 if __name__ == "__main__":

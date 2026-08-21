@@ -2,6 +2,16 @@
 
 Last updated: 2026-08-21
 
+## D-015 — AI candidate-note review boundary
+
+- Fuzzy Bahamut matches are stored as machine-readable comments alongside the
+  visible warning, including Bangumi ID, both titles, score, and Bahamut link.
+- `obsidian_analyze_candidate_note` is read-only and returns checkbox state,
+  subtraction proof, and fuzzy evidence to the AI.
+- Its policy is always `human_review_required_never_auto_exclude`. AI may explain
+  evidence and fetch Bangumi details, but only the user decides checkboxes and
+  fuzzy-match disposition.
+
 ## D-014 — Portable Codex MCP profile
 
 - MCP defaults to the GUI's locally saved non-secret profile; explicit

@@ -188,6 +188,39 @@ class AnimeBridgeAIService:
             "add_paused": True,
         }
 
+    def analyze_candidate_note(self, candidate_path: str) -> dict[str, Any]:
+        """Return deterministic note state and fuzzy evidence without editing it."""
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        return {
+            "candidate": str(candidate),
+            "bahamut_subtracted": document.bahamut_subtracted,
+            "selection_count": len(document.selections),
+            "checked_count": len(document.checked),
+            "unchecked_count": len(document.selections) - len(document.checked),
+            "selections": [
+                {
+                    "bangumi_id": item.bangumi_id,
+                    "title": item.title,
+                    "category": item.category.config_name,
+                    "air_date": item.air_date.isoformat(),
+                    "checked": item.checked,
+                }
+                for item in document.selections
+            ],
+            "fuzzy_reviews": [
+                {
+                    "bangumi_id": review.bangumi_id,
+                    "subject_title": review.subject_title,
+                    "favorite_title": review.favorite_title,
+                    "favorite_href": review.favorite_href,
+                    "score": review.score,
+                    "policy": "human_review_required_never_auto_exclude",
+                }
+                for review in document.reviews
+            ],
+        }
+
     def plan_candidate_rss(
         self,
         candidate_path: str,

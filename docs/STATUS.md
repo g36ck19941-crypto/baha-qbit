@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-21
 
+## v0.11.0.dev0 AI review milestone
+
+- Filtered candidate notes now retain machine-readable fuzzy Bahamut evidence.
+- A new read-only MCP tool returns checkbox state, subtraction proof, candidate
+  metadata, and fuzzy evidence to the AI without editing the note.
+- Every fuzzy result is explicitly human-review-only and cannot trigger automatic
+  exclusion. Full source regression: 54 tests passed.
+
 ## v0.10.0.dev0 Bahamut browser-bridge milestone
 
 - Added a same-origin userscript served by the local GUI. It runs after the
@@ -69,7 +77,7 @@ Last updated: 2026-08-21
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 52 representative tests passed; compile and CLI/JavaScript syntax checks passed.
+- Local execution: 54 representative tests passed; compile and CLI/JavaScript syntax checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
@@ -91,8 +99,8 @@ Last updated: 2026-08-21
   exposes preview and confirmed-apply commands backed by the existing CLI, but
   has not yet been installed, enabled, or executed inside Obsidian.
 - MCP: official SDK 2.0.0 was installed in the ignored project virtual
-  environment. Its in-memory client discovered exactly five tools in default
-  read-only mode, eight in explicitly write-enabled mode, and successfully
+  environment. Its in-memory client discovered exactly six tools in default
+  read-only mode, nine in explicitly write-enabled mode, and successfully
   called the structured Bangumi tool. No real write tool was invoked.
 - Codex MCP host configuration: `.codex/config.toml` parses as TOML and uses
   `default_tools_approval_mode = "writes"`. It has not yet been loaded by a

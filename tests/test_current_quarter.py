@@ -99,6 +99,7 @@ class CurrentQuarterTests(unittest.TestCase):
         self.assertIn("bahamut_subtraction: true", rendered)
         self.assertNotIn("**当前季度 TV**", rendered)
         self.assertIn("巴哈标题待人工确认", rendered)
+        self.assertIn("anime-bridge:bahamut-review", rendered)
         self.assertIn("模糊匹配仍保留", rendered)
 
 

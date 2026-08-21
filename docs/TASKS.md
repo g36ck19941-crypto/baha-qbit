@@ -44,7 +44,7 @@ Last updated: 2026-08-21
 
 ## Next
 
-- [ ] AB-041 Add AI-assisted low-confidence title review without auto-approval.
+- [x] AB-041 Add AI-assisted low-confidence title review without auto-approval.
 - [x] AB-051 Add the migration assistant and self-contained Windows package.
 
 ## Blocked

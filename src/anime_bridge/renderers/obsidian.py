@@ -51,6 +51,19 @@ def _render_subject(subject: AnimeSubject, review_match: object | None = None) -
     if review_match is not None:
         favorite = review_match.favorite
         favorite_title = " ".join(favorite.title.split()) if favorite is not None else "未知"
+        review_metadata = json.dumps(
+            {
+                "bangumi_id": subject.bangumi_id,
+                "favorite_href": favorite.href if favorite is not None else "",
+                "favorite_title": favorite_title,
+                "score": round(review_match.score, 6),
+                "subject_title": review_match.subject_title or subject.display_name,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        lines.append(f"  <!-- anime-bridge:bahamut-review {review_metadata} -->")
         lines.append(
             f"  - ⚠ 巴哈标题待人工确认：{favorite_title}（相似度 {review_match.score:.0%}，未自动排除）"
         )

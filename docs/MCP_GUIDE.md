@@ -49,9 +49,10 @@ Configure an MCP host with this command and argument array:
 }
 ```
 
-The default server exposes five read-only tools:
+The default server exposes six read-only tools:
 
 - `bangumi_get_subject`
+- `obsidian_analyze_candidate_note`
 - `obsidian_plan_checked_import`
 - `qbittorrent_get_rss_status`
 - `qbittorrent_plan_rss`

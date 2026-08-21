@@ -43,6 +43,28 @@ class AIServiceTests(unittest.TestCase):
         )
         return candidate
 
+    def test_candidate_analysis_is_read_only_and_surfaces_review_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            candidate = vault / "candidate.md"
+            candidate.write_text(
+                "---\nbahamut_subtraction: true\n---\n"
+                "- [ ] **测试动画**\n"
+                "  <!-- anime-bridge:item {\"bangumi_id\":10,\"category\":\"tv\",\"air_date\":\"2026-07-01\"} -->\n"
+                "  <!-- anime-bridge:bahamut-review {\"bangumi_id\":10,\"favorite_href\":\"https://ani.gamer.com.tw/animeRef.php?sn=10\",\"favorite_title\":\"测试动画 第二季\",\"score\":0.8,\"subject_title\":\"测试动画\"} -->\n",
+                encoding="utf-8",
+            )
+            before = candidate.read_bytes()
+            service = AnimeBridgeAIService(vault, bangumi=FakeBangumi(), qbit=FakeQbit())
+            result = service.analyze_candidate_note("candidate.md")
+            self.assertTrue(result["bahamut_subtracted"])
+            self.assertEqual(result["selection_count"], 1)
+            self.assertEqual(
+                result["fuzzy_reviews"][0]["policy"],
+                "human_review_required_never_auto_exclude",
+            )
+            self.assertEqual(candidate.read_bytes(), before)
+
     def test_subject_details_are_structured(self):
         with tempfile.TemporaryDirectory() as directory:
             service = AnimeBridgeAIService(

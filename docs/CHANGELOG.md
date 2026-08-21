@@ -4,6 +4,15 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### AI candidate-note analysis
+
+- Added machine-readable fuzzy-review evidence to filtered candidate notes.
+- Added the read-only MCP `obsidian_analyze_candidate_note` tool for checkbox,
+  subtraction-gate, and fuzzy-match inspection.
+- Fixed the policy to human review; similarity can never become automatic
+  exclusion or a silent note edit.
+- Expanded the source suite to 54 tests.
+
 ### Logged-in Bahamut browser bridge
 
 - Added an installable same-origin userscript that exports paginated favorites

@@ -1,5 +1,15 @@
 # Demonstration record
 
+## v0.11.0.dev0 AI candidate-note review
+
+- A rendered fuzzy match contains both a visible warning and an
+  `anime-bridge:bahamut-review` machine marker.
+- Parser and service tests prove the MCP-facing analysis returns checkbox state,
+  subtraction proof, titles, score, and the fixed human-review-only policy while
+  leaving the candidate file byte-for-byte unchanged.
+- Official in-memory MCP discovery expects six read-only tools and nine tools
+  when the explicit startup write gate is enabled. Source regression: 54 tests.
+
 ## v0.10.0.dev0 logged-in browser bridge
 
 - The local GUI serves `bahamut-export.user.js`; JavaScript syntax validation

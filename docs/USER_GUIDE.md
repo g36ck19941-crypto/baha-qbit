@@ -1,4 +1,4 @@
-# User guide — v0.10.0 development
+# User guide — v0.11.0 development
 
 ## Portable Windows build
 
@@ -98,6 +98,18 @@ This older command proves the HTML parser only; use the browser-helper JSON for
 the actual seasonal difference workflow.
 
 ## Preview checked Obsidian imports
+
+### AI candidate-note analysis
+
+The MCP tool `obsidian_analyze_candidate_note` reads an Anime Bridge candidate
+file inside the configured Vault and returns checkbox counts, item metadata,
+the Bahamut-subtraction gate, and machine-readable fuzzy-match evidence. It is
+read-only. Every fuzzy row carries the policy
+`human_review_required_never_auto_exclude`; the AI may explain or compare the
+titles, but cannot silently remove the candidate or approve it as collected.
+
+The AI can then call `bangumi_get_subject` for refreshed detail and use the
+existing preview/apply tools only after the user has made checkbox decisions.
 
 After checking candidate tasks, build a JSON plan without writing to the Vault:
 

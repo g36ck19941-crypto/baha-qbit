@@ -19,9 +19,19 @@ class CandidateSelection:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateReview:
+    bangumi_id: int
+    subject_title: str
+    favorite_title: str
+    favorite_href: str
+    score: float
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateDocument:
     selections: tuple[CandidateSelection, ...]
     bahamut_subtracted: bool = False
+    reviews: tuple[CandidateReview, ...] = ()
 
     @property
     def checked(self) -> tuple[CandidateSelection, ...]:

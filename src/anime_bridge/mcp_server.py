@@ -58,6 +58,11 @@ def build_mcp_server(service: AnimeBridgeAIService) -> Any:
         """Read one Bangumi subject. Category is tv, movie, web, ova, or other."""
         return service.bangumi_subject(subject_id, category)
 
+    @server.tool(title="分析候选动画笔记", annotations=read_local)
+    def obsidian_analyze_candidate_note(candidate_path: str) -> dict[str, Any]:
+        """Read checkbox state and fuzzy Bahamut evidence without modifying the note."""
+        return service.analyze_candidate_note(candidate_path)
+
     @server.tool(title="预览 Obsidian 动画入库", annotations=read_local)
     def obsidian_plan_checked_import(candidate_path: str) -> dict[str, Any]:
         """Plan all checked candidates without writing; path must be inside the Vault."""

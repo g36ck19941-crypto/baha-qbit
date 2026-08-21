@@ -2,7 +2,7 @@
 
 from .models import AnimeCategory, AnimeSubject, Quarter, ScanPolicy
 from .bahamut import BahamutFavorite
-from .obsidian import CandidateDocument, CandidateSelection, FormalNotePlan
+from .obsidian import CandidateDocument, CandidateReview, CandidateSelection, FormalNotePlan
 from .rss import RSSFeedDraft, RSSRuleDraft
 
 __all__ = [
@@ -10,6 +10,7 @@ __all__ = [
     "AnimeSubject",
     "BahamutFavorite",
     "CandidateDocument",
+    "CandidateReview",
     "CandidateSelection",
     "FormalNotePlan",
     "Quarter",
