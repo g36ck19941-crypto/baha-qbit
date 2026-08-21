@@ -17,6 +17,11 @@ confirm installation. Existing different Obsidian plugin files cause full
 refusal; the assistant never silently overwrites them. Obsidian still requires
 manual plugin enablement after installation.
 
+The ZIP also contains `.codex/config.toml`. When the extracted directory is
+opened as a trusted Codex project, this starts the EXE in MCP mode and reads the
+same GUI-saved paths. Restart Codex after saving the new machine profile; no
+absolute Vault path is embedded in the portable MCP file.
+
 ## Runtime note
 
 Source development requires Python 3.11 or newer. End users can use the

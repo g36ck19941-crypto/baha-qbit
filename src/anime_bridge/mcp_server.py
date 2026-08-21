@@ -8,6 +8,30 @@ from typing import Any, Sequence
 
 from anime_bridge import __version__
 from anime_bridge.ai import AnimeBridgeAIService
+from anime_bridge.settings import UserSettings, default_settings_path
+
+
+def resolve_runtime_settings(
+    vault_path: Path | None,
+    settings_path: Path | None,
+    formal_root: str | None,
+    qbit_base_url: str | None,
+) -> tuple[Path, str, str]:
+    """Resolve explicit MCP overrides or fall back to the GUI's local profile."""
+    if vault_path is not None:
+        defaults = UserSettings()
+        return (
+            vault_path,
+            formal_root or defaults.formal_root,
+            qbit_base_url or defaults.qbit_base_url,
+        )
+    profile_path = settings_path or default_settings_path()
+    profile = UserSettings.load(profile_path)
+    return (
+        Path(profile.vault_path),
+        formal_root or profile.formal_root,
+        qbit_base_url or profile.qbit_base_url,
+    )
 
 
 def build_mcp_server(service: AnimeBridgeAIService) -> Any:
@@ -150,19 +174,33 @@ def build_mcp_server(service: AnimeBridgeAIService) -> Any:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run Anime Bridge as a local MCP server")
-    parser.add_argument("--vault", type=Path, required=True)
-    parser.add_argument("--formal-root", default="C/bangumi")
-    parser.add_argument("--qbit-base-url", default="http://127.0.0.1:8080")
+    parser.add_argument(
+        "--vault",
+        type=Path,
+        default=None,
+        help="explicit Vault override; otherwise read the saved local GUI profile",
+    )
+    parser.add_argument(
+        "--settings",
+        type=Path,
+        default=None,
+        help="optional local profile path used when --vault is omitted",
+    )
+    parser.add_argument("--formal-root", default=None)
+    parser.add_argument("--qbit-base-url", default=None)
     parser.add_argument(
         "--allow-writes",
         action="store_true",
         help="register write tools; individual calls still require confirmation",
     )
     args = parser.parse_args(argv)
+    vault_path, formal_root, qbit_base_url = resolve_runtime_settings(
+        args.vault, args.settings, args.formal_root, args.qbit_base_url
+    )
     service = AnimeBridgeAIService(
-        args.vault,
-        formal_root=args.formal_root,
-        qbit_base_url=args.qbit_base_url,
+        vault_path,
+        formal_root=formal_root,
+        qbit_base_url=qbit_base_url,
         allow_writes=args.allow_writes,
     )
     build_mcp_server(service).run()

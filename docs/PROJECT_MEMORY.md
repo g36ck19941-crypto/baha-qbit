@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-21
 
+## D-014 — Portable Codex MCP profile
+
+- MCP defaults to the GUI's locally saved non-secret profile; explicit
+  `--vault`, `--formal-root`, `--qbit-base-url`, and `--settings` remain valid.
+- The source checkout config points to `./dist/anime-bridge.exe`; the release
+  ZIP contains `.codex/config.toml` pointing to `./anime-bridge.exe`.
+- A moved installation therefore needs one GUI settings save plus a Codex
+  restart, not manual editing of an absolute TOML path.
+
 ## D-013 — Bahamut authenticated browser bridge
 
 - Authentication stays in the user's browser. A same-origin userscript reads

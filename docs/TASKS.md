@@ -40,6 +40,7 @@ Last updated: 2026-08-21
 - [x] AB-050a Add the loopback-only operational web interface.
 - [x] AB-050b Add visible write confirmation, activity log, themes, and density controls.
 - [x] AB-050c Package the GUI, CLI, MCP runtime, and Obsidian plugin for migration.
+- [x] AB-050d Package a relative Codex MCP config backed by GUI-saved settings.
 
 ## Next
 

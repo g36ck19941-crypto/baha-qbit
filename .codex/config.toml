@@ -3,8 +3,6 @@
 command = "./dist/anime-bridge.exe"
 args = [
   "mcp",
-  "--vault",
-  "C:/PersonalBlog/Obsidian Vault",
   "--allow-writes",
 ]
 enabled = true

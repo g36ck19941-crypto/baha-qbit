@@ -60,6 +60,9 @@ tagged `anime-bridge-candidates`, not `bangumi`.
   The default server registers five read-only tools. Three write tools are absent
   unless the process starts with `--allow-writes`; individual write calls still
   require confirmation and retain all underlying conflict/safe-default gates.
+  With no explicit CLI overrides, MCP reads the same local non-secret profile
+  as the GUI. The release ZIP carries a project-scoped config whose EXE path is
+  relative to the extracted package root.
 - The desktop UX is a dependency-free local web server bound to `127.0.0.1` on
   a random port. A high-entropy session token gates the page and every API call;
   CSP/no-store headers reduce browser attack surface. The browser UI delegates

@@ -16,8 +16,18 @@ class CodexConfigTests(unittest.TestCase):
         self.assertEqual(server["command"], "./dist/anime-bridge.exe")
         self.assertEqual(server["args"][0], "mcp")
         self.assertIn("--allow-writes", server["args"])
+        self.assertNotIn("--vault", server["args"])
         self.assertEqual(server["default_tools_approval_mode"], "writes")
         self.assertFalse(server["required"])
+
+    def test_portable_config_uses_package_root_and_saved_profile(self) -> None:
+        config = tomllib.loads(
+            (ROOT / "config" / "portable-codex-config.toml").read_text("utf-8")
+        )
+        server = config["mcp_servers"]["anime_bridge"]
+        self.assertEqual(server["command"], "./anime-bridge.exe")
+        self.assertEqual(server["args"], ["mcp", "--allow-writes"])
+        self.assertEqual(server["default_tools_approval_mode"], "writes")
 
 
 if __name__ == "__main__":

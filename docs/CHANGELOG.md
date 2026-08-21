@@ -15,7 +15,7 @@ All notable changes are recorded here. The project follows semantic versioning.
   title matches remain visible for manual review.
 - Added a hard gate: formal Obsidian import and candidate-driven RSS refuse a
   note unless `bahamut_subtraction: true` is present.
-- Expanded the source suite to 50 tests. A real authenticated export remains a
+- Expanded the source suite to 52 tests. A real authenticated export remains a
   separate user-assisted verification gate.
 
 ### Batch anime RSS sources
@@ -34,6 +34,9 @@ All notable changes are recorded here. The project follows semantic versioning.
 - Kept host-side approval prompts for write tools in addition to Anime Bridge's
   per-call confirmation token.
 - Added a configuration contract test and Codex Desktop/CLI/IDE setup guidance.
+- Removed the machine-specific Vault path from project MCP configuration. MCP
+  now reads the GUI-saved profile by default, and the portable ZIP embeds a
+  package-relative `.codex/config.toml`.
 
 ### Portable Windows package
 
@@ -65,9 +68,9 @@ All notable changes are recorded here. The project follows semantic versioning.
 ### AI/MCP core
 
 - Official MCP Python SDK v2 optional dependency and local stdio launcher.
-- Four default read-only tools for Bangumi details, Obsidian batch planning,
-  qBittorrent status, and RSS-rule planning.
-- Two write tools registered only with an explicit process startup gate, plus a
+- Five default read-only tools for Bangumi details, Obsidian batch planning,
+  qBittorrent status, and single/batch RSS-rule planning.
+- Three write tools registered only with an explicit process startup gate, plus a
   required per-call confirmation and the existing Vault/loopback/conflict gates.
 - AI-facing service layer remains independent of the MCP SDK and model provider.
 - Official in-memory MCP client verified tool discovery and a structured call;

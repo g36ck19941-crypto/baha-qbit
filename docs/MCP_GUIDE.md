@@ -12,16 +12,20 @@ configuration is shared by Codex Desktop, CLI, and the IDE extension. Restart
 the client after building or downloading the executable, then use `/mcp` (or
 the MCP servers settings page) to confirm that `anime_bridge` is connected.
 
+The MCP launcher reads the same non-secret local profile saved by the GUI, so
+the checked-in config does not contain a machine-specific Vault path. Open the
+GUI and save **本机设置** before restarting Codex. `--vault`, `--formal-root`,
+`--qbit-base-url`, and `--settings` remain available as explicit overrides.
+
 The checked-in configuration exposes the write-capable tools but sets Codex's
 approval mode to `writes`. Anime Bridge independently requires the exact
 `CONFIRM_LOCAL_WRITE` confirmation value for every apply call. To make the
 connection read-only, remove `--allow-writes` from `.codex/config.toml`.
 
-The project config uses the current machine's Vault path. On another computer,
-change the value after `--vault`; keep forward slashes in TOML paths. The
-portable ZIP puts `anime-bridge.exe` at its root, so either place it under this
-checkout's `dist/` directory or use the host UI/manual configuration shown in
-the packaged-mode section below.
+The portable ZIP includes its own `.codex/config.toml` pointing to the EXE at
+the package root. Extract the complete ZIP, open that directory as a trusted
+Codex project, save local paths in Anime Bridge, and restart Codex. No TOML path
+editing is needed for the normal portable flow.
 
 ## Source-mode installation
 
@@ -39,8 +43,8 @@ Configure an MCP host with this command and argument array:
   "command": "C:/Users/30871/Desktop/baha-qbit/.venv/Scripts/python.exe",
   "args": [
     "C:/Users/30871/Desktop/baha-qbit/mcp_launcher.py",
-    "--vault",
-    "C:/PersonalBlog/Obsidian Vault"
+    "--settings",
+    "C:/Path/To/AnimeBridge/config.json"
   ]
 }
 ```
@@ -76,9 +80,12 @@ The portable executable bundles the runtime and MCP SDK. Configure the host as:
 ```json
 {
   "command": "C:/Path/To/anime-bridge.exe",
-  "args": ["mcp", "--vault", "C:/Path/To/Obsidian Vault"]
+  "args": ["mcp"]
 }
 ```
+
+Without explicit path arguments, packaged mode reads the GUI's saved local
+profile. Add `--vault` only for a deliberate one-host override.
 
 Add `--allow-writes` only when the host should register the three write tools.
 The tool contract and confirmation gates are identical to source mode.

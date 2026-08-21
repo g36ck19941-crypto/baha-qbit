@@ -14,11 +14,13 @@
   `out/2026-07-filtered-contract-demo.md`: 101 eligible subjects became 100,
   `LV999的村民` was absent, and the note recorded
   `bahamut_subtraction: true`. This proves wiring, not authenticated ownership.
-- Source regression: 50 tests passed. This is not live-account evidence; the
+- Source regression: 52 tests passed. This is not live-account evidence; the
   user must still complete Cloudflare verification/login and run the exporter.
 - Frozen `anime-bridge.exe` reported `0.10.0.dev0`; its GUI smoke test loaded
   the embedded userscript. A live 1280×720 DOM inspection showed the exporter
   path and helper link, no horizontal overflow, and zero console errors.
+- Portable-config tests prove the release MCP command is relative to the package
+  root and a moved GUI profile supplies Vault/formal-root/qBittorrent paths.
 
 ## v0.9.0.dev0 checked-candidate RSS batch
 

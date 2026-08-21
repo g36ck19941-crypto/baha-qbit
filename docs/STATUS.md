@@ -12,12 +12,14 @@ Last updated: 2026-08-21
 - Exact normalized favorites are removed; fuzzy matches remain annotated for
   review. Unfiltered candidate notes are now refused by formal import and batch
   RSS instead of relying on a warning alone.
-- Source regression: 50 tests passed. JavaScript and Python syntax checks pass.
+- Source regression: 52 tests passed. JavaScript and Python syntax checks pass.
 - The 20.9 MB frozen executable reported v0.10, served the embedded exporter,
   and passed GUI smoke plus a 1280×720 zero-console-error inspection.
 - Live authenticated account evidence is still pending the user's Cloudflare
   verification and login; fixture/export-contract evidence is not substituted
   for that gate.
+- Portable MCP now reads the GUI-saved machine profile and the ZIP embeds a
+  package-relative Codex config. Source regression: 52 tests passed.
 
 ## v0.9.0.dev0 batch RSS milestone
 
@@ -67,7 +69,7 @@ Last updated: 2026-08-21
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 50 representative tests passed; compile and CLI/JavaScript syntax checks passed.
+- Local execution: 52 representative tests passed; compile and CLI/JavaScript syntax checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
