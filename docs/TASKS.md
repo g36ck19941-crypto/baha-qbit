@@ -20,6 +20,8 @@ Last updated: 2026-08-21
 - [x] AB-010b1 Add a credential-free logged-in browser exporter with pagination.
 - [x] AB-010b1a Automatically detect the collection and hand validated JSON to
   the loopback scanner without a manual file step.
+- [x] AB-010b1b Add a browser-aware, policy-safe installation guide for
+  Tampermonkey and the paired automatic-sync userscript.
 - [ ] AB-010b2 Verify the exporter against the user's authenticated collection.
 - [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
 - [x] AB-012a Implement exact-only subtraction and fuzzy-review retention.

@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-21
 
+## v0.13.0.dev0 browser-helper guide milestone
+
+- The local interface now presents a three-step browser-aware installation
+  guide instead of a bare userscript link.
+- Edge, Chrome/Chromium, and Firefox route to official Tampermonkey pages before
+  the paired script and Bahamut collection steps. Unknown browsers use the
+  official generic page.
+- Both security confirmations remain manual; no browser policy is modified.
+
 ## v0.12.0.dev0 automatic Bahamut handoff milestone
 
 - The browser helper now detects a rendered logged-in collection, scans its

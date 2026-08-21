@@ -62,7 +62,7 @@
             <p>纳入 TV、WEB、剧场版与续作；排除 OVA 和其它类型；要求 Bangumi「日本」标签。</p>
             <p>浏览器助手检测到动画疯登录后，会自动同步收藏并直接执行本步骤。</p>
             <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>巴哈收藏 JSON</span><input name="bahamut_export_path" placeholder="C:/Users/.../anime-bridge-bahamut-favorites.json"></label></details>
-            <p class="helper-link"><a href="/bahamut-export.user.js?token=__ANIME_BRIDGE_TOKEN__">安装自动同步浏览器助手（Tampermonkey）</a></p>
+            <p class="helper-link"><button type="button" id="install-browser-helper">安装自动同步浏览器助手</button></p>
           </div>
           <button type="submit" class="primary" id="scan-button">筛选并写入候选笔记</button>
         </form>
@@ -176,6 +176,32 @@
         <button value="cancel">取消</button>
         <button value="confirm" class="danger">确认执行</button>
       </div>
+    </form>
+  </dialog>
+  <dialog id="browser-helper-dialog">
+    <form method="dialog" class="helper-guide">
+      <p class="eyebrow">BROWSER SETUP</p>
+      <h2>安装自动同步浏览器助手</h2>
+      <p>检测到：<strong id="detected-browser">正在判断浏览器</strong></p>
+      <ol>
+        <li>
+          <strong>安装 Tampermonkey</strong>
+          <p>在官方页面点击商店安装，并完成浏览器自己的确认。</p>
+          <a id="open-tampermonkey" class="button-link" href="https://www.tampermonkey.net/" target="_blank" rel="noopener noreferrer">打开 Tampermonkey 官方安装页</a>
+        </li>
+        <li>
+          <strong>安装 Anime Bridge 脚本</strong>
+          <p>完成上一步后返回这里，再点击下面按钮并在 Tampermonkey 中确认安装。</p>
+          <a id="open-browser-helper" class="button-link" href="/bahamut-export.user.js?token=__ANIME_BRIDGE_TOKEN__" target="_blank" rel="noopener noreferrer">继续安装自动同步脚本</a>
+        </li>
+        <li>
+          <strong>登录并验证</strong>
+          <p>保持 Anime Bridge 运行，登录动画疯后打开“我的动画”；助手会自动同步。</p>
+          <a class="button-link" href="https://ani.gamer.com.tw/mygather.php" target="_blank" rel="noopener noreferrer">打开动画疯“我的动画”</a>
+        </li>
+      </ol>
+      <div class="notice warning"><strong>需要你确认两次</strong><p>浏览器扩展和用户脚本都不能由 Anime Bridge 静默安装。</p></div>
+      <div class="button-row"><button value="close">完成或稍后继续</button></div>
     </form>
   </dialog>
   <script src="/app.js"></script>

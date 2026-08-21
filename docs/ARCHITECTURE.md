@@ -40,6 +40,10 @@ tagged `anime-bridge-candidates`, not `bangumi`.
   cookies, passwords, or raw HTML. A valid post is atomically retained and
   immediately triggers the current-quarter difference. A live account sync
   remains to be verified.
+- `browser_helper_guide`: a static, browser-aware dialog routes Edge,
+  Chrome/Chromium, and Firefox to Tampermonkey's official browser-specific page,
+  then exposes the session-gated paired userscript URL. It cannot and does not
+  bypass either browser confirmation or write browser management policy.
 - `bahamut_html`: retained as a pure offline diagnostic parser.
 - `TitleMatcher`: implemented deterministic aliases and confidence scores.
   Exact normalized equality is the only automatic exclusion; AI may later

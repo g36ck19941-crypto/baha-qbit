@@ -99,10 +99,32 @@ function askConfirmation(title, copy) {
   });
 }
 
+function browserInstallTarget() {
+  const agent = navigator.userAgent;
+  if (/Edg\//.test(agent)) {
+    return { name: "Microsoft Edge", url: "https://www.tampermonkey.net/index.php?browser=edge" };
+  }
+  if (/Firefox\//.test(agent)) {
+    return { name: "Mozilla Firefox", url: "https://www.tampermonkey.net/index.php?browser=firefox" };
+  }
+  if (/(?:Chrome|Chromium|CriOS)\//.test(agent)) {
+    return { name: "Google Chrome / Chromium", url: "https://www.tampermonkey.net/index.php?browser=chrome" };
+  }
+  return { name: "未识别的浏览器", url: "https://www.tampermonkey.net/" };
+}
+
+function openBrowserHelperGuide() {
+  const target = browserInstallTarget();
+  document.getElementById("detected-browser").textContent = target.name;
+  document.getElementById("open-tampermonkey").href = target.url;
+  document.getElementById("browser-helper-dialog").showModal();
+}
+
 document.querySelectorAll("[data-theme-choice]").forEach((button) => button.addEventListener("click", () => setChoice("theme", button.dataset.themeChoice)));
 document.querySelectorAll("[data-density-choice]").forEach((button) => button.addEventListener("click", () => setChoice("density", button.dataset.densityChoice)));
 document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
 document.getElementById("clear-log").addEventListener("click", () => logEl.replaceChildren());
+document.getElementById("install-browser-helper").addEventListener("click", openBrowserHelperGuide);
 
 document.getElementById("scan-form").addEventListener("submit", async (event) => {
   event.preventDefault();

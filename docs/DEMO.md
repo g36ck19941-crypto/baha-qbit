@@ -1,5 +1,15 @@
 # Demonstration record
 
+## v0.13.0.dev0 browser-helper installation guide
+
+- The overview now opens a three-step modal: official Tampermonkey destination,
+  session-gated paired userscript, and the Bahamut collection page.
+- JavaScript syntax and HTTP page tests verify the dialog IDs, paired helper
+  URL, all three browser-specific official destinations, and the generic
+  fallback. The frozen GUI passes its HTTP smoke test. This run's browser
+  automation environment blocked new loopback navigation, so modal visual
+  inspection is not claimed as evidence.
+
 ## v0.12.0.dev0 automatic Bahamut handoff
 
 - HTTP tests prove the userscript installer rejects a missing GUI session token

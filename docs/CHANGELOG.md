@@ -4,6 +4,15 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Guided browser-helper installation
+
+- Added an in-app three-step installation guide for Tampermonkey, the paired
+  Anime Bridge userscript, and the Bahamut collection page.
+- Added Edge, Chrome/Chromium, and Firefox detection with official Tampermonkey
+  browser-specific destinations and a generic fallback.
+- Kept browser-store and userscript confirmation visible and user-controlled;
+  the guide never changes browser or enterprise policies.
+
 ### Automatic Bahamut handoff
 
 - Replaced the normal manual JSON download/path step with authenticated-page

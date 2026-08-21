@@ -1,4 +1,4 @@
-# User guide — v0.12.0 development
+# User guide — v0.13.0 development
 
 ## Portable Windows build
 
@@ -61,17 +61,24 @@ Use `--dry-run` to fetch and report the count without writing a file.
 ## Connect the logged-in Bahamut browser
 
 Anime Bridge does not request or store your Bahamut password or Cookie. Install
-Tampermonkey (or a compatible userscript manager), start Anime Bridge, and
-select **安装自动同步浏览器助手** once. Then:
+start Anime Bridge and select **安装自动同步浏览器助手** once. The built-in
+guide detects Edge, Chrome/Chromium, or Firefox and opens the matching official
+Tampermonkey download page. Then:
 
-1. Sign in to `https://ani.gamer.com.tw/mygather.php` and complete any visible
+1. Confirm Tampermonkey installation in the browser's own store UI.
+2. Return to the guide and select **继续安装自动同步脚本**, then confirm the
+   userscript in Tampermonkey.
+3. Sign in to `https://ani.gamer.com.tw/mygather.php` and complete any visible
    Cloudflare challenge yourself.
-2. After the collection appears, the helper reads all visible pagination and
+4. After the collection appears, the helper reads all visible pagination and
    sends the JSON directly to the loopback Anime Bridge service.
-3. Anime Bridge validates and retains the latest JSON internally, performs the
+5. Anime Bridge validates and retains the latest JSON internally, performs the
    current-quarter difference, and writes the candidate note automatically.
-4. If automatic sync is skipped within its six-hour cooldown, select **同步
+6. If automatic sync is skipped within its six-hour cooldown, select **同步
    Anime Bridge 收藏** in the lower-right corner to force a retry.
+
+Browser security requires both confirmations. Anime Bridge never changes
+enterprise policy, registry extension lists, or the browser's extension UI.
 
 No file selection is required in the normal workflow. The advanced manual JSON
 path and CLI remain only as recovery/diagnostic options:

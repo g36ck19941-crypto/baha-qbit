@@ -2,6 +2,17 @@
 
 Last updated: 2026-08-21
 
+## D-017 — Browser-helper installation guide
+
+- Anime Bridge provides a browser-aware three-step guide: open the appropriate
+  official Tampermonkey page, install the session-gated paired userscript, then
+  open the Bahamut collection page.
+- Edge, Chrome/Chromium, and Firefox are recognized from the current browser;
+  unknown browsers use Tampermonkey's generic official page.
+- Extension and userscript confirmation remain user-controlled. The app does
+  not use registry external-install entries, enterprise force-install policy,
+  page overlays, or simulated confirmation clicks.
+
 ## D-016 — Automatic Bahamut JSON handoff
 
 - The installed userscript detects a rendered authenticated collection and

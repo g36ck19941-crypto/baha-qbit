@@ -47,7 +47,18 @@ class WebGUITests(unittest.TestCase):
         self.assertIn('content="test-token"', page)
         self.assertIn('id="migration-plan"', page)
         self.assertIn('id="rss-batch-plan"', page)
+        self.assertIn('id="install-browser-helper"', page)
+        self.assertIn('id="browser-helper-dialog"', page)
         self.assertIn('href="/bahamut-export.user.js?token=test-token"', page)
+        self.assertIn("https://www.tampermonkey.net/", page)
+        with urlopen(
+            f"http://127.0.0.1:{self.server.server_port}/app.js", timeout=5
+        ) as response:
+            app_script = response.read().decode("utf-8")
+        self.assertIn("browserInstallTarget", app_script)
+        self.assertIn("browser=edge", app_script)
+        self.assertIn("browser=chrome", app_script)
+        self.assertIn("browser=firefox", app_script)
         with self.assertRaises(HTTPError) as missing_token:
             urlopen(
                 f"http://127.0.0.1:{self.server.server_port}/bahamut-export.user.js",
