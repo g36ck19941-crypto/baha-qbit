@@ -4,6 +4,12 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Repository operations
+
+- Published the full linear commit history to `origin/main` without force.
+- Corrected the newly created GitHub repository from public to private, then
+  verified that remote main and local HEAD matched at `21ed56f`.
+
 ### Local operational interface
 
 - Loopback-only browser interface with random-port startup, per-process session

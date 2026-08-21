@@ -130,3 +130,11 @@ Generated demonstration images (ignored by Git):
 
 - `out/gui-workbench.png`
 - `out/gui-narrow.png`
+
+## GitHub publication evidence
+
+The linear local history was fast-forwarded to `main` and pushed without force
+to `https://github.com/g36ck19941-crypto/baha-qbit`. Repository metadata exposed
+that it had initially been created public, so it was changed to private. After
+that change, authenticated `git ls-remote origin refs/heads/main` and local
+`git rev-parse HEAD` both returned `21ed56fc2804f61830abcd056e886bf8cd4cf943`.

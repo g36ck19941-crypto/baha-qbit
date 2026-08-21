@@ -4,6 +4,8 @@ Anime Bridge is a local-first bridge between Bangumi, Bahamut Anime Crazy,
 Obsidian, and qBittorrent. The project is being delivered incrementally so each
 external integration remains replaceable and testable.
 
+Private upstream: `https://github.com/g36ck19941-crypto/baha-qbit`
+
 ## Confirmed scope
 
 - Detect titles whose first release date falls in the current anime quarter.

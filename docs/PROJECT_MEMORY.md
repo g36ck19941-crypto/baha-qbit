@@ -71,8 +71,10 @@ committed. Portable exports exclude authenticated state.
 
 Every meaningful change is committed with contemporaneous status and change
 notes. A private GitHub repository named `baha-qbit` is the default because the
-project will contain machine-specific integration documentation. Publishing is
-pending local GitHub CLI authentication.
+project contains machine-specific integration documentation. The repository is
+`https://github.com/g36ck19941-crypto/baha-qbit`; it was corrected from public to
+private on 2026-08-21 and `origin/main` was verified against local HEAD. Windows
+Git Credential Manager can push even though the standalone `gh` CLI is not logged in.
 
 ### D-007: Cross-site matching safety
 

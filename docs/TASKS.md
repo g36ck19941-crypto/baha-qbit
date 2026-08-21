@@ -10,6 +10,10 @@ Last updated: 2026-08-21
 - [x] AB-004 Render an atomic, checkbox-based candidate Markdown file.
 - [x] AB-005 Add representative unit/contract tests and a live read demo.
 
+## Completed — repository infrastructure
+
+- [x] AB-006 Create, private, and push the GitHub repository; verify remote main.
+
 ## In progress
 
 - [x] AB-010a Add a pure, replaceable `mygather.php` HTML parser.
@@ -41,5 +45,4 @@ Last updated: 2026-08-21
 
 ## Blocked
 
-- [ ] AB-006 Create and push the private GitHub repository after the user
-  completes local GitHub CLI authentication.
+- None.

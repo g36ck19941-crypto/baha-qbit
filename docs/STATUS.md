@@ -17,7 +17,7 @@ Last updated: 2026-08-21
 | qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
 | AI/MCP | MCP core verified | Real host connection and AI review pending |
 | GUI | Core and visual verification complete | Packaged executable pending |
-| GitHub remote | Blocked on login | `gh auth status` reports no authenticated host |
+| GitHub remote | Complete | Private `origin/main` matches local HEAD |
 
 ## Verification levels
 
@@ -30,8 +30,10 @@ Last updated: 2026-08-21
 - Bahamut parser/matcher: 11 local tests pass, including fixture HTML, aliases,
   exact subtraction, and fuzzy-review retention. This is interface evidence only;
   the user's authenticated `mygather.php` has not been read.
-- GitHub publishing remains blocked until the user finishes sign-in. The browser
-  reached a Google account page that automation is not permitted to inspect.
+- GitHub: the repository was initially created public, corrected to private,
+  and pushed through Windows Git Credential Manager without exposing a token.
+  Private `origin/main` and local HEAD both resolve to commit `21ed56f` at this
+  milestone. The standalone `gh` CLI remains unauthenticated but is not needed.
 - Obsidian planner: 17 total tests pass. A live Bangumi detail read planned one
   checked title to `C/bangumi/2026/07月新番/LV999的村民.md` with zero conflicts and
   stopped in preview-only mode. No file was written to the real Vault.
