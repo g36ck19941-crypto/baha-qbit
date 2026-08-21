@@ -91,3 +91,11 @@ The first command connected to qBittorrent 4.5.5 / WebUI API 2.8.19. The second
 read the real existing RSS state, reported no conflicts for the proposed names,
 and wrote a preview whose rule was disabled with `addPaused: true`. It explicitly
 stopped in preview-only mode. No feed, rule, torrent, or download state changed.
+
+## v0.5 development — Obsidian plugin package
+
+The package under `integrations/obsidian-plugin` passed Node.js `--check`, and
+its manifest parsed as JSON with plugin ID `anime-bridge`. Source inspection
+establishes that it uses `spawn(..., { shell: false })`, validates the active
+candidate marker, and requires a confirmation modal for apply. This is static
+package evidence only; no real Obsidian installation or command run is claimed.

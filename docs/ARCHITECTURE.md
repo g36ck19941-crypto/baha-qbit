@@ -41,8 +41,10 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
 - `BahamutDifference`: implemented safe core that retains fuzzy review matches
   in the candidate list; live favorites are not wired yet.
 - `ObsidianImporter`: implemented checked-marker parser, detail refresh, formal
-  renderer, preview plan, and conflict-safe apply core. The QuickAdd/custom
-  plugin shell and an approved real-Vault apply remain pending.
+  renderer, preview plan, and conflict-safe apply core. A dependency-free
+  desktop Obsidian command shell delegates to the same CLI and adds a second
+  confirmation before apply. Vault installation/runtime verification and an
+  approved real-Vault apply remain pending.
 - `QbittorrentRSS`: implemented loopback-only Web API client, version probe,
   existing-state reader, feed/rule preview, conflict refusal, and explicit
   apply. Rules default disabled and add matches paused. RSS-source discovery

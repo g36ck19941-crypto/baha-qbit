@@ -1,4 +1,4 @@
-# User guide — v0.4.0 development
+# User guide — v0.5.0 development
 
 ## Runtime note
 
@@ -54,8 +54,23 @@ The command re-fetches checked Bangumi subjects and reports every formal target
 and conflict. It remains preview-only unless `--apply` is explicitly supplied.
 Even with `--apply`, any existing or duplicate target refuses the full batch.
 
-The QuickAdd/custom Obsidian plugin shell is not yet included, so this command
-is currently a developer-facing interface rather than the final one-click UX.
+### Obsidian plugin package
+
+The installable desktop plugin is in `integrations/obsidian-plugin`. Copy that
+directory to `<Vault>/.obsidian/plugins/anime-bridge`, restart or reload
+Obsidian, and enable **Anime Bridge** under Community plugins.
+
+In its settings, packaged mode needs only the future `anime-bridge.exe` path.
+For the current source mode, set **运行程序** to a Python 3.11+ executable and
+**源码启动文件** to this repository's `launcher.py`. Then open a generated
+candidate note and run one of these commands from the command palette:
+
+- `Anime Bridge: 预览已勾选动画的正式归入计划`
+- `Anime Bridge: 正式归入已勾选动画`
+
+The second command displays a confirmation dialog. The Python importer still
+refuses the full batch when any target conflicts. This package has passed static
+checks but has not yet been enabled or run in the real Vault.
 
 ## Preview a qBittorrent RSS feed and rule
 

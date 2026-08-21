@@ -99,6 +99,14 @@ New rules default disabled and add matches paused; enabling or starting download
 requires separate explicit flags. The API has no atomic feed-plus-rule operation,
 so a connection failure after feed creation can leave a feed without its rule.
 
+### D-010: Obsidian plugin boundary
+
+The Obsidian plugin is a thin desktop command shell. It does not duplicate
+matching, rendering, or conflict behavior; it starts the packaged executable or
+source launcher with an argument array and `shell: false`. Preview is a separate
+command. Apply requires an Obsidian confirmation, then remains subject to the
+CLI's own conflict gate.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

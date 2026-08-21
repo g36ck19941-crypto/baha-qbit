@@ -4,6 +4,15 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Obsidian command shell
+
+- Installable, dependency-free desktop plugin package with commands to preview
+  or formally import checked candidates through the shared Python CLI.
+- Candidate-document validation, non-shell process spawning, settings for
+  packaged/source runners, and a second confirmation dialog before apply.
+- JavaScript syntax and manifest JSON checks pass. Real Obsidian runtime and
+  real-Vault write verification remain pending.
+
 ### Planned
 
 - Interactive Bahamut login, favorite export, and confidence-aware difference.

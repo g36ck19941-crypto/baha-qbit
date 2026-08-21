@@ -19,7 +19,8 @@ Last updated: 2026-08-21
 - [ ] AB-012b Connect authenticated favorites to the live seasonal workflow.
 - [x] AB-020a Parse checked candidates and plan compatible formal notes.
 - [x] AB-020b Refuse batch apply when a target exists or collides.
-- [ ] AB-020c Add and verify the QuickAdd/custom Obsidian plugin shell.
+- [x] AB-020c1 Add the dependency-free Obsidian desktop command shell.
+- [ ] AB-020c2 Install, enable, and verify the plugin in the real Vault.
 - [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
 - [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.
 - [x] AB-030b Add RSS feed/rule preview, safe defaults, and conflict refusal.

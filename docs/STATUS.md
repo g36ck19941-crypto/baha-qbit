@@ -13,7 +13,7 @@ Last updated: 2026-08-21
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
 | Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
 | Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
-| Obsidian formal import | Core and live preview complete | Real Vault apply and QuickAdd shell pending |
+| Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
 | AI/MCP and GUI | Planned | Built on stable deterministic workflows |
 | GitHub remote | Blocked on login | `gh auth status` reports no authenticated host |
@@ -37,6 +37,9 @@ Last updated: 2026-08-21
 - qBittorrent: a live read connected to installed version 4.5.5 and WebUI API
   2.8.19, then read the existing RSS feed/rule state and produced a conflict-free
   disabled/paused preview. No RSS state was changed.
+- Obsidian plugin package: manifest/JSON and JavaScript syntax checks pass. It
+  exposes preview and confirmed-apply commands backed by the existing CLI, but
+  has not yet been installed, enabled, or executed inside Obsidian.
 
 ## Current demonstration
 
