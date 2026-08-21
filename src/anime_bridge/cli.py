@@ -12,9 +12,18 @@ from typing import Sequence
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
 from anime_bridge.adapters.bahamut_html import parse_mygather_html
+from anime_bridge.adapters.candidate_markdown import (
+    CandidateParseError,
+    parse_candidate_markdown,
+)
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.storage import write_text_atomic
-from anime_bridge.workflows import CurrentQuarterScanner
+from anime_bridge.workflows import (
+    CurrentQuarterScanner,
+    ObsidianImportConflict,
+    apply_import_plan,
+    plan_checked_import,
+)
 
 
 def _iso_date(value: str) -> date:
@@ -62,6 +71,23 @@ def build_parser() -> argparse.ArgumentParser:
     parse_bahamut.add_argument("input", type=Path, help="UTF-8 HTML file to parse")
     parse_bahamut.add_argument(
         "--json-output", type=Path, default=None, help="optional parsed JSON path"
+    )
+    obsidian_import = subparsers.add_parser(
+        "obsidian-import",
+        help="preview or apply checked candidate items to the formal note library",
+    )
+    obsidian_import.add_argument("candidate", type=Path, help="candidate Markdown file")
+    obsidian_import.add_argument("--vault", type=Path, required=True, help="Obsidian vault")
+    obsidian_import.add_argument(
+        "--formal-root", default="C/bangumi", help="vault-relative formal note root"
+    )
+    obsidian_import.add_argument(
+        "--plan-output", type=Path, default=None, help="optional JSON preview path"
+    )
+    obsidian_import.add_argument(
+        "--apply",
+        action="store_true",
+        help="write notes after preview; existing targets still cause full refusal",
     )
     return parser
 
@@ -116,8 +142,44 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 print(f"Parsed JSON written to: {args.json_output.resolve()}")
             return 0
+        if args.command == "obsidian-import":
+            document = parse_candidate_markdown(args.candidate.read_text(encoding="utf-8"))
+            plans = plan_checked_import(
+                document,
+                BangumiClient(),
+                args.vault.resolve(),
+                args.formal_root,
+            )
+            payload = [
+                {
+                    "bangumi_id": plan.subject.bangumi_id,
+                    "title": plan.subject.display_name,
+                    "target": plan.target_relative.as_posix(),
+                    "conflict": plan.conflict,
+                }
+                for plan in plans
+            ]
+            print(
+                f"Planned {len(plans)} formal notes; "
+                f"conflicts={sum(1 for plan in plans if plan.conflict)}."
+            )
+            if args.plan_output is not None:
+                write_text_atomic(
+                    args.plan_output,
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                )
+                print(f"Import preview written to: {args.plan_output.resolve()}")
+            if not args.apply:
+                print("Preview only: no Obsidian files written. Use --apply explicitly.")
+                return 0
+            written = apply_import_plan(plans, args.vault.resolve())
+            print(f"Wrote {len(written)} formal Obsidian notes.")
+            return 0
     except BangumiAPIError as exc:
         print(f"Bangumi scan failed: {exc}", file=sys.stderr)
         return 2
+    except (CandidateParseError, ObsidianImportConflict) as exc:
+        print(f"Obsidian import refused: {exc}", file=sys.stderr)
+        return 3
     parser.error(f"Unknown command: {args.command}")
     return 2

@@ -82,6 +82,14 @@ infobox aliases are all considered. Similar but non-exact titles remain in the
 candidate list and are reported for manual review. AI may later assist that
 review but cannot lower the deterministic auto-exclusion boundary.
 
+### D-008: Obsidian formal import safety
+
+Candidate tasks carry a machine marker independent of the visible title. Formal
+import re-fetches Bangumi details, previews vault-relative paths, and refuses the
+entire apply operation if any target already exists or collides within the
+batch. The importer never edits `.base`; a new Markdown note enters the existing
+view through the compatible `tags: bangumi` frontmatter.
+
 ## Known environment facts
 
 - Development workspace: `C:\Users\30871\Desktop\baha-qbit`.

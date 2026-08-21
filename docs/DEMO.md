@@ -57,3 +57,20 @@ were subtracted; a similar but non-exact title remained a candidate and was
 reported for review.
 
 This section is fixture evidence, not authenticated Bahamut evidence.
+
+## v0.3 development — Obsidian formal-import preview
+
+One checked item using live Bangumi subject `579787` was planned against the
+real Vault path without applying changes.
+
+```json
+{
+  "bangumi_id": 579787,
+  "title": "LV999的村民",
+  "target": "C/bangumi/2026/07月新番/LV999的村民.md",
+  "conflict": false
+}
+```
+
+Observed output explicitly stated `Preview only: no Obsidian files written`.
+This establishes the read/plan path, not a real Vault write or plugin UX.

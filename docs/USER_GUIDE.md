@@ -40,6 +40,23 @@ python launcher.py parse-bahamut-html mygather.html `
 This command proves the parser interface only. It does not claim that the
 application has connected to the user's account.
 
+## Preview checked Obsidian imports
+
+After checking candidate tasks, build a JSON plan without writing to the Vault:
+
+```powershell
+python launcher.py obsidian-import candidates.md `
+  --vault "C:/PersonalBlog/Obsidian Vault" `
+  --plan-output out/obsidian-import-plan.json
+```
+
+The command re-fetches checked Bangumi subjects and reports every formal target
+and conflict. It remains preview-only unless `--apply` is explicitly supplied.
+Even with `--apply`, any existing or duplicate target refuses the full batch.
+
+The QuickAdd/custom Obsidian plugin shell is not yet included, so this command
+is currently a developer-facing interface rather than the final one-click UX.
+
 ## Troubleshooting
 
 - A network or HTTP failure exits with code `2` and does not replace an existing

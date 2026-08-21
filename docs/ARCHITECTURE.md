@@ -40,8 +40,9 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
   suggest low-confidence matches but cannot silently approve them.
 - `BahamutDifference`: implemented safe core that retains fuzzy review matches
   in the candidate list; live favorites are not wired yet.
-- `ObsidianImporter`: parses checked markers, previews target paths, and creates
-  compatible notes without overwriting user sections.
+- `ObsidianImporter`: implemented checked-marker parser, detail refresh, formal
+  renderer, preview plan, and conflict-safe apply core. The QuickAdd/custom
+  plugin shell and an approved real-Vault apply remain pending.
 - `QbittorrentRSS`: negotiates Web API version, previews feeds/rules, and only
   mutates after explicit confirmation.
 - MCP exposes the same workflows and safety gates; it does not bypass them.

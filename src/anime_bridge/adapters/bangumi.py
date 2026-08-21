@@ -124,3 +124,26 @@ class BangumiClient:
                 if total is None:
                     return
 
+    def get_subject(
+        self,
+        subject_id: int,
+        category: AnimeCategory,
+    ) -> AnimeSubject:
+        """Fetch one full subject for formal-note rendering."""
+
+        assert self.transport is not None
+        payload = self.transport.get_json(
+            f"{self.base_url}/v0/subjects/{int(subject_id)}",
+            {},
+            {
+                "Accept": "application/json",
+                "User-Agent": self.user_agent,
+            },
+            self.timeout_seconds,
+        )
+        try:
+            return AnimeSubject.from_bangumi_payload(payload, category)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise BangumiAPIError(
+                f"Bangumi subject {subject_id} cannot be converted to a formal note"
+            ) from exc

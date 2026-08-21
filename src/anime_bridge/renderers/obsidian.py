@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from anime_bridge import __version__
 from anime_bridge.domain import AnimeSubject
-from anime_bridge.workflows import CurrentQuarterResult
+
+if TYPE_CHECKING:
+    from anime_bridge.workflows.current_quarter import CurrentQuarterResult
 
 
 def _yaml_quote(value: str) -> str:
@@ -51,7 +54,7 @@ def _render_subject(subject: AnimeSubject) -> str:
 
 
 def render_candidate_markdown(
-    result: CurrentQuarterResult,
+    result: "CurrentQuarterResult",
     generated_at: datetime | None = None,
 ) -> str:
     timestamp = generated_at or datetime.now().astimezone()

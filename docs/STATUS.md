@@ -13,7 +13,7 @@ Last updated: 2026-08-21
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
 | Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
 | Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
-| Obsidian formal import | Planned | Preview and idempotency required |
+| Obsidian formal import | Core and live preview complete | Real Vault apply and QuickAdd shell pending |
 | qBittorrent RSS | Planned | WebUI configuration and version negotiation required |
 | AI/MCP and GUI | Planned | Built on stable deterministic workflows |
 | GitHub remote | Blocked on login | `gh auth status` reports no authenticated host |
@@ -31,6 +31,9 @@ Last updated: 2026-08-21
   the user's authenticated `mygather.php` has not been read.
 - GitHub publishing remains blocked until the user finishes sign-in. The browser
   reached a Google account page that automation is not permitted to inspect.
+- Obsidian planner: 17 total tests pass. A live Bangumi detail read planned one
+  checked title to `C/bangumi/2026/07月新番/LV999的村民.md` with zero conflicts and
+  stopped in preview-only mode. No file was written to the real Vault.
 
 ## Current demonstration
 

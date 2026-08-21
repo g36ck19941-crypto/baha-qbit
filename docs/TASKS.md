@@ -17,10 +17,13 @@ Last updated: 2026-08-21
 - [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
 - [x] AB-012a Implement exact-only subtraction and fuzzy-review retention.
 - [ ] AB-012b Connect authenticated favorites to the live seasonal workflow.
+- [x] AB-020a Parse checked candidates and plan compatible formal notes.
+- [x] AB-020b Refuse batch apply when a target exists or collides.
+- [ ] AB-020c Add and verify the QuickAdd/custom Obsidian plugin shell.
+- [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
 
 ## Next
 
-- [ ] AB-020 Add QuickAdd formal import of checked candidates.
 - [ ] AB-030 Add qBittorrent WebUI version negotiation and RSS preview tools.
 - [ ] AB-040 Add deterministic MCP tools and AI-assisted low-confidence review.
 - [ ] AB-050 Add the desktop GUI, packaging, and migration assistant.

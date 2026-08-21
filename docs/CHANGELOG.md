@@ -23,6 +23,20 @@ All notable changes are recorded here. The project follows semantic versioning.
 - 11 local tests pass. Authenticated Bahamut access remains unverified and is
   not represented as complete.
 
+### Obsidian import core
+
+- Candidate Markdown parser that rejects checked tasks without valid machine
+  metadata instead of silently skipping them.
+- Formal-note renderer compatible with the existing animation frontmatter,
+  `C/bangumi/{year}/{MM}月新番/` layout, cover callout, information table, summary,
+  and personal-summary section.
+- Windows-safe note filenames, full-batch conflict preflight, exclusive atomic
+  publication that cannot overwrite a racing target, rollback of files newly
+  created by a failed batch, and explicit `--apply` gating.
+- Live preview for Bangumi subject `579787` planned one conflict-free target in
+  the real Vault layout. The preview did not write to the Vault.
+- 17 local tests pass after this addition.
+
 ## [0.1.0] - 2026-08-21
 
 ### Added
