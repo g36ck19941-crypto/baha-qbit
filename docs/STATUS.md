@@ -2,6 +2,23 @@
 
 Last updated: 2026-08-21
 
+## v0.10.0.dev0 Bahamut browser-bridge milestone
+
+- Added a same-origin userscript served by the local GUI. It runs after the
+  user signs in, follows visible `mygather.php` pagination, and downloads only
+  favorite metadata—never passwords, cookies, tokens, or raw HTML.
+- Added strict schema/host/path/size/completeness validation and wired the export
+  into CLI and GUI seasonal scans. Partial export warnings block the workflow.
+- Exact normalized favorites are removed; fuzzy matches remain annotated for
+  review. Unfiltered candidate notes are now refused by formal import and batch
+  RSS instead of relying on a warning alone.
+- Source regression: 50 tests passed. JavaScript and Python syntax checks pass.
+- The 20.9 MB frozen executable reported v0.10, served the embedded exporter,
+  and passed GUI smoke plus a 1280×720 zero-console-error inspection.
+- Live authenticated account evidence is still pending the user's Cloudflare
+  verification and login; fixture/export-contract evidence is not substituted
+  for that gate.
+
 ## v0.9.0.dev0 batch RSS milestone
 
 - Added replaceable per-anime URL builders for Comicat through RSSHub, DMHY,
@@ -38,8 +55,8 @@ Last updated: 2026-08-21
 | Project skeleton | Complete | Python 3.11+ package, CLI, docs, tests, snapshot tool |
 | Bangumi current-quarter scanner | Complete for v0.1.0 | Live official API read on 2026-08-21 |
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
-| Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
-| Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
+| Bahamut favorites | Browser bridge implemented; live verification pending | Validated export contract; no live account evidence |
+| Cross-site difference | CLI/GUI integration complete; live evidence pending | Exact-only exclusion; fuzzy titles retained and annotated |
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Batch source/rule preview complete | Accessible source endpoint and approved apply pending |
 | AI/MCP | Codex project config added | Restart-time discovery and AI review pending |
@@ -50,17 +67,18 @@ Last updated: 2026-08-21
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 42 representative tests passed; compile and CLI version checks passed.
+- Local execution: 50 representative tests passed; compile and CLI/JavaScript syntax checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.
-- Bahamut parser/matcher: 11 local tests pass, including fixture HTML, aliases,
-  exact subtraction, and fuzzy-review retention. This is interface evidence only;
-  the user's authenticated `mygather.php` has not been read.
+- Bahamut bridge/parser/matcher: local tests cover export validation, fixture
+  HTML, aliases, exact subtraction, fuzzy-review retention, and downstream
+  gating. This is interface evidence only; the user's authenticated
+  `mygather.php` has not been read.
 - GitHub: the repository was initially created public, corrected to private,
   and pushed through Windows Git Credential Manager without exposing a token.
-  Private `origin/main` and local HEAD both resolve to commit `21ed56f` at this
-  milestone. The standalone `gh` CLI remains unauthenticated but is not needed.
+  The current integration branch is tracked by draft PR #1; `main` remains at
+  the last approved baseline. The standalone `gh` CLI remains unauthenticated.
 - Obsidian planner: 17 total tests pass. A live Bangumi detail read planned one
   checked title to `C/bangumi/2026/07月新番/LV999的村民.md` with zero conflicts and
   stopped in preview-only mode. No file was written to the real Vault.
@@ -85,5 +103,6 @@ Last updated: 2026-08-21
 ## Current demonstration
 
 - Regenerable command and evidence: `docs/DEMO.md`.
-- Local preview artifact: `out/2026-07-live-candidates.md` (ignored by Git).
-- The preview explicitly warns that Bahamut subtraction is not implemented.
+- Legacy Bangumi-only preview: `out/2026-07-live-candidates.md` (ignored by Git).
+- The next live artifact must come from the authenticated browser export and
+  prove `bahamut_subtraction: true`; it has not been generated yet.

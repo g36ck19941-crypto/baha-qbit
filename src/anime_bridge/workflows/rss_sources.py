@@ -101,6 +101,11 @@ def build_candidate_rss_drafts(
     category: str = "anime",
     save_root: str = "",
 ) -> tuple[CandidateRSSDraft, ...]:
+    if not document.bahamut_subtracted:
+        raise ValueError(
+            "RSS batch refused because this candidate note has not completed "
+            "Bahamut favorite subtraction"
+        )
     root = _relative_component(feed_root, allow_slash=True)
     result: list[CandidateRSSDraft] = []
     seen_paths: set[str] = set()

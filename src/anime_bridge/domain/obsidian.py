@@ -21,6 +21,7 @@ class CandidateSelection:
 @dataclass(frozen=True, slots=True)
 class CandidateDocument:
     selections: tuple[CandidateSelection, ...]
+    bahamut_subtracted: bool = False
 
     @property
     def checked(self) -> tuple[CandidateSelection, ...]:

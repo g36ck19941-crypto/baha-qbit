@@ -22,6 +22,14 @@ class CandidateMarkdownTests(unittest.TestCase):
         self.assertEqual(len(document.selections), 2)
         self.assertEqual([item.bangumi_id for item in document.checked], [10])
         self.assertIs(document.selections[1].category, AnimeCategory.MOVIE)
+        self.assertFalse(document.bahamut_subtracted)
+
+    def test_reads_completed_bahamut_subtraction_gate(self) -> None:
+        document = parse_candidate_markdown(
+            "---\nbahamut_subtraction: true\n---\n"
+            '- [x] **已筛选**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
+        )
+        self.assertTrue(document.bahamut_subtracted)
 
     def test_refuses_task_without_marker(self) -> None:
         with self.assertRaises(CandidateParseError):

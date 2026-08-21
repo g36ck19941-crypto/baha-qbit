@@ -10,6 +10,7 @@ from anime_bridge import __version__
 from anime_bridge.domain import AnimeSubject
 
 if TYPE_CHECKING:
+    from anime_bridge.workflows.bahamut_difference import BahamutDifferenceResult
     from anime_bridge.workflows.current_quarter import CurrentQuarterResult
 
 
@@ -24,7 +25,7 @@ def _blockquote(text: str) -> str:
     return "\n".join(f"> {line}" if line else ">" for line in cleaned.splitlines())
 
 
-def _render_subject(subject: AnimeSubject) -> str:
+def _render_subject(subject: AnimeSubject, review_match: object | None = None) -> str:
     metadata = json.dumps(
         {
             "bangumi_id": subject.bangumi_id,
@@ -47,6 +48,12 @@ def _render_subject(subject: AnimeSubject) -> str:
         f"  - Bangumi 评分：{score}",
         f"  - 条目：[{subject.bangumi_url}]({subject.bangumi_url})",
     ]
+    if review_match is not None:
+        favorite = review_match.favorite
+        favorite_title = " ".join(favorite.title.split()) if favorite is not None else "未知"
+        lines.append(
+            f"  - ⚠ 巴哈标题待人工确认：{favorite_title}（相似度 {review_match.score:.0%}，未自动排除）"
+        )
     if subject.cover_url:
         lines.append(f"  - 封面：![{subject.display_name}|180]({subject.cover_url})")
     lines.extend(["", _blockquote(subject.summary), ""])
@@ -56,6 +63,10 @@ def _render_subject(subject: AnimeSubject) -> str:
 def render_candidate_markdown(
     result: "CurrentQuarterResult",
     generated_at: datetime | None = None,
+    *,
+    bahamut_difference: "BahamutDifferenceResult | None" = None,
+    bahamut_favorite_count: int = 0,
+    bahamut_exported_at: str = "",
 ) -> str:
     timestamp = generated_at or datetime.now().astimezone()
     start, end = result.quarter.bounds(result.year)
@@ -68,6 +79,7 @@ def render_candidate_markdown(
         f"range_start: {start.isoformat()}",
         f"range_end_exclusive: {end.isoformat()}",
         f"generated_at: {_yaml_quote(timestamp.isoformat(timespec='seconds'))}",
+        f"bahamut_subtraction: {'true' if bahamut_difference is not None else 'false'}",
         "formal_imported: false",
         "tags:",
         "  - anime-bridge-candidates",
@@ -75,15 +87,34 @@ def render_candidate_markdown(
         "",
         f"# {result.year} {result.quarter.cn_name}动画候选",
         "",
-        "> [!warning] 预览阶段",
-        "> 本文件尚未执行巴哈收藏差集。请勿把它当作最终待选清单。",
-        "> 后续版本只会正式导入已勾选且通过差集确认的条目。",
-        "",
-        f"共发现 **{len(result.subjects)}** 个符合当前类型和日期规则的 Bangumi 条目。",
+    ]
+    if bahamut_difference is None:
+        header.extend([
+            "> [!warning] 预览阶段",
+            "> 本文件尚未执行巴哈收藏差集。请勿把它当作最终待选清单。",
+            "> 正式入库与批量 RSS 会拒绝此文件。请先导入登录浏览器生成的巴哈收藏 JSON。",
+            "",
+        ])
+        review_by_subject: dict[int, object] = {}
+    else:
+        header.extend([
+            "> [!success] 巴哈收藏差集已执行",
+            f"> 浏览器导出收藏：{bahamut_favorite_count}；自动移除精确匹配：{len(bahamut_difference.exact_matches)}；待人工确认：{len(bahamut_difference.review_matches)}。",
+            f"> 收藏导出时间：{bahamut_exported_at or '未提供'}。模糊匹配仍保留在下方，不会自动删除。",
+            "",
+        ])
+        review_by_subject = {
+            match.subject.bangumi_id: match for match in bahamut_difference.review_matches
+        }
+    header.extend([
+        f"差集后候选 **{len(result.subjects)}** 个。",
         f"另有 **{len(result.excluded_without_japan_tag)}** 个条目因缺少 `日本` 元标签而未纳入。",
         "",
-    ]
+    ])
     if not result.subjects:
         header.append("当前没有发现符合规则的条目。\n")
         return "\n".join(header).rstrip() + "\n"
-    return "\n".join(header + [_render_subject(item) for item in result.subjects]).rstrip() + "\n"
+    return "\n".join(
+        header
+        + [_render_subject(item, review_by_subject.get(item.bangumi_id)) for item in result.subjects]
+    ).rstrip() + "\n"

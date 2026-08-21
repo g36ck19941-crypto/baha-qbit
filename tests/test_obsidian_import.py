@@ -45,6 +45,14 @@ class FakeDetailsSource:
 
 
 class ObsidianImportTests(unittest.TestCase):
+    def test_unfiltered_candidate_is_refused(self) -> None:
+        document = parse_candidate_markdown(
+            '- [x] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ObsidianImportConflict, "Bahamut"):
+                plan_checked_import(document, FakeDetailsSource(), Path(directory))
+
     def test_formal_renderer_matches_existing_frontmatter_contract(self) -> None:
         subject = detailed_subject()
         content = render_formal_note(subject, recorded_on=date(2026, 8, 21))
@@ -66,7 +74,7 @@ class ObsidianImportTests(unittest.TestCase):
 
     def test_preview_and_apply_never_overwrite_existing_note(self) -> None:
         document = parse_candidate_markdown(
-            '- [x] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
+            '---\nbahamut_subtraction: true\n---\n- [x] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
         )
         with tempfile.TemporaryDirectory() as directory:
             vault = Path(directory)
@@ -85,7 +93,7 @@ class ObsidianImportTests(unittest.TestCase):
 
     def test_target_appearing_after_preview_is_not_overwritten(self) -> None:
         document = parse_candidate_markdown(
-            '- [x] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
+            '---\nbahamut_subtraction: true\n---\n- [x] **测试**\n  <!-- anime-bridge:item {"air_date":"2026-07-05","bangumi_id":10,"category":"tv"} -->\n'
         )
         with tempfile.TemporaryDirectory() as directory:
             vault = Path(directory)

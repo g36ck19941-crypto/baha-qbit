@@ -41,6 +41,13 @@ class WebGUITests(unittest.TestCase):
         self.assertIn('content="test-token"', page)
         self.assertIn('id="migration-plan"', page)
         self.assertIn('id="rss-batch-plan"', page)
+        self.assertIn('href="/bahamut-export.user.js"', page)
+        with urlopen(
+            f"http://127.0.0.1:{self.server.server_port}/bahamut-export.user.js",
+            timeout=5,
+        ) as response:
+            helper = response.read().decode("utf-8")
+        self.assertIn("anime-bridge-bahamut-favorites", helper)
         status = self.post("/api/status", {})
         self.assertTrue(status["ok"])
         self.assertEqual(status["result"]["settings"]["integration_folder"], "bangumi1")

@@ -2,6 +2,19 @@
 
 Last updated: 2026-08-21
 
+## D-013 — Bahamut authenticated browser bridge
+
+- Authentication stays in the user's browser. A same-origin userscript reads
+  `mygather.php` after the user completes login/CAPTCHA and follows only visible
+  pagination links, with a 50-page ceiling.
+- Its JSON contains title, canonical Anime Crazy link, SN, page number, export
+  time, and warnings. It excludes passwords, cookies, tokens, and raw HTML.
+- Imports accept only schema v1 HTTPS URLs on `ani.gamer.com.tw` and are capped
+  at 5 MiB. Any pagination/parser warning marks the export incomplete and blocks
+  subtraction. Exact normalized matches are removed; fuzzy matches remain visible.
+- Obsidian formal import and candidate-driven RSS refuse notes whose frontmatter
+  does not prove `bahamut_subtraction: true`.
+
 ## D-008 — RSS source adapters and availability evidence
 
 - Source discovery is a replaceable URL-template layer, separate from the
@@ -82,9 +95,9 @@ Formal notes must remain compatible with these frontmatter keys:
 
 ### D-005: Authentication and secrets
 
-Bahamut login happens interactively in a dedicated browser profile. Passwords
-are never captured. Raw cookies, qBittorrent credentials, and AI keys are never
-committed. Portable exports exclude authenticated state.
+Bahamut login happens interactively in the user's browser. Passwords and cookies
+are never captured; the browser helper exports only validated favorite metadata.
+Raw cookies, qBittorrent credentials, and AI keys are never committed.
 
 ### D-006: GitHub and releases
 
@@ -152,7 +165,6 @@ and are included as Python package data.
 - Obsidian vault: `C:\PersonalBlog\Obsidian Vault`.
 - Existing integration folder: `bangumi1`; existing QuickAdd, Dataview, and
   Templater plugins are installed.
-- qBittorrent 4.5.5 is installed and was observed running; WebUI availability
-  has not yet been established.
+- qBittorrent 4.5.5 is installed; loopback WebUI API 2.8.19 was read successfully.
 - System Python is absent. Development verification uses the bundled Codex
   Python runtime; the eventual package must include its own runtime.

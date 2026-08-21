@@ -15,6 +15,9 @@ from anime_bridge.domain import (
 
 _TASK = re.compile(r"^- \[(?P<state>[ xX])\] \*\*(?P<title>.+?)\*\*\s*$")
 _MARKER = re.compile(r"^\s*<!-- anime-bridge:item (?P<payload>\{.*\}) -->\s*$")
+_BAHAMUT_SUBTRACTION = re.compile(
+    r"^bahamut_subtraction:\s*true\s*$", re.IGNORECASE | re.MULTILINE
+)
 
 
 class CandidateParseError(ValueError):
@@ -55,5 +58,8 @@ def parse_candidate_markdown(markdown: str) -> CandidateDocument:
             ) from exc
         selections.append(selection)
 
-    return CandidateDocument(tuple(selections))
+    return CandidateDocument(
+        tuple(selections),
+        bahamut_subtracted=_BAHAMUT_SUBTRACTION.search(markdown) is not None,
+    )
 

@@ -1,5 +1,25 @@
 # Demonstration record
 
+## v0.10.0.dev0 logged-in browser bridge
+
+- The local GUI serves `bahamut-export.user.js`; JavaScript syntax validation
+  passes and HTTP tests confirm the installation link and asset are present.
+- Schema tests accept a valid two-page export, deduplicate repeated favorites,
+  and reject non-Bahamut links, unknown schema versions, and incomplete exports.
+- A filtered renderer test proves exact matches disappear, fuzzy matches remain
+  annotated, and `bahamut_subtraction: true` is recorded.
+- Negative tests prove unfiltered candidates are refused by Obsidian planning
+  and batch RSS generation.
+- A live Bangumi read plus explicitly synthetic one-favorite export generated
+  `out/2026-07-filtered-contract-demo.md`: 101 eligible subjects became 100,
+  `LV999的村民` was absent, and the note recorded
+  `bahamut_subtraction: true`. This proves wiring, not authenticated ownership.
+- Source regression: 50 tests passed. This is not live-account evidence; the
+  user must still complete Cloudflare verification/login and run the exporter.
+- Frozen `anime-bridge.exe` reported `0.10.0.dev0`; its GUI smoke test loaded
+  the embedded userscript. A live 1280×720 DOM inspection showed the exporter
+  path and helper link, no horizontal overflow, and zero console errors.
+
 ## v0.9.0.dev0 checked-candidate RSS batch
 
 - Read the real loopback qBittorrent RSS state without changing it.

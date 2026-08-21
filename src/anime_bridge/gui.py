@@ -8,6 +8,7 @@ import secrets
 import sys
 import threading
 import webbrowser
+from dataclasses import replace
 from datetime import date
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -18,12 +19,13 @@ from urllib.request import Request, urlopen
 
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
+from anime_bridge.adapters.bahamut_export import load_bahamut_export
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.migration import apply_migration, plan_migration
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic
-from anime_bridge.workflows import CurrentQuarterScanner
+from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_favorites
 
 
 WEB_ROOT = Path(__file__).with_name("web")
@@ -45,7 +47,7 @@ class WebGUIController:
             "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
-                {"name": "巴哈姆特实时收藏", "state": "waiting_login"},
+                {"name": "巴哈姆特登录浏览器桥接", "state": "bridge_ready"},
                 {"name": "Obsidian 入库核心", "state": "ready"},
                 {"name": "qBittorrent RSS 核心", "state": "ready"},
                 {"name": "GitHub 私有远端", "state": "ready"},
@@ -76,16 +78,50 @@ class WebGUIController:
         self.settings = candidate
         return {"saved": True, "path": str(self.settings_path)}
 
-    def scan_current(self) -> dict[str, Any]:
+    def scan_current(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         result = CurrentQuarterScanner(BangumiClient()).scan(date.today())
+        payload = payload or {}
+        export_path_text = str(payload.get("bahamut_export_path") or "").strip()
+        difference = None
+        favorite_export = None
+        if export_path_text:
+            favorite_export = load_bahamut_export(Path(export_path_text))
+            difference = subtract_bahamut_favorites(
+                result.subjects, favorite_export.favorites
+            )
+            result = replace(result, subjects=difference.candidates)
         directory = Path(self.settings.vault_path) / self.settings.integration_folder
         output = directory / f"{result.year}-{result.quarter.start_month:02d}-动画候选.md"
-        write_text_atomic(output, render_candidate_markdown(result))
+        write_text_atomic(
+            output,
+            render_candidate_markdown(
+                result,
+                bahamut_difference=difference,
+                bahamut_favorite_count=(
+                    len(favorite_export.favorites) if favorite_export is not None else 0
+                ),
+                bahamut_exported_at=(
+                    favorite_export.exported_at if favorite_export is not None else ""
+                ),
+            ),
+        )
         return {
             "count": len(result.subjects),
             "excluded_without_japan_tag": len(result.excluded_without_japan_tag),
             "output": str(output),
-            "bahamut_subtraction": "not_run",
+            "bahamut_subtraction": "completed" if difference is not None else "not_run",
+            "bahamut_favorites": (
+                len(favorite_export.favorites) if favorite_export is not None else 0
+            ),
+            "bahamut_exact_removed": (
+                len(difference.exact_matches) if difference is not None else 0
+            ),
+            "bahamut_review_matches": (
+                len(difference.review_matches) if difference is not None else 0
+            ),
+            "bahamut_export_warnings": (
+                list(favorite_export.warnings) if favorite_export is not None else []
+            ),
         }
 
     def _service(self, *, allow_writes: bool = False) -> AnimeBridgeAIService:
@@ -215,7 +251,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             html = html.replace("__ANIME_BRIDGE_TOKEN__", self.server.token)
             self._bytes(HTTPStatus.OK, html.encode("utf-8"), "text/html; charset=utf-8")
             return
-        if parsed.path in {"/app.css", "/app.js"}:
+        if parsed.path in {"/app.css", "/app.js", "/bahamut-export.user.js"}:
             filename = parsed.path.lstrip("/")
             content_type = (
                 "text/css; charset=utf-8"
@@ -257,7 +293,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
         routes = {
             "/api/status": lambda: controller.public_status(),
             "/api/settings": lambda: controller.update_settings(payload),
-            "/api/scan": lambda: controller.scan_current(),
+            "/api/scan": lambda: controller.scan_current(payload),
             "/api/obsidian/plan": lambda: controller.obsidian_plan(payload),
             "/api/obsidian/apply": lambda: controller.obsidian_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
@@ -309,6 +345,12 @@ def _smoke_test(server: AnimeBridgeWebServer) -> None:
         page = response.read().decode("utf-8")
     if "Anime Bridge" not in page:
         raise RuntimeError("Web GUI page did not render")
+    with urlopen(
+        f"http://127.0.0.1:{server.server_port}/bahamut-export.user.js", timeout=5
+    ) as response:
+        helper = response.read().decode("utf-8")
+    if "anime-bridge-bahamut-favorites" not in helper:
+        raise RuntimeError("Bahamut browser helper was not packaged")
     request = Request(
         f"http://127.0.0.1:{server.server_port}/api/status",
         data=b"{}",

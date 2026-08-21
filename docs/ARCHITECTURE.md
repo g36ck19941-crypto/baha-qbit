@@ -27,19 +27,23 @@ can be replaced without changing quarter or safety rules.
    summary, source link, and machine-readable marker per subject.
 5. Write atomically so an interrupted run does not leave a partial candidate.
 
-The v0.1.0 output carries an explicit warning because Bahamut subtraction is a
-later milestone. It is deliberately tagged `anime-bridge-candidates`, not
-`bangumi`, so it cannot enter the existing formal Base accidentally.
+Bangumi-only output carries an explicit warning and `bahamut_subtraction: false`.
+Formal import and batch RSS reject that state. A validated login-browser export
+changes the gate to true after exact-only subtraction; candidate notes remain
+tagged `anime-bridge-candidates`, not `bangumi`.
 
 ## Integration boundaries
 
-- `bahamut_html`: implemented pure parser for `mygather.php`; interactive browser
-  session acquisition and paginated live reads remain pending.
+- `bahamut_export`: a userscript runs inside the user's authenticated
+  `mygather.php` browser session, follows visible pagination, and exports a
+  strictly validated JSON interchange file without cookies, passwords, or raw
+  HTML. A live account export remains to be verified.
+- `bahamut_html`: retained as a pure offline diagnostic parser.
 - `TitleMatcher`: implemented deterministic aliases and confidence scores.
   Exact normalized equality is the only automatic exclusion; AI may later
   suggest low-confidence matches but cannot silently approve them.
-- `BahamutDifference`: implemented safe core that retains fuzzy review matches
-  in the candidate list; live favorites are not wired yet.
+- `BahamutDifference`: wired into CLI and GUI scans. Exact matches are removed;
+  fuzzy review matches remain visibly annotated in the candidate list.
 - `ObsidianImporter`: implemented checked-marker parser, detail refresh, formal
   renderer, preview plan, and conflict-safe apply core. A dependency-free
   desktop Obsidian command shell delegates to the same CLI and adds a second
@@ -53,7 +57,7 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
   plus a credential-free custom HTTPS template. Endpoint availability remains
   an external precondition and is reported separately from URL construction.
 - MCP uses the official SDK v2 over local stdio and exposes the same workflows.
-  The default server registers four read-only tools. Two write tools are absent
+  The default server registers five read-only tools. Three write tools are absent
   unless the process starts with `--allow-writes`; individual write calls still
   require confirmation and retain all underlying conflict/safe-default gates.
 - The desktop UX is a dependency-free local web server bound to `127.0.0.1` on

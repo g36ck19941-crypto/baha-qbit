@@ -6,6 +6,7 @@ import argparse
 import getpass
 import json
 import sys
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import Sequence
@@ -14,6 +15,7 @@ from anime_bridge import __version__
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
 from anime_bridge.adapters.bahamut_html import parse_mygather_html
+from anime_bridge.adapters.bahamut_export import load_bahamut_export
 from anime_bridge.adapters.candidate_markdown import (
     CandidateParseError,
     parse_candidate_markdown,
@@ -32,6 +34,7 @@ from anime_bridge.workflows import (
     plan_checked_import,
     plan_rss,
     RSSPlanConflict,
+    subtract_bahamut_favorites,
 )
 
 
@@ -72,6 +75,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--user-agent",
         default=f"AnimeBridge/{__version__} (local application)",
         help="identifiable User-Agent sent to Bangumi",
+    )
+    scan.add_argument(
+        "--bahamut-export",
+        type=Path,
+        default=None,
+        help="JSON exported by the logged-in Anime Bridge browser helper",
     )
     parse_bahamut = subparsers.add_parser(
         "parse-bahamut-html",
@@ -187,6 +196,21 @@ def _run_scan(args: argparse.Namespace) -> int:
     reference_date = args.date or date.today()
     scanner = CurrentQuarterScanner(BangumiClient(user_agent=args.user_agent))
     result = scanner.scan(reference_date)
+    difference = None
+    favorite_export = None
+    if args.bahamut_export is not None:
+        favorite_export = load_bahamut_export(args.bahamut_export)
+        difference = subtract_bahamut_favorites(result.subjects, favorite_export.favorites)
+        result = replace(result, subjects=difference.candidates)
+        print(
+            f"Bahamut export: {len(favorite_export.favorites)} favorites from "
+            f"{favorite_export.pages_scanned} page(s); removed "
+            f"{len(difference.exact_matches)} exact match(es); retained "
+            f"{len(difference.review_matches)} fuzzy review match(es)."
+        )
+        for warning in favorite_export.warnings:
+            print(f"Bahamut export warning: {warning}", file=sys.stderr)
+
     output = args.output or Path("out") / (
         f"{result.year}-{result.quarter.start_month:02d}-candidates.md"
     )
@@ -204,7 +228,19 @@ def _run_scan(args: argparse.Namespace) -> int:
         print("Dry run: no file written.")
         return 0
 
-    write_text_atomic(output, render_candidate_markdown(result))
+    write_text_atomic(
+        output,
+        render_candidate_markdown(
+            result,
+            bahamut_difference=difference,
+            bahamut_favorite_count=(
+                len(favorite_export.favorites) if favorite_export is not None else 0
+            ),
+            bahamut_exported_at=(
+                favorite_export.exported_at if favorite_export is not None else ""
+            ),
+        ),
+    )
     print(f"Candidate preview written to: {output.resolve()}")
     return 0
 

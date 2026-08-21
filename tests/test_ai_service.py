@@ -36,6 +36,7 @@ class AIServiceTests(unittest.TestCase):
     def write_candidate(vault: Path) -> Path:
         candidate = vault / "candidate.md"
         candidate.write_text(
+            "---\nbahamut_subtraction: true\n---\n"
             "- [x] **测试动画**\n"
             "  <!-- anime-bridge:item {\"bangumi_id\":10,\"category\":\"tv\",\"air_date\":\"2026-07-01\"} -->\n",
             encoding="utf-8",

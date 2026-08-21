@@ -79,7 +79,8 @@ function renderStatus(status) {
     row.className = "milestone";
     row.innerHTML = `<span class="index">${String(index + 1).padStart(2, "0")}</span><span></span><span class="state"></span>`;
     row.children[1].textContent = item.name;
-    row.children[2].textContent = item.state === "ready" ? "已建立" : "等待登录";
+    const stateLabels = { ready: "已建立", bridge_ready: "助手就绪", waiting_login: "等待登录" };
+    row.children[2].textContent = stateLabels[item.state] || item.state;
     row.children[2].classList.add(item.state);
     return row;
   }));
@@ -103,9 +104,10 @@ document.querySelectorAll("[data-density-choice]").forEach((button) => button.ad
 document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
 document.getElementById("clear-log").addEventListener("click", () => logEl.replaceChildren());
 
-document.getElementById("scan-button").addEventListener("click", async () => {
+document.getElementById("scan-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
   try {
-    const result = await api("/api/scan", {}, "扫描当前季度");
+    const result = await api("/api/scan", formObject(event.currentTarget), "扫描当前季度并执行巴哈差集");
     document.getElementById("candidate-path").value = result.output;
     showView("obsidian");
   } catch (_) {}

@@ -17,10 +17,12 @@ Last updated: 2026-08-21
 ## In progress
 
 - [x] AB-010a Add a pure, replaceable `mygather.php` HTML parser.
-- [ ] AB-010b Add interactive Bahamut browser login and paginated live reader.
+- [x] AB-010b1 Add a credential-free logged-in browser exporter with pagination.
+- [ ] AB-010b2 Verify the exporter against the user's authenticated collection.
 - [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
 - [x] AB-012a Implement exact-only subtraction and fuzzy-review retention.
-- [ ] AB-012b Connect authenticated favorites to the live seasonal workflow.
+- [x] AB-012b1 Connect validated favorite exports to CLI/GUI seasonal difference.
+- [ ] AB-012b2 Verify the real-account difference and review retained fuzzy matches.
 - [x] AB-020a Parse checked candidates and plan compatible formal notes.
 - [x] AB-020b Refuse batch apply when a target exists or collides.
 - [x] AB-020c1 Add the dependency-free Obsidian desktop command shell.

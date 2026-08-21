@@ -21,7 +21,8 @@ class RSSSourceTests(unittest.TestCase):
                 CandidateSelection(
                     False, "未选择动画", 102, AnimeCategory.TV, date(2026, 7, 3)
                 ),
-            )
+            ),
+            bahamut_subtracted=True,
         )
 
     def test_catalog_is_replaceable_and_uses_https(self):
@@ -29,6 +30,11 @@ class RSSSourceTests(unittest.TestCase):
         self.assertEqual(set(providers), {"comicat-rsshub", "dmhy"})
         self.assertTrue(all(provider.template.startswith("https://") for provider in providers.values()))
         self.assertIn("self-hosted", providers["comicat-rsshub"].operational_note)
+
+    def test_unfiltered_candidate_is_refused(self):
+        unfiltered = CandidateDocument(self.document().selections)
+        with self.assertRaisesRegex(ValueError, "Bahamut"):
+            build_candidate_rss_drafts(unfiltered, "dmhy")
 
     def test_provider_urls_encode_title_and_extra_terms(self):
         comicat = build_feed_url("comicat-rsshub", ("跃动青春", "1080P", "简日"))

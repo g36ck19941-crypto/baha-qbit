@@ -4,6 +4,20 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Logged-in Bahamut browser bridge
+
+- Added an installable same-origin userscript that exports paginated favorites
+  from the user's authenticated browser without exporting passwords, cookies,
+  tokens, or raw page HTML.
+- Added strict, size-limited schema validation for the favorite JSON export.
+- Incomplete exports and any pagination/parser warning now block subtraction.
+- Wired exact-only Bahamut subtraction into CLI and GUI seasonal scans; fuzzy
+  title matches remain visible for manual review.
+- Added a hard gate: formal Obsidian import and candidate-driven RSS refuse a
+  note unless `bahamut_subtraction: true` is present.
+- Expanded the source suite to 50 tests. A real authenticated export remains a
+  separate user-assisted verification gate.
+
 ### Batch anime RSS sources
 
 - Added Comicat-via-RSSHub, DMHY, and custom HTTPS source templates.
@@ -67,10 +81,6 @@ All notable changes are recorded here. The project follows semantic versioning.
   packaged/source runners, and a second confirmation dialog before apply.
 - JavaScript syntax and manifest JSON checks pass. Real Obsidian runtime and
   real-Vault write verification remain pending.
-
-### Planned
-
-- Interactive Bahamut login, favorite export, and confidence-aware difference.
 
 ### Added
 

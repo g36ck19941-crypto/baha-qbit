@@ -1,4 +1,4 @@
-# User guide — v0.9.0 development
+# User guide — v0.10.0 development
 
 ## Portable Windows build
 
@@ -53,24 +53,44 @@ python launcher.py scan --date 2026-08-21 --output out/2026-07-candidates.md
 
 Use `--dry-run` to fetch and report the count without writing a file.
 
-## Important limitation
+## Connect the logged-in Bahamut browser
 
-v0.1.0 is the Bangumi discovery slice only. Its candidate file has not yet had
-the user's Bahamut favorites removed. The note says this explicitly and is not
-tagged for the formal animation Base.
+Anime Bridge does not request or store your Bahamut password or Cookie. Install
+Tampermonkey (or a compatible userscript manager), open the local interface,
+and select **安装登录浏览器导出助手**. Then:
+
+1. Sign in to `https://ani.gamer.com.tw/mygather.php` and complete any visible
+   Cloudflare challenge yourself.
+2. Select **导出 Anime Bridge 收藏** in the lower-right corner.
+3. The browser downloads `anime-bridge-bahamut-favorites-YYYYMMDD.json`.
+4. Put that JSON path in the local interface before scanning, or use the CLI:
+
+```powershell
+python launcher.py scan `
+  --bahamut-export "C:/Users/you/Downloads/anime-bridge-bahamut-favorites-20260821.json"
+```
+
+The helper follows visible pagination links in the logged-in page, exports only
+title/link/SN/page metadata, and records partial-page warnings. Any warning or
+incomplete page makes the seasonal scan refuse the export. It never exports
+Cookie values, passwords, or raw HTML. Exact normalized title matches are
+removed; fuzzy matches remain in the candidate note with a warning.
+
+If no export is supplied, Anime Bridge may still create a Bangumi-only preview,
+but `bahamut_subtraction: false` makes both formal import and batch RSS refuse it.
 
 ## Offline Bahamut parser diagnostic
 
-Until interactive login is implemented, a UTF-8 HTML file exported from the
-logged-in `mygather.php` page can be parsed without transmitting credentials:
+For parser diagnostics, a UTF-8 HTML file saved from `mygather.php` can still be
+parsed without transmitting credentials:
 
 ```powershell
 python launcher.py parse-bahamut-html mygather.html `
   --json-output out/bahamut-favorites.json
 ```
 
-This command proves the parser interface only. It does not claim that the
-application has connected to the user's account.
+This older command proves the HTML parser only; use the browser-helper JSON for
+the actual seasonal difference workflow.
 
 ## Preview checked Obsidian imports
 
