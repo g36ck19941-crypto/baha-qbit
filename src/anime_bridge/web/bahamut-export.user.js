@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         Anime Bridge - 巴哈姆特收藏导出
+// @name         Anime Bridge - 巴哈姆特收藏自动同步
 // @namespace    https://github.com/g36ck19941-crypto/baha-qbit
-// @version      0.1.0
-// @description  在已登录的动画疯“我的动画”页面导出收藏；不导出 Cookie、密码或页面 HTML。
+// @version      0.2.0
+// @description  检测动画疯登录后自动同步收藏到本机 Anime Bridge；不导出 Cookie、密码或页面 HTML。
 // @match        https://ani.gamer.com.tw/mygather.php*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      127.0.0.1
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -14,6 +15,10 @@
   const FORMAT = "anime-bridge-bahamut-favorites";
   const MAX_PAGES = 50;
   const BUTTON_ID = "anime-bridge-export-favorites";
+  const ENDPOINT = "__ANIME_BRIDGE_ENDPOINT__";
+  const BRIDGE_TOKEN = "__ANIME_BRIDGE_BRIDGE_TOKEN__";
+  const LAST_SYNC_KEY = "anime-bridge-last-auto-sync";
+  const AUTO_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
   function canonicalPageUrl(raw) {
     const url = new URL(raw, location.href);
@@ -116,25 +121,38 @@
     };
   }
 
-  function downloadJson(payload) {
-    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
-    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {
-      type: "application/json;charset=utf-8",
+  function pushToAnimeBridge(payload) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "POST",
+        url: ENDPOINT,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Anime-Bridge-Bridge-Token": BRIDGE_TOKEN,
+        },
+        data: JSON.stringify(payload),
+        timeout: 120000,
+        onload(response) {
+          let body;
+          try { body = JSON.parse(response.responseText); }
+          catch (_) { reject(new Error(`本机服务返回了无法识别的响应（HTTP ${response.status}）`)); return; }
+          if (response.status < 200 || response.status >= 300 || !body.ok) {
+            reject(new Error(body.error || `本机服务返回 HTTP ${response.status}`));
+            return;
+          }
+          resolve(body.result);
+        },
+        ontimeout() { reject(new Error("本机扫描超时，请保持 Anime Bridge 运行后重试")); },
+        onerror() { reject(new Error("无法连接本机 Anime Bridge，请先启动程序")); },
+      });
     });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `anime-bridge-bahamut-favorites-${date}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
 
   if (document.getElementById(BUTTON_ID)) return;
   const button = document.createElement("button");
   button.id = BUTTON_ID;
   button.type = "button";
-  button.textContent = "导出 Anime Bridge 收藏";
+  button.textContent = "同步 Anime Bridge 收藏";
   Object.assign(button.style, {
     position: "fixed",
     right: "20px",
@@ -148,20 +166,36 @@
     font: "600 14px system-ui, sans-serif",
     cursor: "pointer",
   });
-  button.addEventListener("click", async () => {
+  async function synchronize({ manual = false } = {}) {
     button.disabled = true;
     button.textContent = "正在读取收藏…";
     try {
       const payload = await collectFavorites();
-      downloadJson(payload);
-      const suffix = payload.warnings.length ? `，${payload.warnings.length} 条警告` : "";
-      alert(`Anime Bridge：已导出 ${payload.favorites.length} 个收藏，共扫描 ${payload.pages_scanned} 页${suffix}。`);
+      if (!payload.complete) throw new Error(payload.warnings.join("；") || "收藏读取不完整");
+      button.textContent = "正在生成候选笔记…";
+      const result = await pushToAnimeBridge(payload);
+      localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+      button.textContent = `已同步 ${payload.favorites.length} 项`;
+      if (manual) alert(`Anime Bridge：已同步 ${payload.favorites.length} 个收藏，并生成 ${result.count} 个候选条目。`);
     } catch (error) {
-      alert(`Anime Bridge 导出失败：${error instanceof Error ? error.message : String(error)}`);
+      button.textContent = "同步失败，点击重试";
+      if (manual) alert(`Anime Bridge 同步失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       button.disabled = false;
-      button.textContent = "导出 Anime Bridge 收藏";
+      if (!button.textContent.startsWith("已同步") && !button.textContent.startsWith("同步失败")) {
+        button.textContent = "同步 Anime Bridge 收藏";
+      }
     }
-  });
+  }
+  button.addEventListener("click", () => synchronize({ manual: true }));
   document.body.appendChild(button);
+
+  const pageShowsCollection = document.querySelector(".theme-list-block")
+    || (document.body?.textContent || "").includes("目前沒有訂閱內容");
+  const lastSync = Number(localStorage.getItem(LAST_SYNC_KEY) || "0");
+  if (pageShowsCollection && Date.now() - lastSync >= AUTO_SYNC_INTERVAL_MS) {
+    setTimeout(() => synchronize(), 800);
+  } else if (!pageShowsCollection) {
+    button.textContent = "等待动画疯登录";
+  }
 })();

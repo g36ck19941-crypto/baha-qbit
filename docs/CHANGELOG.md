@@ -4,6 +4,20 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Automatic Bahamut handoff
+
+- Replaced the normal manual JSON download/path step with authenticated-page
+  detection, direct loopback transfer, validation, atomic retention, and an
+  immediate current-quarter difference scan.
+- Added a persistent browser-pairing secret separate from the GUI session token;
+  the userscript installer is session-gated and the ingest endpoint is
+  loopback-only.
+- Retained manual JSON input as an advanced fallback and refused incomplete
+  automatic exports before they can replace the last valid snapshot.
+- Moved the normal GUI port to stable `127.0.0.1:18765` so an installed helper
+  remains portable across restarts.
+- Expanded the source suite to 56 tests.
+
 ### AI candidate-note analysis
 
 - Added machine-readable fuzzy-review evidence to filtered candidate notes.

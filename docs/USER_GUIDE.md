@@ -1,4 +1,4 @@
-# User guide — v0.11.0 development
+# User guide — v0.12.0 development
 
 ## Portable Windows build
 
@@ -35,7 +35,7 @@ In the project development environment:
 .\.venv\Scripts\python.exe gui_launcher.py
 ```
 
-Anime Bridge binds to `127.0.0.1` on a random port and opens the session-token
+Anime Bridge binds to `127.0.0.1:18765` and opens the session-token
 URL in the default browser. The interface provides current-quarter scanning,
 Obsidian plan/confirmed apply, qBittorrent status, RSS plan/confirmed apply, and
 non-secret settings. Use **结束本机界面服务** before closing the page.
@@ -61,25 +61,38 @@ Use `--dry-run` to fetch and report the count without writing a file.
 ## Connect the logged-in Bahamut browser
 
 Anime Bridge does not request or store your Bahamut password or Cookie. Install
-Tampermonkey (or a compatible userscript manager), open the local interface,
-and select **安装登录浏览器导出助手**. Then:
+Tampermonkey (or a compatible userscript manager), start Anime Bridge, and
+select **安装自动同步浏览器助手** once. Then:
 
 1. Sign in to `https://ani.gamer.com.tw/mygather.php` and complete any visible
    Cloudflare challenge yourself.
-2. Select **导出 Anime Bridge 收藏** in the lower-right corner.
-3. The browser downloads `anime-bridge-bahamut-favorites-YYYYMMDD.json`.
-4. Put that JSON path in the local interface before scanning, or use the CLI:
+2. After the collection appears, the helper reads all visible pagination and
+   sends the JSON directly to the loopback Anime Bridge service.
+3. Anime Bridge validates and retains the latest JSON internally, performs the
+   current-quarter difference, and writes the candidate note automatically.
+4. If automatic sync is skipped within its six-hour cooldown, select **同步
+   Anime Bridge 收藏** in the lower-right corner to force a retry.
+
+No file selection is required in the normal workflow. The advanced manual JSON
+path and CLI remain only as recovery/diagnostic options:
 
 ```powershell
 python launcher.py scan `
   --bahamut-export "C:/Users/you/Downloads/anime-bridge-bahamut-favorites-20260821.json"
 ```
 
-The helper follows visible pagination links in the logged-in page, exports only
+The helper follows visible pagination links in the logged-in page, transmits only
 title/link/SN/page metadata, and records partial-page warnings. Any warning or
 incomplete page makes the seasonal scan refuse the export. It never exports
-Cookie values, passwords, or raw HTML. Exact normalized title matches are
+Cookie values, passwords, or raw HTML. A persistent random pairing secret is
+kept in the local application profile and installed userscript; it is not a
+Bahamut credential and is never committed to Git. Exact normalized title matches are
 removed; fuzzy matches remain in the candidate note with a warning.
+
+Keep Anime Bridge running on port `18765` while opening the collection page.
+If another process occupies that port, close the older Anime Bridge instance
+before starting the new one; the installed helper deliberately uses a stable
+loopback address.
 
 If no export is supplied, Anime Bridge may still create a Bangumi-only preview,
 but `bahamut_subtraction: false` makes both formal import and batch RSS refuse it.

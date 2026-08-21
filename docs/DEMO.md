@@ -1,5 +1,19 @@
 # Demonstration record
 
+## v0.12.0.dev0 automatic Bahamut handoff
+
+- HTTP tests prove the userscript installer rejects a missing GUI session token
+  and embeds a per-profile bridge token without exposing it in public status.
+- Ingest tests prove a wrong bridge token returns 403 and an incomplete export
+  returns 400 without replacing the saved snapshot.
+- A valid one-page contract export is atomically retained and invokes the
+  seasonal scan directly; no manual JSON path is involved.
+- The frozen v0.12 GUI passed its HTTP smoke test from a sandbox-writable local
+  profile. A 1265 px browser inspection showed the correct installer URL,
+  version, no horizontal overflow, and no activity-log errors.
+- Source regression: 56 tests. JavaScript syntax validation passes. This is
+  local contract evidence, not proof of a real authenticated collection sync.
+
 ## v0.11.0.dev0 AI candidate-note review
 
 - A rendered fuzzy match contains both a visible warning and an

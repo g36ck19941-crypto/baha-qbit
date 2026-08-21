@@ -35,9 +35,11 @@ tagged `anime-bridge-candidates`, not `bangumi`.
 ## Integration boundaries
 
 - `bahamut_export`: a userscript runs inside the user's authenticated
-  `mygather.php` browser session, follows visible pagination, and exports a
-  strictly validated JSON interchange file without cookies, passwords, or raw
-  HTML. A live account export remains to be verified.
+  `mygather.php` browser session, follows visible pagination, and posts a
+  strictly validated JSON interchange object to the loopback service without
+  cookies, passwords, or raw HTML. A valid post is atomically retained and
+  immediately triggers the current-quarter difference. A live account sync
+  remains to be verified.
 - `bahamut_html`: retained as a pure offline diagnostic parser.
 - `TitleMatcher`: implemented deterministic aliases and confidence scores.
   Exact normalized equality is the only automatic exclusion; AI may later
@@ -66,8 +68,10 @@ tagged `anime-bridge-candidates`, not `bangumi`.
 - Candidate notes carry machine-readable fuzzy-review markers. The read-only AI
   analyzer exposes checkbox state and evidence with a fixed human-review policy;
   it cannot edit the note or turn similarity into automatic exclusion.
-- The desktop UX is a dependency-free local web server bound to `127.0.0.1` on
-  a random port. A high-entropy session token gates the page and every API call;
+- The desktop UX is a dependency-free local web server bound to
+  `127.0.0.1:18765`. A high-entropy per-process token gates the page and normal
+  API calls. The userscript installer is session-gated and embeds a separate
+  persistent random pairing token; only that token authorizes favorite ingest.
   CSP/no-store headers reduce browser attack surface. The browser UI delegates
   to the same service layer and adds a visible dialog before write requests.
 - `app_launcher.py` is the single frozen entry point: no arguments select the

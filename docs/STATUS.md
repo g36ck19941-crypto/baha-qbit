@@ -2,6 +2,21 @@
 
 Last updated: 2026-08-21
 
+## v0.12.0.dev0 automatic Bahamut handoff milestone
+
+- The browser helper now detects a rendered logged-in collection, scans its
+  pagination, and posts metadata directly to the loopback service. No manual
+  JSON download or path selection remains in the normal workflow.
+- The receiver uses a persistent pairing token, validates completeness, stores
+  the latest JSON atomically, and immediately generates the filtered current-
+  quarter candidate note. Account passwords, cookies, and HTML remain outside
+  the transfer.
+- Full source regression: 56 tests passed; helper JavaScript syntax passes.
+- The frozen EXE reports v0.12 and passes its HTTP smoke test; a 1265 px live
+  UI inspection found no horizontal overflow or activity-log errors.
+- Real authenticated sync still requires the user to finish Cloudflare/login
+  and is not claimed from fixture evidence.
+
 ## v0.11.0.dev0 AI review milestone
 
 - Filtered candidate notes now retain machine-readable fuzzy Bahamut evidence.
@@ -65,7 +80,7 @@ Last updated: 2026-08-21
 | Project skeleton | Complete | Python 3.11+ package, CLI, docs, tests, snapshot tool |
 | Bangumi current-quarter scanner | Complete for v0.1.0 | Live official API read on 2026-08-21 |
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
-| Bahamut favorites | Browser bridge implemented; live verification pending | Validated export contract; no live account evidence |
+| Bahamut favorites | Automatic browser handoff implemented; live verification pending | Validated/authenticated loopback contract; no live account evidence |
 | Cross-site difference | CLI/GUI integration complete; live evidence pending | Exact-only exclusion; fuzzy titles retained and annotated |
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Batch source/rule preview complete | Accessible source endpoint and approved apply pending |
@@ -77,7 +92,7 @@ Last updated: 2026-08-21
 
 - Static/source inspection: completed for the existing Obsidian schema and
   official Bangumi/qBittorrent documentation.
-- Local execution: 54 representative tests passed; compile and CLI/JavaScript syntax checks passed.
+- Local execution: 56 representative tests passed; compile and CLI/JavaScript syntax checks passed.
 - Live Bangumi read: established on 2026-08-21. The 2026 summer scan included
   101 Japan-tagged subjects (78 TV, 13 Movie, 10 WEB) and reported 76 excluded
   subjects without the `日本` meta tag. This is not Bahamut or Obsidian evidence.

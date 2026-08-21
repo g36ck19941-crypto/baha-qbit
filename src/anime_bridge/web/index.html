@@ -60,14 +60,15 @@
           <div>
             <h2>生成候选笔记</h2>
             <p>纳入 TV、WEB、剧场版与续作；排除 OVA 和其它类型；要求 Bangumi「日本」标签。</p>
-            <label class="inline-field"><span>巴哈收藏 JSON</span><input name="bahamut_export_path" placeholder="C:/Users/.../Downloads/anime-bridge-bahamut-favorites-20260821.json"></label>
-            <p class="helper-link"><a href="/bahamut-export.user.js">安装登录浏览器导出助手（Tampermonkey）</a></p>
+            <p>浏览器助手检测到动画疯登录后，会自动同步收藏并直接执行本步骤。</p>
+            <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>巴哈收藏 JSON</span><input name="bahamut_export_path" placeholder="C:/Users/.../anime-bridge-bahamut-favorites.json"></label></details>
+            <p class="helper-link"><a href="/bahamut-export.user.js?token=__ANIME_BRIDGE_TOKEN__">安装自动同步浏览器助手（Tampermonkey）</a></p>
           </div>
           <button type="submit" class="primary" id="scan-button">筛选并写入候选笔记</button>
         </form>
         <div class="notice warning">
           <strong>边界说明</strong>
-          <p>导出助手只在已登录的动画疯页面内读取收藏，不导出密码、Cookie 或网页 HTML。未提供收藏 JSON 时仍可预览 Bangumi，但正式入库与批量 RSS 会拒绝该笔记。</p>
+          <p>助手只在已登录的动画疯页面内读取收藏，不导出密码、Cookie 或网页 HTML。首次安装后保持 Anime Bridge 运行，打开动画疯“我的动画”即可自动同步。</p>
         </div>
       </section>
 

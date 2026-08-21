@@ -19,32 +19,62 @@ from urllib.request import Request, urlopen
 
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
-from anime_bridge.adapters.bahamut_export import load_bahamut_export
+from anime_bridge.adapters.bahamut_export import (
+    BahamutFavoritesExport,
+    load_bahamut_export,
+    parse_bahamut_export_json,
+)
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.migration import apply_migration, plan_migration
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
-from anime_bridge.storage import write_text_atomic
+from anime_bridge.storage import write_text_atomic, write_text_new_atomic
 from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_favorites
 
 
 WEB_ROOT = Path(__file__).with_name("web")
 MAX_REQUEST_BYTES = 1024 * 1024
+DEFAULT_GUI_PORT = 18765
 
 
 class WebGUIController:
     def __init__(self, settings_path: Path | None = None) -> None:
         self.settings_path = settings_path or default_settings_path()
+        self.browser_bridge_token_path = self.settings_path.with_name(
+            "browser-bridge-token.txt"
+        )
+        self.latest_bahamut_export_path = self.settings_path.with_name(
+            "bahamut-favorites-latest.json"
+        )
+        self.browser_bridge_token = self._load_or_create_browser_bridge_token()
+        self._ingest_lock = threading.Lock()
         try:
             self.settings = UserSettings.load(self.settings_path)
         except (OSError, ValueError, json.JSONDecodeError):
             self.settings = UserSettings()
+
+    def _load_or_create_browser_bridge_token(self) -> str:
+        try:
+            token = self.browser_bridge_token_path.read_text(encoding="utf-8").strip()
+        except FileNotFoundError:
+            token = secrets.token_urlsafe(32)
+            try:
+                write_text_new_atomic(self.browser_bridge_token_path, token + "\n")
+            except FileExistsError:
+                token = self.browser_bridge_token_path.read_text(encoding="utf-8").strip()
+        if len(token) < 32:
+            raise ValueError("Browser bridge pairing token is invalid")
+        return token
 
     def public_status(self) -> dict[str, Any]:
         return {
             "version": __version__,
             "settings": self.settings_dict(),
             "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
+            "bahamut_auto_sync": {
+                "configured": True,
+                "has_export": self.latest_bahamut_export_path.is_file(),
+            },
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
                 {"name": "巴哈姆特登录浏览器桥接", "state": "bridge_ready"},
@@ -79,13 +109,40 @@ class WebGUIController:
         return {"saved": True, "path": str(self.settings_path)}
 
     def scan_current(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
-        result = CurrentQuarterScanner(BangumiClient()).scan(date.today())
         payload = payload or {}
         export_path_text = str(payload.get("bahamut_export_path") or "").strip()
-        difference = None
         favorite_export = None
         if export_path_text:
             favorite_export = load_bahamut_export(Path(export_path_text))
+        elif self.latest_bahamut_export_path.is_file():
+            favorite_export = load_bahamut_export(self.latest_bahamut_export_path)
+        return self._scan_with_export(favorite_export)
+
+    def ingest_bahamut_export(self, payload: dict[str, Any]) -> dict[str, Any]:
+        serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        favorite_export = parse_bahamut_export_json(serialized)
+        if not favorite_export.complete or favorite_export.warnings:
+            details = "; ".join(favorite_export.warnings) or "export marked incomplete"
+            raise ValueError(
+                "Bahamut export is incomplete and cannot prove safe subtraction: "
+                + details
+            )
+        with self._ingest_lock:
+            write_text_atomic(
+                self.latest_bahamut_export_path,
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            )
+            result = self._scan_with_export(favorite_export)
+        result["automatic_sync"] = True
+        result["pages_scanned"] = favorite_export.pages_scanned
+        return result
+
+    def _scan_with_export(
+        self, favorite_export: BahamutFavoritesExport | None
+    ) -> dict[str, Any]:
+        result = CurrentQuarterScanner(BangumiClient()).scan(date.today())
+        difference = None
+        if favorite_export is not None:
             difference = subtract_bahamut_favorites(
                 result.subjects, favorite_export.favorites
             )
@@ -251,7 +308,24 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             html = html.replace("__ANIME_BRIDGE_TOKEN__", self.server.token)
             self._bytes(HTTPStatus.OK, html.encode("utf-8"), "text/html; charset=utf-8")
             return
-        if parsed.path in {"/app.css", "/app.js", "/bahamut-export.user.js"}:
+        if parsed.path == "/bahamut-export.user.js":
+            supplied = parse_qs(parsed.query).get("token", [""])[0]
+            if supplied != self.server.token:
+                self._error(HTTPStatus.FORBIDDEN, "Invalid local session token")
+                return
+            helper = (WEB_ROOT / "bahamut-export.user.js").read_text(encoding="utf-8")
+            helper = helper.replace(
+                "__ANIME_BRIDGE_ENDPOINT__",
+                f"http://127.0.0.1:{self.server.server_port}/api/bahamut/ingest",
+            ).replace(
+                "__ANIME_BRIDGE_BRIDGE_TOKEN__",
+                self.server.controller.browser_bridge_token,
+            )
+            self._bytes(
+                HTTPStatus.OK, helper.encode("utf-8"), "text/javascript; charset=utf-8"
+            )
+            return
+        if parsed.path in {"/app.css", "/app.js"}:
             filename = parsed.path.lstrip("/")
             content_type = (
                 "text/css; charset=utf-8"
@@ -266,7 +340,14 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
         self._error(HTTPStatus.NOT_FOUND, "Not found")
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.headers.get("X-Anime-Bridge-Token") != self.server.token:
+        path = urlparse(self.path).path
+        if path == "/api/bahamut/ingest":
+            expected = self.server.controller.browser_bridge_token
+            supplied = self.headers.get("X-Anime-Bridge-Bridge-Token")
+            if not supplied or not secrets.compare_digest(supplied, expected):
+                self._error(HTTPStatus.FORBIDDEN, "Invalid browser bridge pairing token")
+                return
+        elif self.headers.get("X-Anime-Bridge-Token") != self.server.token:
             self._error(HTTPStatus.FORBIDDEN, "Invalid local session token")
             return
         try:
@@ -282,7 +363,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             payload = json.loads(body.decode("utf-8")) if body else {}
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
-            result = self._dispatch(urlparse(self.path).path, payload)
+            result = self._dispatch(path, payload)
         except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
             self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
             return
@@ -294,6 +375,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/status": lambda: controller.public_status(),
             "/api/settings": lambda: controller.update_settings(payload),
             "/api/scan": lambda: controller.scan_current(payload),
+            "/api/bahamut/ingest": lambda: controller.ingest_bahamut_export(payload),
             "/api/obsidian/plan": lambda: controller.obsidian_plan(payload),
             "/api/obsidian/apply": lambda: controller.obsidian_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
@@ -346,7 +428,8 @@ def _smoke_test(server: AnimeBridgeWebServer) -> None:
     if "Anime Bridge" not in page:
         raise RuntimeError("Web GUI page did not render")
     with urlopen(
-        f"http://127.0.0.1:{server.server_port}/bahamut-export.user.js", timeout=5
+        f"http://127.0.0.1:{server.server_port}/bahamut-export.user.js?token={server.token}",
+        timeout=5,
     ) as response:
         helper = response.read().decode("utf-8")
     if "anime-bridge-bahamut-favorites" not in helper:
@@ -373,7 +456,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--no-browser", action="store_true")
     parser.add_argument("--settings", type=Path, default=None)
-    parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--port", type=int, default=DEFAULT_GUI_PORT)
     args = parser.parse_args(argv)
     server = AnimeBridgeWebServer(
         WebGUIController(args.settings), secrets.token_urlsafe(24), args.port

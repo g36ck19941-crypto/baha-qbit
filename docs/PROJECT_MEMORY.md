@@ -2,6 +2,21 @@
 
 Last updated: 2026-08-21
 
+## D-016 — Automatic Bahamut JSON handoff
+
+- The installed userscript detects a rendered authenticated collection and
+  sends its validated JSON directly to `127.0.0.1:18765`; users do not download
+  or select the interchange file in the normal workflow.
+- The ingest endpoint uses a persistent random browser-pairing token distinct
+  from the GUI session token. The installer itself is session-gated. Neither
+  token is committed, placed in portable archives, or treated as an account
+  credential.
+- Complete data is atomically retained as the latest local export and directly
+  triggers current-quarter subtraction and candidate-note generation. Warnings
+  or incomplete pagination refuse the workflow before replacement or scanning.
+- Login and Cloudflare verification remain visible user actions; Anime Bridge
+  does not automate CAPTCHA or receive the Bahamut Cookie/password.
+
 ## D-015 — AI candidate-note review boundary
 
 - Fuzzy Bahamut matches are stored as machine-readable comments alongside the
@@ -173,7 +188,7 @@ qBittorrent access, or disabled/add-paused RSS defaults.
 
 The operational GUI uses a local web interface instead of Tkinter because the
 available bundled Python failed a real Tcl/Tk startup smoke test. It binds only
-to `127.0.0.1`, chooses a random port, and requires a high-entropy per-process
+to `127.0.0.1:18765` and requires a high-entropy per-process
 token for the page and API calls. Browser write actions require a visible dialog
 and remain subject to service-layer gates. Static assets have no CDN dependency
 and are included as Python package data.
