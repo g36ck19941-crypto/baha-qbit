@@ -42,6 +42,13 @@ Include Bangumi anime categories TV (`1`), Movie (`3`), and WEB (`5`). Exclude
 OVA (`2`) and Other (`0`). Sequels are included when Bangumi lists them as an
 independent subject satisfying the same category and date rules.
 
+### D-003a: Japanese-origin filter
+
+The initial scanner requires Bangumi's `日本` meta tag. Items without that tag
+are excluded from the candidate list and their count is reported. This avoids
+mixing other countries' animation into a Japanese seasonal list. A later review
+workflow may expose unclassified entries without weakening the default filter.
+
 ### D-004: Obsidian compatibility
 
 The existing vault stores formal notes below `C/bangumi/{year}/{MM}月新番/` and
@@ -77,4 +84,3 @@ pending local GitHub CLI authentication.
   has not yet been established.
 - System Python is absent. Development verification uses the bundled Codex
   Python runtime; the eventual package must include its own runtime.
-

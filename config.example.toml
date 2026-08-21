@@ -1,0 +1,18 @@
+[bangumi]
+base_url = "https://api.bgm.tv"
+# Bangumi requires an identifiable User-Agent. Replace the contact before live use.
+user_agent = "AnimeBridge/0.1.0 (contact: replace-with-your-github-profile)"
+timeout_seconds = 20
+
+[scan]
+# Extension point: future versions can expose additional category adapters.
+included_categories = ["tv", "movie", "web"]
+required_meta_tag = "日本"
+
+[paths]
+# Candidate files are staged outside the formal library until Bahamut subtraction
+# and explicit checkbox approval are complete.
+candidate_directory = "out"
+obsidian_vault = "C:/PersonalBlog/Obsidian Vault"
+obsidian_integration_folder = "bangumi1"
+formal_anime_folder = "C/bangumi"

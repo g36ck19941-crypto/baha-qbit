@@ -15,8 +15,18 @@ external integration remains replaceable and testable.
 
 ## Current milestone
 
-`v0.1.0` is in development. See [project status](docs/STATUS.md),
+`v0.1.0` implements the Bangumi current-quarter discovery slice. See
+[the user guide](docs/USER_GUIDE.md), [live demo record](docs/DEMO.md),
+[project status](docs/STATUS.md),
 [tasks](docs/TASKS.md), and [change log](docs/CHANGELOG.md).
 
-No credentials or authenticated account state belong in this repository.
+Source-checkout example:
 
+```powershell
+python launcher.py scan --date 2026-08-21
+```
+
+The candidate output is deliberately not a formal Obsidian library entry until
+the Bahamut subtraction and checkbox import milestones are complete.
+
+No credentials or authenticated account state belong in this repository.
