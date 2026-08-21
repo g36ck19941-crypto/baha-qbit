@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import secrets
+import sys
 import threading
 import webbrowser
 from datetime import date
@@ -18,6 +19,7 @@ from urllib.request import Request, urlopen
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
+from anime_bridge.migration import apply_migration, plan_migration
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic
@@ -40,12 +42,14 @@ class WebGUIController:
         return {
             "version": __version__,
             "settings": self.settings_dict(),
+            "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
                 {"name": "巴哈姆特实时收藏", "state": "waiting_login"},
                 {"name": "Obsidian 入库核心", "state": "ready"},
                 {"name": "qBittorrent RSS 核心", "state": "ready"},
-                {"name": "GitHub 远端", "state": "waiting_login"},
+                {"name": "GitHub 私有远端", "state": "ready"},
+                {"name": "Windows 可迁移包", "state": "ready"},
             ],
         }
 
@@ -112,6 +116,19 @@ class WebGUIController:
         return self._service(allow_writes=True).apply_qbit_rss(
             **_rss_arguments(payload), confirmation=WRITE_CONFIRMATION
         )
+
+    def migration_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        runner = Path(_required_text(payload, "runner_path"))
+        return plan_migration(
+            self.settings, self.settings_path, runner
+        ).as_dict()
+
+    def migration_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
+        _require_browser_confirmation(payload)
+        runner = Path(_required_text(payload, "runner_path"))
+        plan = plan_migration(self.settings, self.settings_path, runner)
+        written = apply_migration(plan, self.settings, self.settings_path)
+        return {"written": [str(path) for path in written]}
 
 
 def _required_text(payload: dict[str, Any], key: str) -> str:
@@ -216,6 +233,8 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/qbit/status": lambda: controller.qbit_status(),
             "/api/qbit/plan": lambda: controller.qbit_plan(payload),
             "/api/qbit/apply": lambda: controller.qbit_apply(payload),
+            "/api/migration/plan": lambda: controller.migration_plan(payload),
+            "/api/migration/apply": lambda: controller.migration_apply(payload),
         }
         if path == "/api/shutdown":
             threading.Thread(target=self.server.shutdown, daemon=True).start()
@@ -289,7 +308,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         _smoke_test(server)
         print("Web GUI smoke test passed.")
         return 0
-    print(f"Anime Bridge interface: {server.url}")
+    print(f"Anime Bridge interface: {server.url}", flush=True)
     if not args.no_browser:
         webbrowser.open(server.url)
     try:

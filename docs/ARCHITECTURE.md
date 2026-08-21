@@ -3,7 +3,7 @@
 ## Dependency direction
 
 ```text
-CLI / future GUI / future MCP
+CLI / GUI / MCP / frozen launcher
               |
           workflows
           /       \
@@ -57,3 +57,7 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
   a random port. A high-entropy session token gates the page and every API call;
   CSP/no-store headers reduce browser attack surface. The browser UI delegates
   to the same service layer and adds a visible dialog before write requests.
+- `app_launcher.py` is the single frozen entry point: no arguments select the
+  GUI, `mcp` selects stdio MCP, and all other arguments delegate to the CLI.
+  PyInstaller embeds web assets and the Obsidian plugin payload. Migration
+  stages a new plugin directory and refuses any differing existing file.

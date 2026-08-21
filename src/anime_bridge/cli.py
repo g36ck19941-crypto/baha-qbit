@@ -19,7 +19,9 @@ from anime_bridge.adapters.candidate_markdown import (
 )
 from anime_bridge.adapters.qbittorrent import QBittorrentAPIError, QBittorrentClient
 from anime_bridge.domain import RSSFeedDraft, RSSRuleDraft
+from anime_bridge.migration import MigrationConflict, apply_migration, plan_migration
 from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic
 from anime_bridge.workflows import (
     CurrentQuarterScanner,
@@ -124,6 +126,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rss.add_argument("--plan-output", type=Path, default=None)
     rss.add_argument("--apply", action="store_true")
+
+    migrate = subparsers.add_parser(
+        "migrate", help="preview or install the portable Obsidian integration"
+    )
+    migrate.add_argument("--vault", type=Path, required=True, help="Obsidian vault")
+    migrate.add_argument("--integration-folder", default="bangumi1")
+    migrate.add_argument("--formal-root", default="C/bangumi")
+    migrate.add_argument("--qbit-base-url", default="http://127.0.0.1:8080")
+    migrate.add_argument(
+        "--runner",
+        type=Path,
+        default=Path(sys.executable),
+        help="packaged anime-bridge.exe path (defaults to the current executable)",
+    )
+    migrate.add_argument("--settings", type=Path, default=None)
+    migrate.add_argument("--plan-output", type=Path, default=None)
+    migrate.add_argument("--apply", action="store_true")
     return parser
 
 
@@ -266,10 +285,34 @@ def main(argv: Sequence[str] | None = None) -> int:
             apply_rss_plan(client, plan)
             print("RSS feed and rule created.")
             return 0
+        if args.command == "migrate":
+            settings_path = args.settings or default_settings_path()
+            settings = UserSettings(
+                vault_path=str(args.vault.resolve()),
+                integration_folder=args.integration_folder,
+                formal_root=args.formal_root,
+                qbit_base_url=args.qbit_base_url,
+            )
+            QBittorrentClient(settings.qbit_base_url)
+            plan = plan_migration(settings, settings_path, args.runner)
+            payload = plan.as_dict()
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            if args.plan_output is not None:
+                write_text_atomic(
+                    args.plan_output,
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                )
+                print(f"Migration preview written to: {args.plan_output.resolve()}")
+            if not args.apply:
+                print("Preview only: no plugin or settings files written. Use --apply explicitly.")
+                return 0
+            written = apply_migration(plan, settings, settings_path)
+            print(f"Migration installed or confirmed {len(written)} files.")
+            return 0
     except BangumiAPIError as exc:
         print(f"Bangumi scan failed: {exc}", file=sys.stderr)
         return 2
-    except (CandidateParseError, ObsidianImportConflict) as exc:
+    except (CandidateParseError, ObsidianImportConflict, MigrationConflict) as exc:
         print(f"Obsidian import refused: {exc}", file=sys.stderr)
         return 3
     except (QBittorrentAPIError, RSSPlanConflict, ValueError) as exc:

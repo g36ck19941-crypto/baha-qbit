@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-21
 
+## D-007 — Portable distribution policy
+
+- The Windows artifact is one console-enabled `anime-bridge.exe`: double-click
+  starts the GUI, ordinary arguments run the CLI, and `mcp` starts stdio MCP.
+- Migration is preview-first and refuses existing differing plugin files. It
+  never stores passwords, cookies, tokens, or AI keys.
+- PyInstaller builds must run on Windows because it is not a cross-compiler.
+
 ## Project introduction
 
 Anime Bridge is a portable local application for seasonal anime discovery,

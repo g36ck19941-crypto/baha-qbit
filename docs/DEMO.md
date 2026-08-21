@@ -1,5 +1,14 @@
 # Demonstration record
 
+## v0.8.0.dev0 portable build
+
+- `dist/anime-bridge.exe --version` returned `anime-bridge 0.8.0.dev0`.
+- Frozen GUI smoke returned `Web GUI smoke test passed.`
+- Real Vault migration preview reported `plugin_state: new` and no conflicts;
+  it remained preview-only and made no Vault changes.
+- GUI screenshot: `out/gui-migration-v080.png`; console errors: none.
+- The executable also loaded the MCP help surface successfully.
+
 ## v0.1.0 — Bangumi current-quarter discovery
 
 Date: 2026-08-21 (Asia/Shanghai)

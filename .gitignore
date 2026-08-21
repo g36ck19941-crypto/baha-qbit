@@ -8,6 +8,7 @@ dist/
 build/
 out/
 backups/*.zip
+release/
 config.toml
 *.log
 .env

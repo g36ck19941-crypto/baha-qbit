@@ -4,6 +4,14 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Portable Windows package
+
+- Added one-file Windows GUI/CLI/MCP launcher and reproducible build script.
+- Added conflict-safe Obsidian migration planning and installation.
+- Added GUI migration controls with explicit confirmation.
+- Added portable ZIP creation with embedded and sidecar SHA-256 manifests.
+- Expanded the verified suite to 35 tests.
+
 ### Repository operations
 
 - Published the full linear commit history to `origin/main` without force.

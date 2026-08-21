@@ -85,6 +85,7 @@ function renderStatus(status) {
   }));
   const settings = document.getElementById("settings-form");
   Object.entries(status.settings).forEach(([key, value]) => { settings.elements[key].value = value; });
+  document.getElementById("runner-path").value = status.runner_path || "";
 }
 
 function askConfirmation(title, copy) {
@@ -134,6 +135,14 @@ document.getElementById("rss-apply").addEventListener("click", async () => {
 document.getElementById("settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try { await api("/api/settings", formObject(event.currentTarget), "保存本机设置"); } catch (_) {}
+});
+document.getElementById("migration-plan").addEventListener("click", async () => {
+  try { await api("/api/migration/plan", { runner_path: document.getElementById("runner-path").value }, "预览迁移安装"); } catch (_) {}
+});
+document.getElementById("migration-apply").addEventListener("click", async () => {
+  const confirmed = await askConfirmation("安装 Obsidian 集成？", "将把 Anime Bridge 插件安装到当前 Vault 并保存非敏感本机设置。已有不同文件时会整批拒绝，安装后仍需在 Obsidian 中手动启用。");
+  if (!confirmed) return;
+  try { await api("/api/migration/apply", { runner_path: document.getElementById("runner-path").value, confirmed: true }, "安装 Obsidian 集成"); } catch (_) {}
 });
 document.getElementById("shutdown").addEventListener("click", async () => {
   if (!confirm("结束 Anime Bridge 本机界面服务？")) return;

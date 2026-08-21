@@ -1,10 +1,26 @@
-# User guide — v0.7.0 development
+# User guide — v0.8.0 development
+
+## Portable Windows build
+
+The verified build is `dist/anime-bridge.exe` (Windows x64, no separate Python
+installation required). Double-click it to open the local interface. The same
+file also provides CLI and MCP modes:
+
+```powershell
+.\anime-bridge.exe --version
+.\anime-bridge.exe mcp --vault "C:/Path/To/Vault"
+```
+
+On another computer, open **本机设置**, update the Vault and loopback
+qBittorrent paths, save them, preview the migration installation, and only then
+confirm installation. Existing different Obsidian plugin files cause full
+refusal; the assistant never silently overwrites them. Obsidian still requires
+manual plugin enablement after installation.
 
 ## Runtime note
 
-This source milestone requires Python 3.11 or newer. The current computer has no
-system Python installation, so development checks use the Codex bundled runtime.
-A later packaging milestone will ship a self-contained executable.
+Source development requires Python 3.11 or newer. End users can use the
+self-contained Windows executable instead.
 
 ## Start the local interface
 

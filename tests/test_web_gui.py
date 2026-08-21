@@ -39,6 +39,7 @@ class WebGUITests(unittest.TestCase):
         with urlopen(self.server.url, timeout=5) as response:
             page = response.read().decode("utf-8")
         self.assertIn('content="test-token"', page)
+        self.assertIn('id="migration-plan"', page)
         status = self.post("/api/status", {})
         self.assertTrue(status["ok"])
         self.assertEqual(status["result"]["settings"]["integration_folder"], "bangumi1")
@@ -61,6 +62,9 @@ class WebGUITests(unittest.TestCase):
         with self.assertRaises(HTTPError) as caught:
             self.post("/api/obsidian/apply", {"candidate_path": "candidate.md"})
         self.assertEqual(caught.exception.code, 400)
+        with self.assertRaises(HTTPError) as migration:
+            self.post("/api/migration/apply", {"runner_path": "anime-bridge.exe"})
+        self.assertEqual(migration.exception.code, 400)
 
 
 if __name__ == "__main__":

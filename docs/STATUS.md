@@ -2,6 +2,17 @@
 
 Last updated: 2026-08-21
 
+## v0.8.0.dev0 packaging milestone
+
+- Built a 20.9 MB self-contained Windows x64 executable with GUI, CLI, MCP,
+  web assets, and the Obsidian plugin payload.
+- Added preview-first migration in both CLI and GUI. Existing different plugin
+  files refuse the entire installation; no real Vault installation was run.
+- Verified the frozen executable's version, GUI HTTP smoke test, MCP argument
+  loading, and a real-path migration preview against the user's Vault.
+- Full source regression: 35 tests passed; JavaScript and Python compilation
+  checks passed. The final GUI screenshot reported zero console errors.
+
 ## Progress panel
 
 | Area | State | Evidence / next gate |
@@ -16,7 +27,7 @@ Last updated: 2026-08-21
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
 | AI/MCP | MCP core verified | Real host connection and AI review pending |
-| GUI | Core and visual verification complete | Packaged executable pending |
+| GUI | Packaged and visually verified | Frozen HTTP smoke and screenshot passed |
 | GitHub remote | Complete | Private `origin/main` matches local HEAD |
 
 ## Verification levels

@@ -36,12 +36,12 @@ Last updated: 2026-08-21
 - [ ] AB-040d Connect the MCP server to the user's chosen AI host.
 - [x] AB-050a Add the loopback-only operational web interface.
 - [x] AB-050b Add visible write confirmation, activity log, themes, and density controls.
-- [ ] AB-050c Package the GUI, CLI, MCP runtime, and Obsidian plugin for migration.
+- [x] AB-050c Package the GUI, CLI, MCP runtime, and Obsidian plugin for migration.
 
 ## Next
 
 - [ ] AB-041 Add AI-assisted low-confidence title review without auto-approval.
-- [ ] AB-051 Add the migration assistant and self-contained Windows package.
+- [x] AB-051 Add the migration assistant and self-contained Windows package.
 
 ## Blocked
 

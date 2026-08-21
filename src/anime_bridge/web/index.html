@@ -122,6 +122,14 @@
           <label><span>qBittorrent WebUI</span><input name="qbit_base_url" type="url" required></label>
           <div class="button-row"><button type="submit" class="primary">保存设置</button></div>
         </form>
+        <div class="form-sheet migration-sheet">
+          <label><span>打包程序路径</span><input id="runner-path" placeholder="C:/.../anime-bridge.exe"></label>
+          <div class="button-row">
+            <button type="button" id="migration-plan">预览迁移安装</button>
+            <button type="button" class="danger-outline" id="migration-apply">确认后安装 Obsidian 集成</button>
+          </div>
+        </div>
+        <div class="notice safe"><strong>迁移安装不会覆盖</strong><p>若目标插件目录已有任何不同文件，整批安装会拒绝。安装后仍需在 Obsidian 中手动启用插件。</p></div>
         <div class="notice"><strong>不会保存</strong><p>巴哈姆特 Cookie、qBittorrent 密码、GitHub 凭据和 AI 密钥均不写入此配置。</p></div>
       </section>
     </main>
