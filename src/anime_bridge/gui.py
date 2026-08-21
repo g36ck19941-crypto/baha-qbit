@@ -117,6 +117,15 @@ class WebGUIController:
             **_rss_arguments(payload), confirmation=WRITE_CONFIRMATION
         )
 
+    def qbit_batch_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._service().plan_candidate_rss(**_batch_rss_arguments(payload))
+
+    def qbit_batch_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
+        _require_browser_confirmation(payload)
+        return self._service(allow_writes=True).apply_candidate_rss(
+            **_batch_rss_arguments(payload), confirmation=WRITE_CONFIRMATION
+        )
+
     def migration_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
         runner = Path(_required_text(payload, "runner_path"))
         return plan_migration(
@@ -155,6 +164,27 @@ def _rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
         "smart_filter": bool(payload.get("smart_filter", False)),
         "category": str(payload.get("category") or ""),
         "save_path": str(payload.get("save_path") or ""),
+    }
+
+
+def _batch_rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
+    raw_terms = str(payload.get("extra_terms") or "")
+    terms = tuple(
+        term.strip()
+        for line in raw_terms.splitlines()
+        for term in line.split(",")
+        if term.strip()
+    )
+    return {
+        "candidate_path": _required_text(payload, "candidate_path"),
+        "provider": _required_text(payload, "provider"),
+        "extra_terms": terms,
+        "custom_template": str(payload.get("custom_template") or ""),
+        "must_contain": str(payload.get("must_contain") or ""),
+        "must_not_contain": str(payload.get("must_not_contain") or ""),
+        "episode_filter": str(payload.get("episode_filter") or ""),
+        "category": str(payload.get("category") or "anime"),
+        "save_root": str(payload.get("save_root") or ""),
     }
 
 
@@ -233,6 +263,8 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/qbit/status": lambda: controller.qbit_status(),
             "/api/qbit/plan": lambda: controller.qbit_plan(payload),
             "/api/qbit/apply": lambda: controller.qbit_apply(payload),
+            "/api/qbit/batch-plan": lambda: controller.qbit_batch_plan(payload),
+            "/api/qbit/batch-apply": lambda: controller.qbit_batch_apply(payload),
             "/api/migration/plan": lambda: controller.migration_plan(payload),
             "/api/migration/apply": lambda: controller.migration_apply(payload),
         }

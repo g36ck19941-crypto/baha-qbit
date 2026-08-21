@@ -108,6 +108,26 @@
           <strong>强制安全默认值</strong>
           <p>界面创建的规则始终保持禁用，匹配的下载始终暂停。此界面不提供删除订阅、规则或任务的入口。</p>
         </div>
+        <div class="section-head subsection-head">
+          <div><p class="eyebrow">BATCH DRAFTS</p><h2>从已勾选动画批量生成</h2></div>
+          <p>每部动画一个搜索 RSS 与规则</p>
+        </div>
+        <form id="rss-batch-form" class="form-sheet two-column">
+          <label class="wide"><span>候选笔记路径</span><input name="candidate_path" required placeholder="C:/.../bangumi1/2026-07-动画候选.md"></label>
+          <label><span>RSS 来源</span><select name="provider"><option value="comicat-rsshub">Comicat（经可访问/自建 RSSHub）</option><option value="dmhy">动漫花园</option><option value="custom">自定义 HTTPS 模板</option></select></label>
+          <label><span>附加搜索词（逗号分隔）</span><input name="extra_terms" placeholder="1080P, CHS"></label>
+          <label class="wide"><span>来源模板覆盖（可选）</span><input name="custom_template" placeholder="https://your-rsshub.example/comicat/search/{query}"></label>
+          <label><span>规则必须包含</span><input name="must_contain"></label>
+          <label><span>规则必须排除</span><input name="must_not_contain"></label>
+          <label><span>集数过滤</span><input name="episode_filter" placeholder="1-12"></label>
+          <label><span>qBittorrent 分类</span><input name="category" value="anime"></label>
+          <label class="wide"><span>下载根目录（可选）</span><input name="save_root" placeholder="C:/localanime"></label>
+          <div class="button-row wide">
+            <button type="button" id="rss-batch-plan">预览批量草案</button>
+            <button type="button" class="danger-outline" id="rss-batch-apply">确认后批量创建</button>
+          </div>
+        </form>
+        <div class="notice warning"><strong>批量写入不是原子事务</strong><p>执行前会整批复查冲突，但 qBittorrent API 无事务；中途网络失败时需检查已创建项目后再重试。</p></div>
       </section>
 
       <section class="view" id="view-settings">

@@ -31,6 +31,16 @@ class RSSPlan:
         return self.feed_conflict or self.rule_conflict
 
 
+@dataclass(frozen=True, slots=True)
+class RSSBatchPlan:
+    plans: tuple[RSSPlan, ...]
+    duplicate_targets: tuple[str, ...] = ()
+
+    @property
+    def has_conflict(self) -> bool:
+        return bool(self.duplicate_targets) or any(plan.has_conflict for plan in self.plans)
+
+
 def _rss_paths(tree: dict[str, Any], prefix: str = "") -> set[str]:
     paths: set[str] = set()
     for name, node in tree.items():
@@ -58,3 +68,39 @@ def apply_rss_plan(client: RSSClient, plan: RSSPlan) -> None:
         raise RSSPlanConflict("RSS apply refused because the preview contains conflicts")
     client.add_feed(plan.feed.url, plan.feed.path)
     client.set_rule(plan.rule.name, plan.rule.to_qbittorrent_definition())
+
+
+def plan_rss_batch(
+    client: RSSClient,
+    drafts: tuple[tuple[RSSFeedDraft, RSSRuleDraft], ...],
+) -> RSSBatchPlan:
+    paths = [feed.path for feed, _ in drafts]
+    rules = [rule.name for _, rule in drafts]
+    duplicates = tuple(
+        sorted(
+            {f"feed:{value}" for value in paths if paths.count(value) > 1}
+            | {f"rule:{value}" for value in rules if rules.count(value) > 1}
+        )
+    )
+    existing_paths = _rss_paths(client.rss_items())
+    existing_rules = client.rss_rules()
+    plans = tuple(
+        RSSPlan(
+            feed=feed,
+            rule=rule,
+            feed_conflict=feed.path in existing_paths,
+            rule_conflict=rule.name in existing_rules,
+        )
+        for feed, rule in drafts
+    )
+    return RSSBatchPlan(plans=plans, duplicate_targets=duplicates)
+
+
+def apply_rss_batch(client: RSSClient, batch: RSSBatchPlan) -> None:
+    drafts = tuple((plan.feed, plan.rule) for plan in batch.plans)
+    fresh = plan_rss_batch(client, drafts)
+    if batch.has_conflict or fresh.has_conflict:
+        raise RSSPlanConflict("RSS batch apply refused because the preview contains conflicts")
+    for plan in fresh.plans:
+        client.add_feed(plan.feed.url, plan.feed.path)
+        client.set_rule(plan.rule.name, plan.rule.to_qbittorrent_definition())

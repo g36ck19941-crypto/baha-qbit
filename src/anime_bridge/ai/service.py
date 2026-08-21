@@ -11,9 +11,12 @@ from anime_bridge.adapters.qbittorrent import QBittorrentClient
 from anime_bridge.domain import AnimeCategory, RSSFeedDraft, RSSRuleDraft
 from anime_bridge.workflows import (
     apply_import_plan,
+    apply_rss_batch,
     apply_rss_plan,
+    build_candidate_rss_drafts,
     plan_checked_import,
     plan_rss,
+    plan_rss_batch,
 )
 
 
@@ -185,6 +188,103 @@ class AnimeBridgeAIService:
             "add_paused": True,
         }
 
+    def plan_candidate_rss(
+        self,
+        candidate_path: str,
+        provider: str,
+        extra_terms: tuple[str, ...] = (),
+        custom_template: str = "",
+        must_contain: str = "",
+        must_not_contain: str = "",
+        episode_filter: str = "",
+        category: str = "anime",
+        save_root: str = "",
+    ) -> dict[str, Any]:
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        drafts = build_candidate_rss_drafts(
+            document,
+            provider,
+            extra_terms=extra_terms,
+            custom_template=custom_template,
+            must_contain=must_contain,
+            must_not_contain=must_not_contain,
+            episode_filter=episode_filter,
+            category=category,
+            save_root=save_root,
+        )
+        batch = plan_rss_batch(
+            self.qbit, tuple((draft.feed, draft.rule) for draft in drafts)
+        )
+        return self._candidate_rss_payload(candidate, drafts, batch)
+
+    def apply_candidate_rss(
+        self,
+        candidate_path: str,
+        provider: str,
+        confirmation: str,
+        extra_terms: tuple[str, ...] = (),
+        custom_template: str = "",
+        must_contain: str = "",
+        must_not_contain: str = "",
+        episode_filter: str = "",
+        category: str = "anime",
+        save_root: str = "",
+    ) -> dict[str, Any]:
+        self._require_write(confirmation)
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        drafts = build_candidate_rss_drafts(
+            document,
+            provider,
+            extra_terms=extra_terms,
+            custom_template=custom_template,
+            must_contain=must_contain,
+            must_not_contain=must_not_contain,
+            episode_filter=episode_filter,
+            category=category,
+            save_root=save_root,
+        )
+        batch = plan_rss_batch(
+            self.qbit, tuple((draft.feed, draft.rule) for draft in drafts)
+        )
+        apply_rss_batch(self.qbit, batch)
+        return {
+            "created_count": len(drafts),
+            "feed_paths": [draft.feed.path for draft in drafts],
+            "rule_names": [draft.rule.name for draft in drafts],
+            "enabled": False,
+            "add_paused": True,
+            "atomic": False,
+        }
+
+    @staticmethod
+    def _candidate_rss_payload(candidate: Path, drafts: Any, batch: Any) -> dict[str, Any]:
+        return {
+            "candidate": str(candidate),
+            "draft_count": len(drafts),
+            "conflict_count": sum(plan.has_conflict for plan in batch.plans)
+            + len(batch.duplicate_targets),
+            "duplicate_targets": list(batch.duplicate_targets),
+            "items": [
+                {
+                    "bangumi_id": draft.bangumi_id,
+                    "title": draft.title,
+                    "provider": draft.provider,
+                    "search_terms": list(draft.search_terms),
+                    "feed": {"url": draft.feed.url, "path": draft.feed.path},
+                    "rule": {
+                        "name": draft.rule.name,
+                        **draft.rule.to_qbittorrent_definition(),
+                    },
+                    "feed_conflict": plan.feed_conflict,
+                    "rule_conflict": plan.rule_conflict,
+                }
+                for draft, plan in zip(drafts, batch.plans, strict=True)
+            ],
+            "safe_defaults": {"enabled": False, "add_paused": True},
+        }
+
     def _require_write(self, confirmation: str) -> None:
         if not self.allow_writes:
             raise WritePermissionError(
@@ -223,3 +323,4 @@ class AnimeBridgeAIService:
             add_paused=True,
         )
         return feed, rule
+    build_candidate_rss_drafts,

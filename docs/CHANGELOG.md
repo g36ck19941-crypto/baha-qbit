@@ -4,6 +4,16 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Batch anime RSS sources
+
+- Added Comicat-via-RSSHub, DMHY, and custom HTTPS source templates.
+- Added checked-candidate batch planning to CLI, GUI, and MCP.
+- Added all-conflict preflight before batch writes; rules stay disabled and
+  matches stay paused.
+- Documented that the public RSSHub instance currently presents Cloudflare
+  verification and may need an accessible or self-hosted replacement.
+- Expanded the verified suite from 35 to 41 tests.
+
 ### Portable Windows package
 
 - Added one-file Windows GUI/CLI/MCP launcher and reproducible build script.

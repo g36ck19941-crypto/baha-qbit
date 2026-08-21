@@ -1,4 +1,4 @@
-# User guide — v0.8.0 development
+# User guide — v0.9.0 development
 
 ## Portable Windows build
 
@@ -131,6 +131,39 @@ enabled, add `--username NAME`; the password is prompted and never saved.
 
 The feed and rule are two WebUI API writes rather than one atomic transaction.
 If the connection fails after feed creation, inspect qBittorrent before retrying.
+
+## Batch RSS drafts from checked candidates
+
+The GUI's **RSS 下载器 → 从已勾选动画批量生成** section creates one feed
+URL and disabled/add-paused rule draft per checked candidate. Supported source
+templates are:
+
+- `comicat-rsshub`: `/comicat/search/:keyword` through RSSHub;
+- `dmhy`: the DMHY keyword RSS route;
+- `custom`: a credential-free HTTPS template containing `{query}`.
+
+The public Comicat and `rsshub.app` pages currently present Cloudflare human
+verification on this computer. A generated URL is therefore a draft, not proof
+that qBittorrent can refresh it. For Comicat, provide an accessible or
+self-hosted RSSHub template such as
+`https://your-rsshub.example/comicat/search/{query}`.
+
+CLI preview example:
+
+```powershell
+.\anime-bridge.exe qbittorrent-rss-batch `
+  "C:/Path/To/Vault/bangumi1/2026-07-动画候选.md" `
+  --vault "C:/Path/To/Vault" `
+  --provider dmhy `
+  --extra-term 1080P `
+  --extra-term CHS `
+  --must-not-contain 720P `
+  --plan-output rss-batch-plan.json
+```
+
+Without `--apply`, qBittorrent is read only. Batch apply rechecks every target
+before the first write, but the WebUI API has no multi-item transaction; a
+network failure can leave a partial batch that must be inspected before retry.
 
 ## Troubleshooting
 

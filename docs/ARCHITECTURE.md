@@ -48,7 +48,10 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
 - `QbittorrentRSS`: implemented loopback-only Web API client, version probe,
   existing-state reader, feed/rule preview, conflict refusal, and explicit
   apply. Rules default disabled and add matches paused. RSS-source discovery
-  and higher-level per-anime rule generation remain pending.
+  and checked-candidate batch rule generation. RSS source URL construction is
+  isolated in `rss_sources`, with built-in Comicat/RSSHub and DMHY templates
+  plus a credential-free custom HTTPS template. Endpoint availability remains
+  an external precondition and is reported separately from URL construction.
 - MCP uses the official SDK v2 over local stdio and exposes the same workflows.
   The default server registers four read-only tools. Two write tools are absent
   unless the process starts with `--allow-writes`; individual write calls still

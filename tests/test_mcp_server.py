@@ -36,7 +36,7 @@ class FakeQbit:
 
 @unittest.skipUnless(MCP_AVAILABLE, "official MCP SDK optional dependency not installed")
 class MCPServerTests(unittest.IsolatedAsyncioTestCase):
-    async def test_read_only_server_lists_and_calls_four_tools(self):
+    async def test_read_only_server_lists_and_calls_five_tools(self):
         from mcp import Client
 
         with tempfile.TemporaryDirectory() as directory:
@@ -54,6 +54,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                         "obsidian_plan_checked_import",
                         "qbittorrent_get_rss_status",
                         "qbittorrent_plan_rss",
+                        "qbittorrent_plan_candidate_rss",
                     },
                 )
                 result = await client.call_tool(
@@ -78,7 +79,8 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                 names = {tool.name for tool in tools.tools}
                 self.assertIn("obsidian_apply_checked_import", names)
                 self.assertIn("qbittorrent_apply_rss", names)
-                self.assertEqual(len(names), 6)
+                self.assertIn("qbittorrent_apply_candidate_rss", names)
+                self.assertEqual(len(names), 8)
 
 
 if __name__ == "__main__":

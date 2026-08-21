@@ -136,6 +136,14 @@ document.getElementById("settings-form").addEventListener("submit", async (event
   event.preventDefault();
   try { await api("/api/settings", formObject(event.currentTarget), "保存本机设置"); } catch (_) {}
 });
+document.getElementById("rss-batch-plan").addEventListener("click", async () => {
+  try { await api("/api/qbit/batch-plan", formObject(document.getElementById("rss-batch-form")), "预览批量 RSS 草案"); } catch (_) {}
+});
+document.getElementById("rss-batch-apply").addEventListener("click", async () => {
+  const confirmed = await askConfirmation("批量创建 RSS 订阅与规则？", "将为候选笔记中每个已勾选动画创建一个订阅和规则。规则全部禁用，下载全部暂停；qBittorrent API 不支持事务，中途失败可能留下部分项目。");
+  if (!confirmed) return;
+  try { await api("/api/qbit/batch-apply", { ...formObject(document.getElementById("rss-batch-form")), confirmed: true }, "批量创建 RSS 订阅和规则"); } catch (_) {}
+});
 document.getElementById("migration-plan").addEventListener("click", async () => {
   try { await api("/api/migration/plan", { runner_path: document.getElementById("runner-path").value }, "预览迁移安装"); } catch (_) {}
 });

@@ -32,6 +32,16 @@ class FakeQbit:
 
 
 class AIServiceTests(unittest.TestCase):
+    @staticmethod
+    def write_candidate(vault: Path) -> Path:
+        candidate = vault / "candidate.md"
+        candidate.write_text(
+            "- [x] **测试动画**\n"
+            "  <!-- anime-bridge:item {\"bangumi_id\":10,\"category\":\"tv\",\"air_date\":\"2026-07-01\"} -->\n",
+            encoding="utf-8",
+        )
+        return candidate
+
     def test_subject_details_are_structured(self):
         with tempfile.TemporaryDirectory() as directory:
             service = AnimeBridgeAIService(
@@ -84,6 +94,29 @@ class AIServiceTests(unittest.TestCase):
             definition = qbit.calls[1][2]
             self.assertFalse(definition["enabled"])
             self.assertTrue(definition["addPaused"])
+
+    def test_candidate_rss_batch_is_preview_first_and_safely_applied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            candidate = self.write_candidate(vault)
+            qbit = FakeQbit()
+            preview_service = AnimeBridgeAIService(vault, qbit=qbit)
+            preview = preview_service.plan_candidate_rss(
+                str(candidate), "comicat-rsshub", ("1080P", "CHS")
+            )
+            self.assertEqual(preview["draft_count"], 1)
+            self.assertEqual(qbit.calls, [])
+            enabled = AnimeBridgeAIService(vault, allow_writes=True, qbit=qbit)
+            result = enabled.apply_candidate_rss(
+                str(candidate),
+                "comicat-rsshub",
+                "CONFIRM_LOCAL_WRITE",
+                ("1080P", "CHS"),
+            )
+            self.assertEqual(result["created_count"], 1)
+            self.assertEqual([call[0] for call in qbit.calls], ["feed", "rule"])
+            self.assertFalse(qbit.calls[1][2]["enabled"])
+            self.assertTrue(qbit.calls[1][2]["addPaused"])
 
 
 if __name__ == "__main__":

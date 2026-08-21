@@ -4,7 +4,13 @@ import unittest
 
 from anime_bridge.adapters.qbittorrent import QBittorrentClient
 from anime_bridge.domain.rss import RSSFeedDraft, RSSRuleDraft
-from anime_bridge.workflows.rss_plan import RSSPlanConflict, apply_rss_plan, plan_rss
+from anime_bridge.workflows.rss_plan import (
+    RSSPlanConflict,
+    apply_rss_batch,
+    apply_rss_plan,
+    plan_rss,
+    plan_rss_batch,
+)
 
 
 class FakeRSSClient:
@@ -62,6 +68,17 @@ class QBittorrentRSSTests(unittest.TestCase):
         self.assertEqual(client.calls[0], ("feed", feed.url, feed.path))
         self.assertEqual(client.calls[1][0:2], ("rule", rule.name))
         self.assertFalse(client.calls[1][2]["enabled"])
+
+    def test_batch_rechecks_all_conflicts_before_any_write(self):
+        feed, rule = drafts()
+        second_feed = RSSFeedDraft("https://example.invalid/second.xml", "动画/Second")
+        second_rule = RSSRuleDraft("Second", (second_feed.url,))
+        client = FakeRSSClient(rules={"Second": {}})
+        batch = plan_rss_batch(client, ((feed, rule), (second_feed, second_rule)))
+        self.assertTrue(batch.has_conflict)
+        with self.assertRaises(RSSPlanConflict):
+            apply_rss_batch(client, batch)
+        self.assertEqual(client.calls, [])
 
 
 if __name__ == "__main__":

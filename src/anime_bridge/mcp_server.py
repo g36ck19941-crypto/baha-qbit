@@ -63,6 +63,31 @@ def build_mcp_server(service: AnimeBridgeAIService) -> Any:
             use_regex, episode_filter, smart_filter, category, save_path,
         )
 
+    @server.tool(title="批量生成动画 RSS 规则草案", annotations=read_local)
+    def qbittorrent_plan_candidate_rss(
+        candidate_path: str,
+        provider: str,
+        extra_terms: list[str] | None = None,
+        custom_template: str = "",
+        must_contain: str = "",
+        must_not_contain: str = "",
+        episode_filter: str = "",
+        category: str = "anime",
+        save_root: str = "",
+    ) -> dict[str, Any]:
+        """Build disabled/add-paused per-anime RSS drafts from checked candidates."""
+        return service.plan_candidate_rss(
+            candidate_path,
+            provider,
+            tuple(extra_terms or ()),
+            custom_template,
+            must_contain,
+            must_not_contain,
+            episode_filter,
+            category,
+            save_root,
+        )
+
     if service.allow_writes:
 
         @server.tool(title="正式批量归入 Obsidian", annotations=safe_write)
@@ -91,6 +116,33 @@ def build_mcp_server(service: AnimeBridgeAIService) -> Any:
                 feed_url, feed_path, rule_name, confirmation, must_contain,
                 must_not_contain, use_regex, episode_filter, smart_filter,
                 category, save_path,
+            )
+
+        @server.tool(title="批量创建动画 RSS 规则", annotations=safe_write)
+        def qbittorrent_apply_candidate_rss(
+            candidate_path: str,
+            provider: str,
+            confirmation: str,
+            extra_terms: list[str] | None = None,
+            custom_template: str = "",
+            must_contain: str = "",
+            must_not_contain: str = "",
+            episode_filter: str = "",
+            category: str = "anime",
+            save_root: str = "",
+        ) -> dict[str, Any]:
+            """Create a checked-candidate RSS batch after preview and confirmation."""
+            return service.apply_candidate_rss(
+                candidate_path,
+                provider,
+                confirmation,
+                tuple(extra_terms or ()),
+                custom_template,
+                must_contain,
+                must_not_contain,
+                episode_filter,
+                category,
+                save_root,
             )
 
     return server

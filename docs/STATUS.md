@@ -2,6 +2,19 @@
 
 Last updated: 2026-08-21
 
+## v0.9.0.dev0 batch RSS milestone
+
+- Added replaceable per-anime URL builders for Comicat through RSSHub, DMHY,
+  and credential-free custom HTTPS templates.
+- Added checked-candidate batch preview/apply surfaces in CLI, GUI, and MCP.
+- A real qBittorrent state read produced one conflict-free plan and performed
+  no write. Full regression: 41 tests passed.
+- Live browser checks found Cloudflare human verification on both Comicat and
+  public rsshub.app; those routes are not claimed as directly usable by the
+  downloader until the user supplies an accessible/self-hosted endpoint.
+- Bahamut `mygather.php` is likewise waiting for the user to complete the
+  visible Cloudflare challenge and login personally.
+
 ## v0.8.0.dev0 packaging milestone
 
 - Built a 20.9 MB self-contained Windows x64 executable with GUI, CLI, MCP,
@@ -25,7 +38,7 @@ Last updated: 2026-08-21
 | Bahamut favorites | Parser complete; login pending | Fixture-proven `mygather.php` parser; no live account evidence |
 | Cross-site difference | Core complete; integration pending | Exact-only auto exclusion; fuzzy titles retained for review |
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
-| qBittorrent RSS | Core and live preview complete | Source discovery and approved apply pending |
+| qBittorrent RSS | Batch source/rule preview complete | Accessible source endpoint and approved apply pending |
 | AI/MCP | MCP core verified | Real host connection and AI review pending |
 | GUI | Packaged and visually verified | Frozen HTTP smoke and screenshot passed |
 | GitHub remote | Complete | Private `origin/main` matches local HEAD |

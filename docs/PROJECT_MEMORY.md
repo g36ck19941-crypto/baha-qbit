@@ -2,6 +2,17 @@
 
 Last updated: 2026-08-21
 
+## D-008 — RSS source adapters and availability evidence
+
+- Source discovery is a replaceable URL-template layer, separate from the
+  qBittorrent adapter and batch conflict planner.
+- Built-in providers are Comicat via RSSHub and DMHY; custom templates must be
+  credential-free HTTPS and contain `{query}`.
+- Public Comicat/RSSHub endpoints currently show Cloudflare verification, so
+  their generated URLs are drafts rather than proven downloader-readable feeds.
+- Batch writes preflight all conflicts but cannot be atomic because the
+  qBittorrent WebUI API exposes separate feed and rule writes.
+
 ## D-007 — Portable distribution policy
 
 - The Windows artifact is one console-enabled `anime-bridge.exe`: double-click

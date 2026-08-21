@@ -28,7 +28,7 @@ Last updated: 2026-08-21
 - [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
 - [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.
 - [x] AB-030b Add RSS feed/rule preview, safe defaults, and conflict refusal.
-- [ ] AB-030c Discover approved per-anime RSS sources and generate rule drafts.
+- [x] AB-030c Add replaceable per-anime RSS source adapters and batch rule drafts.
 - [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
 - [x] AB-040a Add an official-SDK local stdio MCP server.
 - [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.

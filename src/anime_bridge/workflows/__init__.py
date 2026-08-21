@@ -7,7 +7,22 @@ from .obsidian_import import (
     apply_import_plan,
     plan_checked_import,
 )
-from .rss_plan import RSSPlan, RSSPlanConflict, apply_rss_plan, plan_rss
+from .rss_plan import (
+    RSSBatchPlan,
+    RSSPlan,
+    RSSPlanConflict,
+    apply_rss_batch,
+    apply_rss_plan,
+    plan_rss,
+    plan_rss_batch,
+)
+from .rss_sources import (
+    CandidateRSSDraft,
+    RSSSourceProvider,
+    build_candidate_rss_drafts,
+    build_feed_url,
+    provider_catalog,
+)
 
 __all__ = [
     "BahamutDifferenceResult",
@@ -17,8 +32,16 @@ __all__ = [
     "apply_import_plan",
     "plan_checked_import",
     "RSSPlan",
+    "RSSBatchPlan",
     "RSSPlanConflict",
     "apply_rss_plan",
+    "apply_rss_batch",
     "plan_rss",
+    "plan_rss_batch",
+    "CandidateRSSDraft",
+    "RSSSourceProvider",
+    "build_candidate_rss_drafts",
+    "build_feed_url",
+    "provider_catalog",
     "subtract_bahamut_favorites",
 ]

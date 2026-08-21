@@ -1,5 +1,15 @@
 # Demonstration record
 
+## v0.9.0.dev0 checked-candidate RSS batch
+
+- Read the real loopback qBittorrent RSS state without changing it.
+- Generated `out/rss-batch-plan.json` for one checked candidate using the
+  Comicat RSSHub route with `1080P` and `CHS` search terms.
+- Plan evidence: one draft, zero conflicts, `enabled=false`, `addPaused=true`.
+- Browser verification showed Cloudflare challenges on Comicat, public RSSHub,
+  and Bahamut; no CAPTCHA was solved and no authenticated data was read.
+- Source regression: 41 tests passed.
+
 ## v0.8.0.dev0 portable build
 
 - `dist/anime-bridge.exe --version` returned `anime-bridge 0.8.0.dev0`.
