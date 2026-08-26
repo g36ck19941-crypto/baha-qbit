@@ -6,7 +6,7 @@ external integration remains replaceable and testable.
 
 Private upstream: `https://github.com/g36ck19941-crypto/baha-qbit`
 
-Current development version: `0.13.0.dev0`. The verified Windows x64 build is
+Current development version: `0.15.0.dev0`. The Windows x64 build is
 generated as `dist/anime-bridge.exe`; double-clicking it opens the local UI.
 
 ## Confirmed scope
@@ -15,21 +15,22 @@ generated as `dist/anime-bridge.exe`; double-clicking it opens the local UI.
 - Include TV, WEB, movie, and sequel subjects; exclude OVA and other subjects.
 - Preserve an extension point for historical or manually selected quarters.
 - Stage candidates as checkbox-based Obsidian Markdown before formal import.
-- Subtract the current user's exported Bahamut favorites and manage approved RSS
+- Subtract every title publicly listed by Bahamut in the current quarter and manage approved RSS
   subscriptions and qBittorrent rules through preview-first operations.
 
 ## Current milestone
 
-`v0.13.0.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
+`v0.15.0.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
 conflict-safe Obsidian import core, and preview-first local qBittorrent RSS
 control, an installable Obsidian command shell, a tested local MCP server, and a
 loopback-only browser interface, self-contained Windows executable, and a
 preview-first migration assistant, batch per-anime RSS source/rule drafts, and
-an authenticated-browser helper that automatically sends validated favorite
-metadata to the loopback service and immediately generates the filtered
+an account-free browser helper that automatically sends the validated public
+current-quarter catalog to the loopback service and immediately generates the filtered
 candidate note, plus a read-only MCP candidate-note analyzer for AI-assisted
 review, and a browser-aware guided installer for Tampermonkey plus the paired
-Anime Bridge userscript. A real authenticated sync remains pending. See
+Anime Bridge userscript, and Taiwan/Hong Kong title canonicalization backed by
+Bangumi regional aliases. See
 [the user guide](docs/USER_GUIDE.md), [live demo record](docs/DEMO.md),
 [project status](docs/STATUS.md),
 [tasks](docs/TASKS.md), and [change log](docs/CHANGELOG.md).
@@ -47,6 +48,6 @@ Launch the local interface from the development environment:
 ```
 
 Unfiltered candidate output is deliberately refused by formal Obsidian import
-and batch RSS. A login-browser export must complete the Bahamut subtraction gate.
+and batch RSS. A complete public-catalog export must complete the Bahamut subtraction gate.
 
 No credentials or authenticated account state belong in this repository.

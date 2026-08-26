@@ -4,12 +4,39 @@ import json
 import tempfile
 import threading
 import unittest
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from anime_bridge.gui import AnimeBridgeWebServer, WebGUIController
+
+
+def current_catalog_payload(*, complete: bool = True) -> dict:
+    today = date.today()
+    start_month = ((today.month - 1) // 3) * 3 + 1
+    return {
+        "format": "anime-bridge-bahamut-current-quarter",
+        "schema_version": 1,
+        "exported_at": f"{today.isoformat()}T10:00:00.000Z",
+        "source_url": "https://ani.gamer.com.tw/animeList.php?sort=1&page=1",
+        "quarter_year": today.year,
+        "quarter_start_month": start_month,
+        "pages_scanned": 1,
+        "complete": complete,
+        "warnings": [] if complete else ["pagination changed"],
+        "items": [
+            {
+                "title": "测试动画",
+                "href": "https://ani.gamer.com.tw/animeRef.php?sn=123",
+                "sn": 123,
+                "page": 1,
+                "year": today.year,
+                "month": start_month,
+            }
+        ],
+    }
 
 
 class WebGUITests(unittest.TestCase):
@@ -49,7 +76,7 @@ class WebGUITests(unittest.TestCase):
         self.assertIn('id="rss-batch-plan"', page)
         self.assertIn('id="install-browser-helper"', page)
         self.assertIn('id="browser-helper-dialog"', page)
-        self.assertIn('href="/bahamut-export.user.js?token=test-token"', page)
+        self.assertIn('href="/bahamut-catalog.user.js?token=test-token"', page)
         self.assertIn("https://www.tampermonkey.net/", page)
         with urlopen(
             f"http://127.0.0.1:{self.server.server_port}/app.js", timeout=5
@@ -61,16 +88,18 @@ class WebGUITests(unittest.TestCase):
         self.assertIn("browser=firefox", app_script)
         with self.assertRaises(HTTPError) as missing_token:
             urlopen(
-                f"http://127.0.0.1:{self.server.server_port}/bahamut-export.user.js",
+                f"http://127.0.0.1:{self.server.server_port}/bahamut-catalog.user.js",
                 timeout=5,
             )
         self.assertEqual(missing_token.exception.code, 403)
         with urlopen(
-            f"http://127.0.0.1:{self.server.server_port}/bahamut-export.user.js?token=test-token",
+            f"http://127.0.0.1:{self.server.server_port}/bahamut-catalog.user.js?token=test-token",
             timeout=5,
         ) as response:
             helper = response.read().decode("utf-8")
-        self.assertIn("anime-bridge-bahamut-favorites", helper)
+        self.assertIn("anime-bridge-bahamut-current-quarter", helper)
+        self.assertIn("quarter_start_month", helper)
+        self.assertIn(".theme-time", helper)
         self.assertIn("GM_xmlhttpRequest", helper)
         self.assertIn(f"127.0.0.1:{self.server.server_port}/api/bahamut/ingest", helper)
         self.assertIn(self.server.controller.browser_bridge_token, helper)
@@ -87,30 +116,14 @@ class WebGUITests(unittest.TestCase):
         )
 
     def test_browser_bridge_authenticates_saves_and_triggers_scan(self):
-        payload = {
-            "format": "anime-bridge-bahamut-favorites",
-            "schema_version": 1,
-            "exported_at": "2026-08-21T10:00:00.000Z",
-            "source_url": "https://ani.gamer.com.tw/mygather.php",
-            "pages_scanned": 1,
-            "complete": True,
-            "warnings": [],
-            "favorites": [
-                {
-                    "title": "测试动画",
-                    "href": "https://ani.gamer.com.tw/animeRef.php?sn=123",
-                    "sn": 123,
-                    "page": 1,
-                }
-            ],
-        }
+        payload = current_catalog_payload()
         with self.assertRaises(HTTPError) as wrong_token:
             self.post("/api/bahamut/ingest", payload, bridge_token="wrong")
         self.assertEqual(wrong_token.exception.code, 403)
 
         expected_scan = {"count": 4, "output": "candidate.md"}
         with patch.object(
-            self.server.controller, "_scan_with_export", return_value=expected_scan.copy()
+            self.server.controller, "_scan_with_catalog", return_value=expected_scan.copy()
         ) as scan:
             result = self.post(
                 "/api/bahamut/ingest",
@@ -122,21 +135,12 @@ class WebGUITests(unittest.TestCase):
         self.assertEqual(result["result"]["pages_scanned"], 1)
         scan.assert_called_once()
         saved = json.loads(
-            self.server.controller.latest_bahamut_export_path.read_text(encoding="utf-8")
+            self.server.controller.latest_bahamut_catalog_path.read_text(encoding="utf-8")
         )
-        self.assertEqual(saved["favorites"][0]["sn"], 123)
+        self.assertEqual(saved["items"][0]["sn"], 123)
 
     def test_browser_bridge_refuses_incomplete_export(self):
-        payload = {
-            "format": "anime-bridge-bahamut-favorites",
-            "schema_version": 1,
-            "exported_at": "2026-08-21T10:00:00.000Z",
-            "source_url": "https://ani.gamer.com.tw/mygather.php",
-            "pages_scanned": 1,
-            "complete": False,
-            "warnings": ["pagination changed"],
-            "favorites": [],
-        }
+        payload = current_catalog_payload(complete=False)
         with self.assertRaises(HTTPError) as incomplete:
             self.post(
                 "/api/bahamut/ingest",
@@ -144,7 +148,7 @@ class WebGUITests(unittest.TestCase):
                 bridge_token=self.server.controller.browser_bridge_token,
             )
         self.assertEqual(incomplete.exception.code, 400)
-        self.assertFalse(self.server.controller.latest_bahamut_export_path.exists())
+        self.assertFalse(self.server.controller.latest_bahamut_catalog_path.exists())
 
     def test_remote_qbittorrent_setting_is_refused(self):
         payload = {

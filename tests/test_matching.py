@@ -3,9 +3,14 @@ from __future__ import annotations
 import unittest
 from datetime import date
 
-from anime_bridge.domain import AnimeCategory, AnimeSubject, BahamutFavorite
-from anime_bridge.matching import MatchKind, best_title_match, normalize_title
-from anime_bridge.workflows import subtract_bahamut_favorites
+from anime_bridge.domain import AnimeCategory, AnimeSubject, BahamutCatalogItem
+from anime_bridge.matching import (
+    MatchKind,
+    best_title_match,
+    normalize_title,
+    normalized_title_forms,
+)
+from anime_bridge.workflows import subtract_bahamut_catalog
 
 
 def subject(subject_id: int, cn: str, jp: str, aliases=()) -> AnimeSubject:
@@ -26,16 +31,40 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual(normalize_title("ＡＢＣ：Season 2"), "abcseason2")
 
     def test_exact_alias_is_eligible_for_automatic_exclusion(self) -> None:
-        anime = subject(1, "药师少女的独语 第二季", "薬屋のひとりごと 第2期", ("藥師少女的獨語 第二季",))
-        favorite = BahamutFavorite("藥師少女的獨語　第二季", "/animeRef.php?sn=9", 9)
-        match = best_title_match(anime, [favorite])
+        anime = subject(1, "药师少女的独语 第二季", "薬屋のひとりごと 第2期")
+        item = BahamutCatalogItem("藥師少女的獨語　第二季", "/animeRef.php?sn=9", 9)
+        match = best_title_match(anime, [item])
         self.assertIs(match.kind, MatchKind.EXACT)
         self.assertTrue(match.auto_exclude)
 
+    def test_taiwan_phrase_title_is_canonicalized_for_exact_exclusion(self) -> None:
+        anime = subject(5, "网络胜利组", "ネト充のススメ")
+        item = BahamutCatalogItem("網路勝利組", "/animeRef.php?sn=12", 12)
+        self.assertIn("网络胜利组", normalized_title_forms(item.title))
+        self.assertIs(best_title_match(anime, [item]).kind, MatchKind.EXACT)
+
+    def test_hong_kong_title_is_canonicalized_for_exact_exclusion(self) -> None:
+        anime = subject(6, "机动战士高达", "機動戦士ガンダム")
+        item = BahamutCatalogItem("機動戰士高達", "/animeRef.php?sn=13", 13)
+        self.assertIn("机动战士高达", normalized_title_forms(item.title))
+        self.assertIs(best_title_match(anime, [item]).kind, MatchKind.EXACT)
+
+    def test_distinct_taiwan_translation_uses_explicit_bangumi_alias(self) -> None:
+        anime = subject(8, "机动战士高达", "機動戦士ガンダム", ("機動戰士鋼彈",))
+        item = BahamutCatalogItem("機動戰士鋼彈", "/animeRef.php?sn=15", 15)
+        match = best_title_match(anime, [item])
+        self.assertIs(match.kind, MatchKind.EXACT)
+        self.assertEqual(match.subject_title, "機動戰士鋼彈")
+
+    def test_unrelated_title_is_not_automatically_excluded(self) -> None:
+        anime = subject(7, "胆大党", "ダンダダン")
+        item = BahamutCatalogItem("膽小鬼", "/animeRef.php?sn=14", 14)
+        self.assertIs(best_title_match(anime, [item]).kind, MatchKind.NONE)
+
     def test_fuzzy_match_is_review_only_and_remains_a_candidate(self) -> None:
         anime = subject(2, "测试动画 第二季", "テストアニメ 2")
-        favorite = BahamutFavorite("测试动画 第2季", "/animeRef.php?sn=10", 10)
-        result = subtract_bahamut_favorites([anime], [favorite])
+        item = BahamutCatalogItem("测试动画 第2季", "/animeRef.php?sn=10", 10)
+        result = subtract_bahamut_catalog([anime], [item])
         self.assertEqual(result.candidates, (anime,))
         self.assertEqual(result.exact_matches, ())
         self.assertEqual(len(result.review_matches), 1)
@@ -43,8 +72,8 @@ class MatchingTests(unittest.TestCase):
     def test_exact_match_is_subtracted_and_unmatched_remains(self) -> None:
         collected = subject(3, "已收藏动画", "収集済み")
         remaining = subject(4, "完全不同的作品", "まったく別の作品")
-        favorite = BahamutFavorite("已收藏动画", "/animeRef.php?sn=11", 11)
-        result = subtract_bahamut_favorites([collected, remaining], [favorite])
+        item = BahamutCatalogItem("已收藏动画", "/animeRef.php?sn=11", 11)
+        result = subtract_bahamut_catalog([collected, remaining], [item])
         self.assertEqual(result.candidates, (remaining,))
         self.assertEqual([item.subject for item in result.exact_matches], [collected])
         self.assertEqual(result.review_matches, ())

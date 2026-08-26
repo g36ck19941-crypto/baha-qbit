@@ -1,5 +1,39 @@
 # Demonstration record
 
+## v0.15.0.dev0 public current-quarter catalog
+
+- Contract tests accept deduplicated public catalog rows and reject the old
+  personal-favorites schema, non-catalog sources, cross-quarter rows, warnings,
+  and incomplete pagination.
+- HTTP tests prove the session-gated installer serves the new catalog helper,
+  a wrong bridge token is refused, and valid current-quarter JSON is retained
+  before invoking the scan.
+- Matching tests retain Taiwan/Hong Kong exact conversion and fuzzy-review
+  safety. Full source regression: 65 tests passed; Python compilation and both
+  browser-helper/application JavaScript syntax checks passed.
+- No live Anime Crazy page was read by the executable in this run, and no
+  Obsidian candidate note was rewritten; public-page live evidence is pending.
+- Frozen verification: the EXE reported `0.15.0.dev0` and passed GUI smoke with
+  the new helper and OpenCC data. Because the sandbox default temporary folder
+  rejected PyInstaller extraction, the smoke process used a workspace-local
+  temporary directory; normal double-click behavior was not asserted here.
+
+## v0.14.0.dev0 Taiwan/Hong Kong title matching
+
+- Fixed tests prove simplified `药师少女的独语` matches traditional
+  `藥師少女的獨語`, Taiwan `網路勝利組` matches `网络胜利组`, and Hong Kong
+  `機動戰士高達` matches `机动战士高达`.
+- An explicit Bangumi Taiwan alias proves the distinct localization
+  `機動戰士鋼彈` can match without pretending OpenCC inferred `高达/鋼彈`.
+- A negative test keeps the unrelated `膽小鬼` separate from `胆大党`.
+- Read-only real-data audit: 515 latest Bahamut favorites versus the existing
+  90-item 2026 summer candidate note yielded 13 additional exact matches. The
+  audit did not write the candidate note or rerun the live network scan.
+- Full source regression: 60 tests passed.
+- Packaged-app verification: `anime-bridge.exe --version` reported
+  `0.14.0.dev0`, and the frozen GUI smoke test passed after checking
+  `網路勝利組` canonicalizes to `网络胜利组`.
+
 ## v0.13.0.dev0 browser-helper installation guide
 
 - The overview now opens a three-step modal: official Tampermonkey destination,

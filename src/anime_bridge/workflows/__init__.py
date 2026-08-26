@@ -1,7 +1,11 @@
 """Application workflows composed from domain rules and adapters."""
 
 from .current_quarter import CurrentQuarterResult, CurrentQuarterScanner
-from .bahamut_difference import BahamutDifferenceResult, subtract_bahamut_favorites
+from .bahamut_difference import (
+    BahamutDifferenceResult,
+    subtract_bahamut_catalog,
+    subtract_bahamut_favorites,
+)
 from .obsidian_import import (
     ObsidianImportConflict,
     apply_import_plan,
@@ -43,5 +47,6 @@ __all__ = [
     "build_candidate_rss_drafts",
     "build_feed_url",
     "provider_catalog",
+    "subtract_bahamut_catalog",
     "subtract_bahamut_favorites",
 ]

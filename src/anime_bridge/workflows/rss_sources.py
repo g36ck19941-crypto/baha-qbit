@@ -104,7 +104,7 @@ def build_candidate_rss_drafts(
     if not document.bahamut_subtracted:
         raise ValueError(
             "RSS batch refused because this candidate note has not completed "
-            "Bahamut favorite subtraction"
+            "Bahamut current-quarter catalog subtraction"
         )
     root = _relative_component(feed_root, allow_slash=True)
     result: list[CandidateRSSDraft] = []

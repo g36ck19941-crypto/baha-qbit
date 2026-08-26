@@ -1,6 +1,38 @@
 # Project status
 
-Last updated: 2026-08-21
+Last updated: 2026-08-26
+
+## v0.15.0.dev0 public current-quarter catalog milestone
+
+- Normal subtraction no longer reads the user's Anime Crazy favorites or
+  requires login. The browser helper scans the public year-sorted catalog and
+  exports only titles whose displayed month is inside the current quarter.
+- The backend independently rejects old favorites JSON, cross-quarter rows,
+  incomplete scans, warnings, non-catalog source paths, and unsafe links.
+- Exact regional-title matches are removed; fuzzy matches remain annotated for
+  human review. Existing Obsidian and qBittorrent preview/write gates remain.
+- Full source regression: 65 tests passed. Python compilation and both browser
+  helper/application JavaScript syntax checks passed.
+- The 21.4 MB frozen EXE reports `0.15.0.dev0` and passes its GUI smoke test,
+  including packaged catalog-helper and OpenCC checks. The sandbox default
+  temporary directory rejected one-file extraction, so this verification used
+  a workspace-local temporary directory; that limitation is recorded rather
+  than presented as an ordinary double-click run.
+
+## v0.14.0.dev0 regional-title matching milestone
+
+- Bahamut/Bangumi comparison now canonicalizes standard Traditional, Taiwan
+  regional phrases, and Hong Kong forms before exact matching.
+- Explicit Taiwan/Hong Kong translated-name fields in Bangumi infobox data join
+  the existing alias set. The fuzzy threshold and human-review boundary did not
+  change.
+- A read-only audit against the user's latest 515-title export found 13
+  additional exact matches inside the existing 90-item summer candidate note.
+  No Vault note was changed by the audit.
+- Full source regression: 60 tests passed.
+- The rebuilt Windows executable reports `0.14.0.dev0`; its frozen GUI smoke
+  test passed after executing a Taiwan-title conversion, proving the OpenCC
+  dictionaries are present in the packaged application.
 
 ## v0.13.0.dev0 browser-helper guide milestone
 
@@ -89,7 +121,7 @@ Last updated: 2026-08-21
 | Project skeleton | Complete | Python 3.11+ package, CLI, docs, tests, snapshot tool |
 | Bangumi current-quarter scanner | Complete for v0.1.0 | Live official API read on 2026-08-21 |
 | Candidate Markdown preview | Complete for v0.1.0 | Atomic checkbox note with cover, summary, source metadata |
-| Bahamut favorites | Automatic browser handoff implemented; live verification pending | Validated/authenticated loopback contract; no live account evidence |
+| Bahamut public catalog | Account-free automatic handoff implemented | Contract tests complete; live public-page sync pending |
 | Cross-site difference | CLI/GUI integration complete; live evidence pending | Exact-only exclusion; fuzzy titles retained and annotated |
 | Obsidian formal import | Core, live preview, plugin package complete | Plugin runtime and real apply pending |
 | qBittorrent RSS | Batch source/rule preview complete | Accessible source endpoint and approved apply pending |

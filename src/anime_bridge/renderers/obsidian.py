@@ -78,7 +78,7 @@ def render_candidate_markdown(
     generated_at: datetime | None = None,
     *,
     bahamut_difference: "BahamutDifferenceResult | None" = None,
-    bahamut_favorite_count: int = 0,
+    bahamut_catalog_count: int = 0,
     bahamut_exported_at: str = "",
 ) -> str:
     timestamp = generated_at or datetime.now().astimezone()
@@ -93,6 +93,7 @@ def render_candidate_markdown(
         f"range_end_exclusive: {end.isoformat()}",
         f"generated_at: {_yaml_quote(timestamp.isoformat(timespec='seconds'))}",
         f"bahamut_subtraction: {'true' if bahamut_difference is not None else 'false'}",
+        f"bahamut_scope: {'current-quarter-catalog' if bahamut_difference is not None else 'not-run'}",
         "formal_imported: false",
         "tags:",
         "  - anime-bridge-candidates",
@@ -104,16 +105,16 @@ def render_candidate_markdown(
     if bahamut_difference is None:
         header.extend([
             "> [!warning] 预览阶段",
-            "> 本文件尚未执行巴哈收藏差集。请勿把它当作最终待选清单。",
-            "> 正式入库与批量 RSS 会拒绝此文件。请先导入登录浏览器生成的巴哈收藏 JSON。",
+            "> 本文件尚未执行动画疯当季目录差集。请勿把它当作最终待选清单。",
+            "> 正式入库与批量 RSS 会拒绝此文件。请先用浏览器助手同步动画疯公开当季目录。",
             "",
         ])
         review_by_subject: dict[int, object] = {}
     else:
         header.extend([
-            "> [!success] 巴哈收藏差集已执行",
-            f"> 浏览器导出收藏：{bahamut_favorite_count}；自动移除精确匹配：{len(bahamut_difference.exact_matches)}；待人工确认：{len(bahamut_difference.review_matches)}。",
-            f"> 收藏导出时间：{bahamut_exported_at or '未提供'}。模糊匹配仍保留在下方，不会自动删除。",
+            "> [!success] 动画疯当季目录差集已执行",
+            f"> 动画疯当季上架：{bahamut_catalog_count}；自动移除精确匹配：{len(bahamut_difference.exact_matches)}；待人工确认：{len(bahamut_difference.review_matches)}。",
+            f"> 目录同步时间：{bahamut_exported_at or '未提供'}。模糊匹配仍保留在下方，不会自动删除。",
             "",
         ])
         review_by_subject = {

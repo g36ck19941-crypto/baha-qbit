@@ -19,17 +19,18 @@ from urllib.request import Request, urlopen
 
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
-from anime_bridge.adapters.bahamut_export import (
-    BahamutFavoritesExport,
-    load_bahamut_export,
-    parse_bahamut_export_json,
+from anime_bridge.adapters.bahamut_catalog import (
+    BahamutCatalogExport,
+    load_bahamut_catalog,
+    parse_bahamut_catalog_json,
 )
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.migration import apply_migration, plan_migration
+from anime_bridge.matching import normalized_title_forms
 from anime_bridge.renderers import render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic, write_text_new_atomic
-from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_favorites
+from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
 
 
 WEB_ROOT = Path(__file__).with_name("web")
@@ -43,8 +44,8 @@ class WebGUIController:
         self.browser_bridge_token_path = self.settings_path.with_name(
             "browser-bridge-token.txt"
         )
-        self.latest_bahamut_export_path = self.settings_path.with_name(
-            "bahamut-favorites-latest.json"
+        self.latest_bahamut_catalog_path = self.settings_path.with_name(
+            "bahamut-current-quarter-latest.json"
         )
         self.browser_bridge_token = self._load_or_create_browser_bridge_token()
         self._ingest_lock = threading.Lock()
@@ -73,11 +74,11 @@ class WebGUIController:
             "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
             "bahamut_auto_sync": {
                 "configured": True,
-                "has_export": self.latest_bahamut_export_path.is_file(),
+                "has_export": self.latest_bahamut_catalog_path.is_file(),
             },
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
-                {"name": "巴哈姆特登录浏览器桥接", "state": "bridge_ready"},
+                {"name": "动画疯公开当季目录同步", "state": "bridge_ready"},
                 {"name": "Obsidian 入库核心", "state": "ready"},
                 {"name": "qBittorrent RSS 核心", "state": "ready"},
                 {"name": "GitHub 私有远端", "state": "ready"},
@@ -110,42 +111,47 @@ class WebGUIController:
 
     def scan_current(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         payload = payload or {}
-        export_path_text = str(payload.get("bahamut_export_path") or "").strip()
-        favorite_export = None
-        if export_path_text:
-            favorite_export = load_bahamut_export(Path(export_path_text))
-        elif self.latest_bahamut_export_path.is_file():
-            favorite_export = load_bahamut_export(self.latest_bahamut_export_path)
-        return self._scan_with_export(favorite_export)
+        catalog_path_text = str(payload.get("bahamut_catalog_path") or "").strip()
+        catalog = None
+        if catalog_path_text:
+            catalog = load_bahamut_catalog(Path(catalog_path_text))
+        elif self.latest_bahamut_catalog_path.is_file():
+            catalog = load_bahamut_catalog(self.latest_bahamut_catalog_path)
+        return self._scan_with_catalog(catalog)
 
-    def ingest_bahamut_export(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def ingest_bahamut_catalog(self, payload: dict[str, Any]) -> dict[str, Any]:
         serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-        favorite_export = parse_bahamut_export_json(serialized)
-        if not favorite_export.complete or favorite_export.warnings:
-            details = "; ".join(favorite_export.warnings) or "export marked incomplete"
+        catalog = parse_bahamut_catalog_json(serialized)
+        if not catalog.complete or catalog.warnings:
+            details = "; ".join(catalog.warnings) or "catalog marked incomplete"
             raise ValueError(
-                "Bahamut export is incomplete and cannot prove safe subtraction: "
+                "Bahamut catalog is incomplete and cannot prove safe subtraction: "
                 + details
             )
+        today = date.today()
+        expected_start_month = ((today.month - 1) // 3) * 3 + 1
+        if (catalog.quarter_year, catalog.quarter_start_month) != (
+            today.year,
+            expected_start_month,
+        ):
+            raise ValueError("Bahamut catalog does not describe the current quarter")
         with self._ingest_lock:
             write_text_atomic(
-                self.latest_bahamut_export_path,
+                self.latest_bahamut_catalog_path,
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             )
-            result = self._scan_with_export(favorite_export)
+            result = self._scan_with_catalog(catalog)
         result["automatic_sync"] = True
-        result["pages_scanned"] = favorite_export.pages_scanned
+        result["pages_scanned"] = catalog.pages_scanned
         return result
 
-    def _scan_with_export(
-        self, favorite_export: BahamutFavoritesExport | None
+    def _scan_with_catalog(
+        self, catalog: BahamutCatalogExport | None
     ) -> dict[str, Any]:
         result = CurrentQuarterScanner(BangumiClient()).scan(date.today())
         difference = None
-        if favorite_export is not None:
-            difference = subtract_bahamut_favorites(
-                result.subjects, favorite_export.favorites
-            )
+        if catalog is not None:
+            difference = subtract_bahamut_catalog(result.subjects, catalog.items)
             result = replace(result, subjects=difference.candidates)
         directory = Path(self.settings.vault_path) / self.settings.integration_folder
         output = directory / f"{result.year}-{result.quarter.start_month:02d}-动画候选.md"
@@ -154,11 +160,11 @@ class WebGUIController:
             render_candidate_markdown(
                 result,
                 bahamut_difference=difference,
-                bahamut_favorite_count=(
-                    len(favorite_export.favorites) if favorite_export is not None else 0
+                bahamut_catalog_count=(
+                    len(catalog.items) if catalog is not None else 0
                 ),
                 bahamut_exported_at=(
-                    favorite_export.exported_at if favorite_export is not None else ""
+                    catalog.exported_at if catalog is not None else ""
                 ),
             ),
         )
@@ -167,8 +173,8 @@ class WebGUIController:
             "excluded_without_japan_tag": len(result.excluded_without_japan_tag),
             "output": str(output),
             "bahamut_subtraction": "completed" if difference is not None else "not_run",
-            "bahamut_favorites": (
-                len(favorite_export.favorites) if favorite_export is not None else 0
+            "bahamut_catalog_titles": (
+                len(catalog.items) if catalog is not None else 0
             ),
             "bahamut_exact_removed": (
                 len(difference.exact_matches) if difference is not None else 0
@@ -177,7 +183,7 @@ class WebGUIController:
                 len(difference.review_matches) if difference is not None else 0
             ),
             "bahamut_export_warnings": (
-                list(favorite_export.warnings) if favorite_export is not None else []
+                list(catalog.warnings) if catalog is not None else []
             ),
         }
 
@@ -308,12 +314,12 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             html = html.replace("__ANIME_BRIDGE_TOKEN__", self.server.token)
             self._bytes(HTTPStatus.OK, html.encode("utf-8"), "text/html; charset=utf-8")
             return
-        if parsed.path == "/bahamut-export.user.js":
+        if parsed.path in {"/bahamut-catalog.user.js", "/bahamut-export.user.js"}:
             supplied = parse_qs(parsed.query).get("token", [""])[0]
             if supplied != self.server.token:
                 self._error(HTTPStatus.FORBIDDEN, "Invalid local session token")
                 return
-            helper = (WEB_ROOT / "bahamut-export.user.js").read_text(encoding="utf-8")
+            helper = (WEB_ROOT / "bahamut-catalog.user.js").read_text(encoding="utf-8")
             helper = helper.replace(
                 "__ANIME_BRIDGE_ENDPOINT__",
                 f"http://127.0.0.1:{self.server.server_port}/api/bahamut/ingest",
@@ -375,7 +381,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/status": lambda: controller.public_status(),
             "/api/settings": lambda: controller.update_settings(payload),
             "/api/scan": lambda: controller.scan_current(payload),
-            "/api/bahamut/ingest": lambda: controller.ingest_bahamut_export(payload),
+            "/api/bahamut/ingest": lambda: controller.ingest_bahamut_catalog(payload),
             "/api/obsidian/plan": lambda: controller.obsidian_plan(payload),
             "/api/obsidian/apply": lambda: controller.obsidian_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
@@ -421,6 +427,8 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
 
 
 def _smoke_test(server: AnimeBridgeWebServer) -> None:
+    if "网络胜利组" not in normalized_title_forms("網路勝利組"):
+        raise RuntimeError("Regional title dictionaries were not packaged")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     with urlopen(server.url, timeout=5) as response:
@@ -428,11 +436,11 @@ def _smoke_test(server: AnimeBridgeWebServer) -> None:
     if "Anime Bridge" not in page:
         raise RuntimeError("Web GUI page did not render")
     with urlopen(
-        f"http://127.0.0.1:{server.server_port}/bahamut-export.user.js?token={server.token}",
+        f"http://127.0.0.1:{server.server_port}/bahamut-catalog.user.js?token={server.token}",
         timeout=5,
     ) as response:
         helper = response.read().decode("utf-8")
-    if "anime-bridge-bahamut-favorites" not in helper:
+    if "anime-bridge-bahamut-current-quarter" not in helper:
         raise RuntimeError("Bahamut browser helper was not packaged")
     request = Request(
         f"http://127.0.0.1:{server.server_port}/api/status",

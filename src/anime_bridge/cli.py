@@ -15,7 +15,7 @@ from anime_bridge import __version__
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
 from anime_bridge.adapters.bahamut_html import parse_mygather_html
-from anime_bridge.adapters.bahamut_export import load_bahamut_export
+from anime_bridge.adapters.bahamut_catalog import load_bahamut_catalog
 from anime_bridge.adapters.candidate_markdown import (
     CandidateParseError,
     parse_candidate_markdown,
@@ -34,7 +34,7 @@ from anime_bridge.workflows import (
     plan_checked_import,
     plan_rss,
     RSSPlanConflict,
-    subtract_bahamut_favorites,
+    subtract_bahamut_catalog,
 )
 
 
@@ -77,10 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="identifiable User-Agent sent to Bangumi",
     )
     scan.add_argument(
+        "--bahamut-catalog",
         "--bahamut-export",
+        dest="bahamut_catalog",
         type=Path,
         default=None,
-        help="JSON exported by the logged-in Anime Bridge browser helper",
+        help="current-quarter JSON exported from Bahamut's public catalog",
     )
     parse_bahamut = subparsers.add_parser(
         "parse-bahamut-html",
@@ -197,19 +199,24 @@ def _run_scan(args: argparse.Namespace) -> int:
     scanner = CurrentQuarterScanner(BangumiClient(user_agent=args.user_agent))
     result = scanner.scan(reference_date)
     difference = None
-    favorite_export = None
-    if args.bahamut_export is not None:
-        favorite_export = load_bahamut_export(args.bahamut_export)
-        difference = subtract_bahamut_favorites(result.subjects, favorite_export.favorites)
+    catalog = None
+    if args.bahamut_catalog is not None:
+        catalog = load_bahamut_catalog(args.bahamut_catalog)
+        if (catalog.quarter_year, catalog.quarter_start_month) != (
+            result.year,
+            result.quarter.start_month,
+        ):
+            raise ValueError("Bahamut catalog does not describe the scan quarter")
+        difference = subtract_bahamut_catalog(result.subjects, catalog.items)
         result = replace(result, subjects=difference.candidates)
         print(
-            f"Bahamut export: {len(favorite_export.favorites)} favorites from "
-            f"{favorite_export.pages_scanned} page(s); removed "
+            f"Bahamut catalog: {len(catalog.items)} current-quarter title(s) from "
+            f"{catalog.pages_scanned} page(s); removed "
             f"{len(difference.exact_matches)} exact match(es); retained "
             f"{len(difference.review_matches)} fuzzy review match(es)."
         )
-        for warning in favorite_export.warnings:
-            print(f"Bahamut export warning: {warning}", file=sys.stderr)
+        for warning in catalog.warnings:
+            print(f"Bahamut catalog warning: {warning}", file=sys.stderr)
 
     output = args.output or Path("out") / (
         f"{result.year}-{result.quarter.start_month:02d}-candidates.md"
@@ -233,11 +240,9 @@ def _run_scan(args: argparse.Namespace) -> int:
         render_candidate_markdown(
             result,
             bahamut_difference=difference,
-            bahamut_favorite_count=(
-                len(favorite_export.favorites) if favorite_export is not None else 0
-            ),
+            bahamut_catalog_count=(len(catalog.items) if catalog is not None else 0),
             bahamut_exported_at=(
-                favorite_export.exported_at if favorite_export is not None else ""
+                catalog.exported_at if catalog is not None else ""
             ),
         ),
     )

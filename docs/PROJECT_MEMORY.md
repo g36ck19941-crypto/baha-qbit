@@ -1,6 +1,33 @@
 # Project memory
 
-Last updated: 2026-08-21
+Last updated: 2026-08-26
+
+## D-019 — Bahamut scope is the public current-quarter catalog
+
+- The subtraction set is every title publicly listed by Anime Crazy with a
+  displayed start month inside the current four-season quarter, not the user's
+  favorites.
+- The paired userscript reads year-sorted `animeList.php` pages without login
+  until it proves the older-quarter boundary. Any missing card metadata,
+  request failure, or page-limit exhaustion makes the export incomplete.
+- The backend rejects the old favorites schema for this workflow, cross-quarter
+  items, incorrect source paths, warnings, and incomplete exports. Fuzzy title
+  matches remain visible for human review and never auto-exclude.
+- The prior `mygather.php` parser/export modules remain only as historical
+  diagnostics; normal GUI and CLI scans no longer consume personal favorites.
+
+## D-018 — Taiwan and Hong Kong title equivalence
+
+- Cross-site matching canonicalizes every Bangumi and Bahamut title through
+  OpenCC standard Traditional, Taiwan-with-phrases, and Hong Kong conversions.
+- Bangumi infobox aliases explicitly accept Taiwan, Hong Kong, Traditional
+  Chinese, and general Chinese translated-name keys in both scripts.
+- Only exact equality after deterministic conversion or an explicit alias may
+  auto-exclude. A completely different regional translation missing from the
+  source aliases remains a review candidate; fuzzy thresholds are unchanged.
+- A read-only audit of the user's 2026 summer note and 515-title local export
+  found 13 additional exact title matches from normalization alone. This did
+  not rewrite the Vault or claim a fresh full scan.
 
 ## D-017 — Browser-helper installation guide
 

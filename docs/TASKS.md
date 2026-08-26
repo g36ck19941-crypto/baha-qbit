@@ -1,6 +1,6 @@
 # Agile task board
 
-Last updated: 2026-08-21
+Last updated: 2026-08-26
 
 ## Completed — v0.1.0
 
@@ -22,11 +22,17 @@ Last updated: 2026-08-21
   the loopback scanner without a manual file step.
 - [x] AB-010b1b Add a browser-aware, policy-safe installation guide for
   Tampermonkey and the paired automatic-sync userscript.
-- [ ] AB-010b2 Verify the exporter against the user's authenticated collection.
+- [x] AB-010b2 Superseded the authenticated-collection exporter with the public
+  current-quarter catalog workflow.
+- [x] AB-010c Add public catalog pagination, quarter-boundary proof, strict JSON
+  validation, automatic loopback handoff, and account-free setup guidance.
 - [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
+- [x] AB-011b Add deterministic Taiwan/Hong Kong title forms and regional
+  translated-name aliases without relaxing automatic-exclusion safety.
 - [x] AB-012a Implement exact-only subtraction and fuzzy-review retention.
 - [x] AB-012b1 Connect validated favorite exports to CLI/GUI seasonal difference.
-- [ ] AB-012b2 Verify the real-account difference and review retained fuzzy matches.
+- [x] AB-012b2 Removed the real-account dependency; retained fuzzy-match review
+  for the public catalog difference.
 - [x] AB-020a Parse checked candidates and plan compatible formal notes.
 - [x] AB-020b Refuse batch apply when a target exists or collides.
 - [x] AB-020c1 Add the dependency-free Obsidian desktop command shell.

@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+import re
+import unicodedata
 from typing import Any, Iterable, Mapping
 
 
@@ -200,10 +202,20 @@ def _flatten_infobox_value(value: Any) -> Iterable[str]:
 def _extract_bangumi_aliases(infobox: Any) -> tuple[str, ...]:
     if not isinstance(infobox, list):
         return ()
-    alias_keys = {"别名", "別名", "中文名", "英文名", "其它名称", "其他名称"}
+    alias_keys = {
+        "别名", "別名", "中文名", "英文名", "其它名称", "其他名称",
+        "中文译名", "中文譯名", "繁体中文名", "繁體中文名", "繁中名",
+        "台湾译名", "台灣譯名", "台湾名称", "台灣名稱", "台湾名", "台灣名",
+        "香港译名", "香港譯名", "香港名称", "香港名稱", "香港名",
+        "港台译名", "港台譯名", "台港译名", "台港譯名",
+    }
     values: list[str] = []
     for row in infobox:
-        if not isinstance(row, Mapping) or str(row.get("key") or "") not in alias_keys:
+        if not isinstance(row, Mapping):
+            continue
+        key = unicodedata.normalize("NFKC", str(row.get("key") or ""))
+        key = re.sub(r"[\s:：]+", "", key)
+        if key not in alias_keys:
             continue
         values.extend(_flatten_infobox_value(row.get("value")))
     return _unique_texts(values)

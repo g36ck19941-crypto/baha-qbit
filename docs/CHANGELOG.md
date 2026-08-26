@@ -4,6 +4,31 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Public Bahamut current-quarter catalog
+
+- Replaced personal-favorites subtraction with every Anime Crazy catalog title
+  whose displayed `YYYY/MM` falls inside the current four-season quarter.
+- Added an account-free Tampermonkey helper that scans year-sorted public
+  catalog pages until it proves the older-quarter boundary and hands validated
+  JSON directly to the loopback service.
+- Added strict catalog schema, host/path, quarter, item-date, completeness, and
+  page-limit validation. Personal-favorites JSON is not accepted by the new
+  normal workflow.
+- Preserved exact-only automatic removal, Taiwan/Hong Kong title forms, and
+  visible human review for fuzzy matches.
+
+### Taiwan and Hong Kong title matching
+
+- Added OpenCC-backed `t2s`, `tw2sp`, and `hk2s` canonical title forms for both
+  Bangumi subjects and Bahamut favorites.
+- Added explicit Bangumi infobox alias keys for Taiwan, Hong Kong, Traditional
+  Chinese, and general Chinese translated names.
+- Kept automatic subtraction exact-only and retained unrelated/fuzzy titles for
+  human review.
+- Added OpenCC data collection to the Windows build and regression cases for
+  Taiwan phrases, Hong Kong forms, explicit regional aliases, and false matches.
+- Expanded the complete source suite to 60 tests.
+
 ### Guided browser-helper installation
 
 - Added an in-app three-step installation guide for Tampermonkey, the paired

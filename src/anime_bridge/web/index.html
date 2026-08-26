@@ -60,15 +60,15 @@
           <div>
             <h2>生成候选笔记</h2>
             <p>纳入 TV、WEB、剧场版与续作；排除 OVA 和其它类型；要求 Bangumi「日本」标签。</p>
-            <p>浏览器助手检测到动画疯登录后，会自动同步收藏并直接执行本步骤。</p>
-            <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>巴哈收藏 JSON</span><input name="bahamut_export_path" placeholder="C:/Users/.../anime-bridge-bahamut-favorites.json"></label></details>
+            <p>浏览器助手会读取动画疯公开“所有动画”目录，自动同步本季度上架作品并执行差集。</p>
+            <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>动画疯当季目录 JSON</span><input name="bahamut_catalog_path" placeholder="C:/Users/.../bahamut-current-quarter.json"></label></details>
             <p class="helper-link"><button type="button" id="install-browser-helper">安装自动同步浏览器助手</button></p>
           </div>
           <button type="submit" class="primary" id="scan-button">筛选并写入候选笔记</button>
         </form>
         <div class="notice warning">
           <strong>边界说明</strong>
-          <p>助手只在已登录的动画疯页面内读取收藏，不导出密码、Cookie 或网页 HTML。首次安装后保持 Anime Bridge 运行，打开动画疯“我的动画”即可自动同步。</p>
+          <p>助手只读取动画疯公开目录中的标题、链接和上架年月，不读取账号、收藏、密码、Cookie 或网页 HTML。首次安装后保持 Anime Bridge 运行，打开“所有动画”即可自动同步。</p>
         </div>
       </section>
 
@@ -192,12 +192,12 @@
         <li>
           <strong>安装 Anime Bridge 脚本</strong>
           <p>完成上一步后返回这里，再点击下面按钮并在 Tampermonkey 中确认安装。</p>
-          <a id="open-browser-helper" class="button-link" href="/bahamut-export.user.js?token=__ANIME_BRIDGE_TOKEN__" target="_blank" rel="noopener noreferrer">继续安装自动同步脚本</a>
+          <a id="open-browser-helper" class="button-link" href="/bahamut-catalog.user.js?token=__ANIME_BRIDGE_TOKEN__" target="_blank" rel="noopener noreferrer">继续安装自动同步脚本</a>
         </li>
         <li>
-          <strong>登录并验证</strong>
-          <p>保持 Anime Bridge 运行，登录动画疯后打开“我的动画”；助手会自动同步。</p>
-          <a class="button-link" href="https://ani.gamer.com.tw/mygather.php" target="_blank" rel="noopener noreferrer">打开动画疯“我的动画”</a>
+          <strong>打开目录并验证</strong>
+          <p>保持 Anime Bridge 运行，打开动画疯“所有动画”；助手会自动同步，不要求登录。</p>
+          <a class="button-link" href="https://ani.gamer.com.tw/animeList.php" target="_blank" rel="noopener noreferrer">打开动画疯“所有动画”</a>
         </li>
       </ol>
       <div class="notice warning"><strong>需要你确认两次</strong><p>浏览器扩展和用户脚本都不能由 Anime Bridge 静默安装。</p></div>

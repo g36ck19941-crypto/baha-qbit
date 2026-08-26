@@ -79,7 +79,7 @@ function renderStatus(status) {
     row.className = "milestone";
     row.innerHTML = `<span class="index">${String(index + 1).padStart(2, "0")}</span><span></span><span class="state"></span>`;
     row.children[1].textContent = item.name;
-    const stateLabels = { ready: "已建立", bridge_ready: "助手就绪", waiting_login: "等待登录" };
+    const stateLabels = { ready: "已建立", bridge_ready: "助手就绪" };
     row.children[2].textContent = stateLabels[item.state] || item.state;
     row.children[2].classList.add(item.state);
     return row;

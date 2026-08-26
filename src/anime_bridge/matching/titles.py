@@ -11,9 +11,12 @@ import unicodedata
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from enum import Enum
+from functools import lru_cache
 from typing import Iterable
 
-from anime_bridge.domain import AnimeSubject, BahamutFavorite
+from opencc import OpenCC
+
+from anime_bridge.domain import AnimeSubject, BahamutCatalogItem
 
 
 _NON_WORD = re.compile(r"[^\w\u3040-\u30ff\u3400-\u9fff]+", re.UNICODE)
@@ -22,6 +25,25 @@ _NON_WORD = re.compile(r"[^\w\u3040-\u30ff\u3400-\u9fff]+", re.UNICODE)
 def normalize_title(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).casefold()
     return _NON_WORD.sub("", normalized).replace("_", "")
+
+
+@lru_cache(maxsize=3)
+def _converter(configuration: str) -> OpenCC:
+    return OpenCC(configuration)
+
+
+@lru_cache(maxsize=8192)
+def normalized_title_forms(value: str) -> tuple[str, ...]:
+    """Return literal plus generic, Taiwan-phrase, and Hong Kong canonical forms."""
+
+    text = unicodedata.normalize("NFKC", value).casefold()
+    candidates = (
+        text,
+        _converter("t2s").convert(text),
+        _converter("tw2sp").convert(text),
+        _converter("hk2s").convert(text),
+    )
+    return tuple(dict.fromkeys(filter(None, (normalize_title(item) for item in candidates))))
 
 
 class MatchKind(Enum):
@@ -35,7 +57,7 @@ class TitleMatch:
     kind: MatchKind
     score: float
     subject: AnimeSubject
-    favorite: BahamutFavorite | None = None
+    favorite: BahamutCatalogItem | None = None
     subject_title: str = ""
 
     @property
@@ -43,33 +65,23 @@ class TitleMatch:
         return self.kind is MatchKind.EXACT and self.favorite is not None
 
 
-def _pairs(
-    subject_titles: Iterable[str], favorites: Iterable[BahamutFavorite]
-) -> Iterable[tuple[str, str, BahamutFavorite]]:
-    for subject_title in subject_titles:
-        normalized_subject = normalize_title(subject_title)
-        if not normalized_subject:
-            continue
-        for favorite in favorites:
-            normalized_favorite = normalize_title(favorite.title)
-            if normalized_favorite:
-                yield normalized_subject, normalized_favorite, favorite
-
-
 def best_title_match(
     subject: AnimeSubject,
-    favorites: Iterable[BahamutFavorite],
+    favorites: Iterable[BahamutCatalogItem],
     review_threshold: float = 0.72,
 ) -> TitleMatch:
     best_score = 0.0
-    best_favorite: BahamutFavorite | None = None
+    best_favorite: BahamutCatalogItem | None = None
     best_subject_title = ""
 
+    favorite_forms = tuple(
+        (favorite, normalized_title_forms(favorite.title)) for favorite in favorites
+    )
     for subject_title in subject.title_variants:
-        for normalized_subject, normalized_favorite, favorite in _pairs(
-            (subject_title,), favorites
-        ):
-            if normalized_subject == normalized_favorite:
+        subject_forms = normalized_title_forms(subject_title)
+        subject_form_set = set(subject_forms)
+        for favorite, normalized_favorites in favorite_forms:
+            if subject_form_set.intersection(normalized_favorites):
                 return TitleMatch(
                     kind=MatchKind.EXACT,
                     score=1.0,
@@ -77,11 +89,15 @@ def best_title_match(
                     favorite=favorite,
                     subject_title=subject_title,
                 )
-            score = SequenceMatcher(None, normalized_subject, normalized_favorite).ratio()
-            if score > best_score:
-                best_score = score
-                best_favorite = favorite
-                best_subject_title = subject_title
+            for normalized_subject in subject_forms:
+                for normalized_favorite in normalized_favorites:
+                    score = SequenceMatcher(
+                        None, normalized_subject, normalized_favorite
+                    ).ratio()
+                    if score > best_score:
+                        best_score = score
+                        best_favorite = favorite
+                        best_subject_title = subject_title
 
     if best_favorite is not None and best_score >= review_threshold:
         return TitleMatch(

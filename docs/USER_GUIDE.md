@@ -1,4 +1,4 @@
-# User guide — v0.13.0 development
+# User guide — v0.15.0 development
 
 ## Portable Windows build
 
@@ -58,24 +58,26 @@ python launcher.py scan --date 2026-08-21 --output out/2026-07-candidates.md
 
 Use `--dry-run` to fetch and report the count without writing a file.
 
-## Connect the logged-in Bahamut browser
+## Synchronize Bahamut's public current-quarter catalog
 
-Anime Bridge does not request or store your Bahamut password or Cookie. Install
-start Anime Bridge and select **安装自动同步浏览器助手** once. The built-in
+Anime Bridge no longer reads your personal favorites and does not require a
+Bahamut login. Start Anime Bridge and select **安装自动同步浏览器助手** once. The built-in
 guide detects Edge, Chrome/Chromium, or Firefox and opens the matching official
 Tampermonkey download page. Then:
 
 1. Confirm Tampermonkey installation in the browser's own store UI.
 2. Return to the guide and select **继续安装自动同步脚本**, then confirm the
    userscript in Tampermonkey.
-3. Sign in to `https://ani.gamer.com.tw/mygather.php` and complete any visible
-   Cloudflare challenge yourself.
-4. After the collection appears, the helper reads all visible pagination and
-   sends the JSON directly to the loopback Anime Bridge service.
+3. Open `https://ani.gamer.com.tw/animeList.php`; no account login is required.
+4. The helper reads the public catalog in year order until it reaches the
+   current quarter boundary, then sends only current-quarter rows to Anime Bridge.
 5. Anime Bridge validates and retains the latest JSON internally, performs the
    current-quarter difference, and writes the candidate note automatically.
 6. If automatic sync is skipped within its six-hour cooldown, select **同步
-   Anime Bridge 收藏** in the lower-right corner to force a retry.
+   Anime Bridge 当季目录** in the lower-right corner to force a retry.
+
+If the older favorites helper is already installed, install the v0.15 helper
+from the guide and disable or remove the old **巴哈姆特收藏自动同步** userscript.
 
 Browser security requires both confirmations. Anime Bridge never changes
 enterprise policy, registry extension lists, or the browser's extension UI.
@@ -85,23 +87,30 @@ path and CLI remain only as recovery/diagnostic options:
 
 ```powershell
 python launcher.py scan `
-  --bahamut-export "C:/Users/you/Downloads/anime-bridge-bahamut-favorites-20260821.json"
+  --bahamut-catalog "C:/Users/you/Downloads/bahamut-current-quarter.json"
 ```
 
-The helper follows visible pagination links in the logged-in page, transmits only
-title/link/SN/page metadata, and records partial-page warnings. Any warning or
-incomplete page makes the seasonal scan refuse the export. It never exports
-Cookie values, passwords, or raw HTML. A persistent random pairing secret is
-kept in the local application profile and installed userscript; it is not a
-Bahamut credential and is never committed to Git. Exact normalized title matches are
+The helper transmits title, link, SN, page, and displayed `YYYY/MM` metadata.
+The JSON declares its quarter, and the backend rejects entries outside that
+quarter, personal-favorites JSON, warnings, or incomplete pagination. It never
+exports account state, Cookie values, passwords, or raw HTML. A persistent
+random pairing secret is kept in the local application profile and installed
+userscript and is never committed to Git. Exact normalized title matches are
 removed; fuzzy matches remain in the candidate note with a warning.
 
-Keep Anime Bridge running on port `18765` while opening the collection page.
+Title comparison includes literal text plus OpenCC standard-Traditional,
+Taiwan-with-regional-phrases, and Hong-Kong-to-Simplified forms. Bangumi
+infobox fields for Taiwan/Hong Kong, Traditional-Chinese, and general Chinese
+translated names are also exact aliases. A completely different regional title
+missing from Bangumi's aliases remains visible for manual review; Anime Bridge
+does not lower the fuzzy threshold or guess a silent exclusion.
+
+Keep Anime Bridge running on port `18765` while opening the catalog page.
 If another process occupies that port, close the older Anime Bridge instance
 before starting the new one; the installed helper deliberately uses a stable
 loopback address.
 
-If no export is supplied, Anime Bridge may still create a Bangumi-only preview,
+If no catalog is supplied, Anime Bridge may still create a Bangumi-only preview,
 but `bahamut_subtraction: false` makes both formal import and batch RSS refuse it.
 
 ## Offline Bahamut parser diagnostic

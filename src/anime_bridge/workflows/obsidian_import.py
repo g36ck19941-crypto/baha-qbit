@@ -32,7 +32,7 @@ def plan_checked_import(
     if not document.bahamut_subtracted:
         raise ObsidianImportConflict(
             "Import refused because this candidate note has not completed "
-            "Bahamut favorite subtraction"
+            "Bahamut current-quarter catalog subtraction"
         )
     plans: list[FormalNotePlan] = []
     seen_targets: set[str] = set()

@@ -28,25 +28,27 @@ can be replaced without changing quarter or safety rules.
 5. Write atomically so an interrupted run does not leave a partial candidate.
 
 Bangumi-only output carries an explicit warning and `bahamut_subtraction: false`.
-Formal import and batch RSS reject that state. A validated login-browser export
+Formal import and batch RSS reject that state. A validated public-catalog export
 changes the gate to true after exact-only subtraction; candidate notes remain
 tagged `anime-bridge-candidates`, not `bangumi`.
 
 ## Integration boundaries
 
-- `bahamut_export`: a userscript runs inside the user's authenticated
-  `mygather.php` browser session, follows visible pagination, and posts a
-  strictly validated JSON interchange object to the loopback service without
-  cookies, passwords, or raw HTML. A valid post is atomically retained and
-  immediately triggers the current-quarter difference. A live account sync
-  remains to be verified.
+- `bahamut_catalog`: a userscript reads the public `animeList.php` pages in
+  year order until it crosses the current quarter boundary. It posts only rows
+  whose displayed `YYYY/MM` falls inside that quarter. The backend independently
+  validates the declared quarter, item dates, host, paths, completeness, and
+  page limit before atomically retaining the JSON and running the difference.
 - `browser_helper_guide`: a static, browser-aware dialog routes Edge,
   Chrome/Chromium, and Firefox to Tampermonkey's official browser-specific page,
   then exposes the session-gated paired userscript URL. It cannot and does not
   bypass either browser confirmation or write browser management policy.
 - `bahamut_html`: retained as a pure offline diagnostic parser.
 - `TitleMatcher`: implemented deterministic aliases and confidence scores.
-  Exact normalized equality is the only automatic exclusion; AI may later
+  Each title expands into literal, OpenCC `t2s`, `tw2sp`, and `hk2s` forms;
+  flexible Bangumi infobox aliases include explicit Taiwan/Hong Kong translated
+  name fields. Exact equality across these proven forms is the only automatic
+  exclusion; AI may later
   suggest low-confidence matches but cannot silently approve them.
 - `BahamutDifference`: wired into CLI and GUI scans. Exact matches are removed;
   fuzzy review matches remain visibly annotated in the candidate list.
@@ -75,7 +77,7 @@ tagged `anime-bridge-candidates`, not `bangumi`.
 - The desktop UX is a dependency-free local web server bound to
   `127.0.0.1:18765`. A high-entropy per-process token gates the page and normal
   API calls. The userscript installer is session-gated and embeds a separate
-  persistent random pairing token; only that token authorizes favorite ingest.
+  persistent random pairing token; only that token authorizes catalog ingest.
   CSP/no-store headers reduce browser attack surface. The browser UI delegates
   to the same service layer and adds a visible dialog before write requests.
 - `app_launcher.py` is the single frozen entry point: no arguments select the

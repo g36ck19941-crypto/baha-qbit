@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 
 from anime_bridge.domain import AnimeCategory, AnimeSubject, BahamutFavorite
 from anime_bridge.renderers import render_candidate_markdown
-from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_favorites
+from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
 
 
 def anime(subject_id: int, air_date: date, category: AnimeCategory, title: str) -> AnimeSubject:
@@ -78,7 +78,7 @@ class CurrentQuarterTests(unittest.TestCase):
 
     def test_filtered_candidate_records_gate_and_review_match(self) -> None:
         original = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
-        favorites = (
+        catalog = (
             BahamutFavorite(
                 "当前季度 TV", "https://ani.gamer.com.tw/animeRef.php?sn=10", 10
             ),
@@ -88,16 +88,17 @@ class CurrentQuarterTests(unittest.TestCase):
                 30,
             ),
         )
-        difference = subtract_bahamut_favorites(original.subjects, favorites)
+        difference = subtract_bahamut_catalog(original.subjects, catalog)
         filtered = replace(original, subjects=difference.candidates)
         rendered = render_candidate_markdown(
             filtered,
             bahamut_difference=difference,
-            bahamut_favorite_count=2,
+            bahamut_catalog_count=2,
             bahamut_exported_at="2026-08-21T18:00:00Z",
         )
         self.assertIn("bahamut_subtraction: true", rendered)
         self.assertNotIn("**当前季度 TV**", rendered)
+        self.assertIn("动画疯当季目录差集已执行", rendered)
         self.assertIn("巴哈标题待人工确认", rendered)
         self.assertIn("anime-bridge:bahamut-review", rendered)
         self.assertIn("模糊匹配仍保留", rendered)
