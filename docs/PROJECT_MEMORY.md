@@ -30,6 +30,13 @@ Last updated: 2026-08-27
   a separate `*-复核.md` note containing evidence and links; no formal import or
   batch RSS path consumes that note automatically.
 
+## D-022 — Curated official Bahamut title aliases
+
+- A small, reviewable alias table covers official regional/franchise naming
+  where a Bahamut card intentionally omits a season suffix or episode subtitle.
+  It currently includes the three user-reported works and is tested as exact
+  matching; it does not turn general fuzzy similarity into automatic exclusion.
+
 ## D-019 — Bahamut scope is the public current-quarter catalog
 
 - The subtraction set is every title publicly listed by Anime Crazy with a

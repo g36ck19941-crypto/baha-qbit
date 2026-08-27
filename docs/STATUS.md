@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-27
 
+## v0.16.3.dev0 reported-title alias correction
+
+- Added tests for the three reported works. Their official Bahamut naming is
+  respectively a short regional title, a franchise card without the season
+  suffix, and a base title without the `44:CLOUDY BEACH` subtitle.
+- These now become exact matches when their Bahamut cards are present in the
+  supplied catalog; high-confidence fuzzy rows still go to `*-复核.md`.
+
 ## v0.16.2.dev0 sequel matching and review separation
 
 - Common sequel suffixes now canonicalize across Chinese, Japanese Roman

@@ -76,6 +76,22 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual([item.subject for item in result.exact_matches], [anime])
         self.assertEqual(result.review_matches, ())
 
+    def test_cross_site_aliases_match_three_reported_bahamut_titles(self) -> None:
+        subjects = (
+            subject(9, "超超超超超喜欢你的100个女朋友 第三季", "君のことが大大大大大好きな100人の彼女 第3期"),
+            subject(10, "靠死亡游戏混饭吃。 44:CLOUDY BEACH", "死亡遊戯で飯を食う。 44:CLOUDY BEACH"),
+            subject(11, "恶女不才，请多关照 ～雏宫蝶鼠换身传～", "ふつつかな悪女ではございますが ～雛宮蝶鼠とりかえ伝～"),
+        )
+        items = (
+            BahamutCatalogItem("超超超超超喜歡你的 100 個女朋友", "https://ani.gamer.com.tw/animeRef.php?sn=21", 21),
+            BahamutCatalogItem("靠死亡遊戲混飯吃。", "https://ani.gamer.com.tw/animeRef.php?sn=22", 22),
+            BahamutCatalogItem("我是不才惡女", "https://ani.gamer.com.tw/animeRef.php?sn=23", 23),
+        )
+        result = subtract_bahamut_catalog(subjects, items)
+        self.assertEqual([match.subject.bangumi_id for match in result.exact_matches], [9, 10, 11])
+        self.assertEqual(result.candidates, ())
+        self.assertEqual(result.review_matches, ())
+
     def test_exact_match_is_subtracted_and_unmatched_remains(self) -> None:
         collected = subject(3, "已收藏动画", "収集済み")
         remaining = subject(4, "完全不同的作品", "まったく別の作品")

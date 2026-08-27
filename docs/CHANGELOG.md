@@ -4,6 +4,13 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Additional Bahamut regional and franchise aliases
+
+- Added curated official-title equivalences for `我是不才惡女`,
+  `超超超超超喜歡你的 100 個女朋友`, and `靠死亡遊戲混飯吃。` so season
+  suffixes and episode subtitles do not prevent exact subtraction when the
+  Bahamut franchise card uses a shorter title.
+
 ### Sequel matching and separate fuzzy-review note
 
 - Canonicalized common sequel suffixes such as `Ⅱ`, `第二季`, `2nd Season`,

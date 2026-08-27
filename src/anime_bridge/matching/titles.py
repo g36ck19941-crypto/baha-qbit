@@ -25,6 +25,19 @@ _SEQUEL_SUFFIXES = (
     (re.compile(r"(?:第三季|第3季|3rdseason|season3|iii)$"), "3"),
     (re.compile(r"(?:第四季|第4季|4thseason|season4|iv)$"), "4"),
 )
+_SEQUEL_BASE_SUFFIX = re.compile(
+    r"(?:第二季|第三季|第四季|第[234]期|第[234]季|2ndseason|3rdseason|4thseason|season[234]|ii|iii|iv)$"
+)
+_COLON_SUBTITLE = re.compile(
+    r"^(.+?)(?:\s+\d+)?\s*:[a-z0-9][a-z0-9 _-]*$", re.IGNORECASE
+)
+_CURATED_ALIAS_GROUPS = (
+    (
+        "我是不才恶女",
+        "恶女不才，请多关照 ～雏宫蝶鼠换身传～",
+        "ふつつかな悪女ではございますが ～雛宮蝶鼠とりかえ伝～",
+    ),
+)
 
 
 def normalize_title(value: str) -> str:
@@ -37,6 +50,9 @@ def _sequel_forms(normalized: str) -> tuple[str, ...]:
     for suffix, replacement in _SEQUEL_SUFFIXES:
         if suffix.search(normalized):
             forms.append(suffix.sub(replacement, normalized))
+    base = _SEQUEL_BASE_SUFFIX.sub("", normalized)
+    if base != normalized and base:
+        forms.append(base)
     return tuple(dict.fromkeys(forms))
 
 
@@ -57,7 +73,16 @@ def normalized_title_forms(value: str) -> tuple[str, ...]:
         _converter("hk2s").convert(text),
     )
     normalized = tuple(dict.fromkeys(filter(None, (normalize_title(item) for item in candidates))))
-    return tuple(dict.fromkeys(form for item in normalized for form in _sequel_forms(item)))
+    forms = {form for item in normalized for form in _sequel_forms(item)}
+    for item in candidates:
+        match = _COLON_SUBTITLE.match(unicodedata.normalize("NFKC", item).casefold().strip())
+        if match:
+            forms.add(normalize_title(match.group(1)))
+    for group in _CURATED_ALIAS_GROUPS:
+        group_forms = {normalize_title(item) for item in group}
+        if forms.intersection(group_forms):
+            forms.update(group_forms)
+    return tuple(dict.fromkeys(form for form in forms if form))
 
 
 class MatchKind(Enum):
