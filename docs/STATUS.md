@@ -1,6 +1,27 @@
 # Project status
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
+
+## v0.16.0.dev0 direct public-catalog retrieval milestone
+
+- Normal GUI and CLI scans now request the public year-sorted Anime Crazy
+  catalog directly; opening Bahamut or installing the helper is no longer part
+  of the normal path.
+- Retrieval is restricted to the official HTTPS host, bounded to 20 pages and
+  5 MiB per page, and must prove a complete older-quarter boundary before any
+  subtraction is accepted.
+- The optional browser fallback now avoids the reported first-page HTTP 403 by
+  parsing the rendered catalog page and reusing the same-origin browser session
+  for later pages. It never sends Cookie values to Anime Bridge.
+- Full source regression: 70 tests passed. Python compilation and both browser
+  helper/application JavaScript syntax checks passed.
+- A read-only live backend run on 2026-08-27 retrieved 45 titles for the
+  2026-07 quarter and proved the boundary on page 2 without opening a browser.
+  This does not guarantee every network: HTTP 403/Cloudflare remains an explicit
+  browser-fallback case, with no bypass or false completeness claim.
+- The 21.6 MB frozen EXE reports `0.16.0.dev0` and passes its packaged GUI,
+  catalog-helper, and OpenCC smoke test using a workspace-local extraction
+  directory. Normal double-click extraction was not reasserted in the sandbox.
 
 ## v0.15.0.dev0 public current-quarter catalog milestone
 

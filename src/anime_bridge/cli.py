@@ -15,7 +15,7 @@ from anime_bridge import __version__
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
 from anime_bridge.adapters.bahamut_html import parse_mygather_html
-from anime_bridge.adapters.bahamut_catalog import load_bahamut_catalog
+from anime_bridge.adapters.bahamut_catalog import BahamutCatalogClient, load_bahamut_catalog
 from anime_bridge.adapters.candidate_markdown import (
     CandidateParseError,
     parse_candidate_markdown,
@@ -83,6 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="current-quarter JSON exported from Bahamut's public catalog",
+    )
+    scan.add_argument(
+        "--skip-bahamut-catalog",
+        action="store_true",
+        help="diagnostic only: create a gated Bangumi-only preview",
     )
     parse_bahamut = subparsers.add_parser(
         "parse-bahamut-html",
@@ -196,12 +201,17 @@ def _qbit_client(args: argparse.Namespace) -> QBittorrentClient:
 
 def _run_scan(args: argparse.Namespace) -> int:
     reference_date = args.date or date.today()
+    if args.skip_bahamut_catalog and args.bahamut_catalog is not None:
+        raise ValueError("--skip-bahamut-catalog cannot be combined with --bahamut-catalog")
     scanner = CurrentQuarterScanner(BangumiClient(user_agent=args.user_agent))
     result = scanner.scan(reference_date)
     difference = None
     catalog = None
-    if args.bahamut_catalog is not None:
+    if not args.skip_bahamut_catalog and args.bahamut_catalog is not None:
         catalog = load_bahamut_catalog(args.bahamut_catalog)
+    elif not args.skip_bahamut_catalog:
+        catalog = BahamutCatalogClient().fetch_current_quarter(reference_date)
+    if catalog is not None:
         if (catalog.quarter_year, catalog.quarter_start_month) != (
             result.year,
             result.quarter.start_month,

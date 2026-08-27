@@ -1,5 +1,26 @@
 # Demonstration record
 
+## v0.16.0.dev0 direct catalog retrieval and 403 fallback
+
+- A read-only live backend request on 2026-08-27 fetched 45 Anime Crazy titles
+  for the 2026-07 quarter and stopped after page 2 proved the older-quarter
+  boundary. No browser, login, Cookie, Obsidian write, or qBittorrent write was
+  involved.
+- Contract tests cover public-page parsing, bounded pagination, incomplete-card
+  refusal, and unproven-boundary refusal. HTTP tests prove a normal GUI scan
+  invokes the direct client without browser handoff.
+- The fallback userscript now reads the rendered first `sort=1&page=1` document
+  and uses the same-origin browser session for later pages; static assertions
+  prevent regression to the user-observed `credentials: omit` HTTP 403 path.
+- Full source regression: 70 tests passed; Python compilation and both browser
+  JavaScript syntax checks passed.
+- Frozen verification: `anime-bridge.exe --version` reported `0.16.0.dev0`, and
+  GUI smoke verified the embedded helper, OpenCC data, and local status API. A
+  workspace-local temporary directory was used because normal sandbox temporary
+  extraction is not a valid double-click baseline.
+- Live success is one environment-specific observation, not a guarantee that
+  Anime Crazy will never return HTTP 403 or Cloudflare verification elsewhere.
+
 ## v0.15.0.dev0 public current-quarter catalog
 
 - Contract tests accept deduplicated public catalog rows and reject the old

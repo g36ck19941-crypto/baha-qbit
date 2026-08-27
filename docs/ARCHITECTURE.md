@@ -34,11 +34,14 @@ tagged `anime-bridge-candidates`, not `bangumi`.
 
 ## Integration boundaries
 
-- `bahamut_catalog`: a userscript reads the public `animeList.php` pages in
-  year order until it crosses the current quarter boundary. It posts only rows
-  whose displayed `YYYY/MM` falls inside that quarter. The backend independently
-  validates the declared quarter, item dates, host, paths, completeness, and
-  page limit before atomically retaining the JSON and running the difference.
+- `bahamut_catalog`: the backend normally reads public `animeList.php` pages
+  directly from the official HTTPS host in year order until it proves the older
+  quarter boundary. Requests have host, redirect, size, timeout, and page bounds;
+  incomplete card metadata or unexpected ordering refuses subtraction. A
+  session-aware userscript is retained only as an HTTP 403/Cloudflare fallback:
+  it parses the rendered first page, fetches later same-origin pages, and posts
+  public metadata rather than Cookie or account state. The backend independently
+  validates either path's quarter, dates, host, paths, and completeness.
 - `browser_helper_guide`: a static, browser-aware dialog routes Edge,
   Chrome/Chromium, and Firefox to Tampermonkey's official browser-specific page,
   then exposes the session-gated paired userscript URL. It cannot and does not

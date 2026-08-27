@@ -20,6 +20,7 @@ from urllib.request import Request, urlopen
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
 from anime_bridge.adapters.bahamut_catalog import (
+    BahamutCatalogClient,
     BahamutCatalogExport,
     load_bahamut_catalog,
     parse_bahamut_catalog_json,
@@ -72,13 +73,13 @@ class WebGUIController:
             "version": __version__,
             "settings": self.settings_dict(),
             "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
-            "bahamut_auto_sync": {
-                "configured": True,
-                "has_export": self.latest_bahamut_catalog_path.is_file(),
+            "bahamut_catalog": {
+                "direct_fetch": True,
+                "has_browser_fallback": self.latest_bahamut_catalog_path.is_file(),
             },
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
-                {"name": "动画疯公开当季目录同步", "state": "bridge_ready"},
+                {"name": "动画疯公开目录自动获取", "state": "ready"},
                 {"name": "Obsidian 入库核心", "state": "ready"},
                 {"name": "qBittorrent RSS 核心", "state": "ready"},
                 {"name": "GitHub 私有远端", "state": "ready"},
@@ -112,11 +113,10 @@ class WebGUIController:
     def scan_current(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         payload = payload or {}
         catalog_path_text = str(payload.get("bahamut_catalog_path") or "").strip()
-        catalog = None
         if catalog_path_text:
             catalog = load_bahamut_catalog(Path(catalog_path_text))
-        elif self.latest_bahamut_catalog_path.is_file():
-            catalog = load_bahamut_catalog(self.latest_bahamut_catalog_path)
+        else:
+            catalog = BahamutCatalogClient().fetch_current_quarter(date.today())
         return self._scan_with_catalog(catalog)
 
     def ingest_bahamut_catalog(self, payload: dict[str, Any]) -> dict[str, Any]:

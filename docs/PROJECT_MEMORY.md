@@ -1,6 +1,21 @@
 # Project memory
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
+
+## D-020 — Direct catalog retrieval is default; browser helper is fallback
+
+- GUI and CLI scans fetch `animeList.php` directly from the official HTTPS host
+  by default. Users do not open Bahamut or install Tampermonkey for the normal
+  path, and no account state is needed.
+- The client uses only year-sort and page parameters, enforces host redirects,
+  size/page bounds, complete card metadata, descending dates, and proof of the
+  older-quarter boundary. Any uncertainty refuses subtraction.
+- Anime Crazy can reject non-browser traffic with HTTP 403 or Cloudflare. The
+  app reports this honestly; it does not automate CAPTCHA or import browser
+  cookies. The optional helper is the recovery path.
+- After a user-observed first-page 403, helper v0.4 reads the rendered first
+  `animeList.php` document and requests later pages with the same-origin browser
+  session. Only parsed public metadata is posted to the loopback service.
 
 ## D-019 — Bahamut scope is the public current-quarter catalog
 

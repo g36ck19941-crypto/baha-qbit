@@ -1,4 +1,4 @@
-# User guide — v0.15.0 development
+# User guide — v0.16.0 development
 
 ## Portable Windows build
 
@@ -61,29 +61,37 @@ Use `--dry-run` to fetch and report the count without writing a file.
 ## Synchronize Bahamut's public current-quarter catalog
 
 Anime Bridge no longer reads your personal favorites and does not require a
-Bahamut login. Start Anime Bridge and select **安装自动同步浏览器助手** once. The built-in
-guide detects Edge, Chrome/Chromium, or Firefox and opens the matching official
-Tampermonkey download page. Then:
+Bahamut login. In the normal workflow, select **扫描当季差集**: Anime Bridge
+directly reads the public year-sorted catalog, proves the current-quarter page
+boundary, and subtracts those titles. You do not need to open Bahamut or install
+Tampermonkey.
+
+Anime Crazy may return HTTP 403 or a Cloudflare verification page to a local
+non-browser client. Anime Bridge reports that failure instead of accepting an
+incomplete catalog. Only then use **安装备用浏览器助手**. The guide detects Edge,
+Chrome/Chromium, or Firefox and opens the matching official Tampermonkey page:
 
 1. Confirm Tampermonkey installation in the browser's own store UI.
 2. Return to the guide and select **继续安装自动同步脚本**, then confirm the
    userscript in Tampermonkey.
 3. Open `https://ani.gamer.com.tw/animeList.php`; no account login is required.
-4. The helper reads the public catalog in year order until it reaches the
+4. Helper v0.4 reads the already rendered first page, then uses the browser's
+   same-origin session for later public catalog pages until it reaches the
    current quarter boundary, then sends only current-quarter rows to Anime Bridge.
 5. Anime Bridge validates and retains the latest JSON internally, performs the
    current-quarter difference, and writes the candidate note automatically.
 6. If automatic sync is skipped within its six-hour cooldown, select **同步
    Anime Bridge 当季目录** in the lower-right corner to force a retry.
 
-If the older favorites helper is already installed, install the v0.15 helper
-from the guide and disable or remove the old **巴哈姆特收藏自动同步** userscript.
+If an older catalog/favorites helper is installed, reinstall the helper from
+the v0.16 guide and disable or remove the old script. This update is required
+for the first-page HTTP 403 fix.
 
 Browser security requires both confirmations. Anime Bridge never changes
 enterprise policy, registry extension lists, or the browser's extension UI.
 
-No file selection is required in the normal workflow. The advanced manual JSON
-path and CLI remain only as recovery/diagnostic options:
+No file selection or browser is required in the normal workflow. The advanced
+manual JSON path and CLI remain recovery/diagnostic options:
 
 ```powershell
 python launcher.py scan `

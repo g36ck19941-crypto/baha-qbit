@@ -3,10 +3,17 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
+from datetime import date, datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from typing import Mapping, Protocol
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
+from urllib.request import Request, urlopen
 
+from anime_bridge import __version__
 from anime_bridge.domain import BahamutCatalogItem
 
 
@@ -15,6 +22,142 @@ SCHEMA_VERSION = 1
 MAX_EXPORT_BYTES = 5 * 1024 * 1024
 _ALLOWED_HOST = "ani.gamer.com.tw"
 _QUARTER_START_MONTHS = {1, 4, 7, 10}
+_PAGE_BYTE_LIMIT = 5 * 1024 * 1024
+_DATE_PATTERN = re.compile(r"(20\d{2})\s*[/／-]\s*(\d{1,2})")
+
+
+class BahamutCatalogError(RuntimeError):
+    """A public catalog request or completeness failure."""
+
+
+class TextTransport(Protocol):
+    def get_text(
+        self,
+        url: str,
+        headers: Mapping[str, str],
+        timeout_seconds: float,
+    ) -> str: ...
+
+
+class UrlLibTextTransport:
+    def get_text(
+        self,
+        url: str,
+        headers: Mapping[str, str],
+        timeout_seconds: float,
+    ) -> str:
+        request = Request(url, headers=dict(headers), method="GET")
+        try:
+            with urlopen(request, timeout=timeout_seconds) as response:
+                final_url = response.geturl()
+                if urlparse(final_url).hostname != _ALLOWED_HOST:
+                    raise BahamutCatalogError("Bahamut catalog redirected outside its host")
+                raw = response.read(_PAGE_BYTE_LIMIT + 1)
+        except HTTPError as exc:
+            raise BahamutCatalogError(
+                f"Bahamut catalog returned HTTP {exc.code}; use the browser-helper fallback"
+            ) from exc
+        except (URLError, TimeoutError) as exc:
+            reason = getattr(exc, "reason", str(exc))
+            raise BahamutCatalogError(
+                f"Unable to reach Bahamut catalog ({reason}); use the browser-helper fallback"
+            ) from exc
+        if len(raw) > _PAGE_BYTE_LIMIT:
+            raise BahamutCatalogError("Bahamut catalog page exceeds the 5 MiB safety limit")
+        try:
+            return raw.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise BahamutCatalogError(
+                "Bahamut catalog returned invalid UTF-8; use the browser-helper fallback"
+            ) from exc
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedCatalogPage:
+    items: tuple[BahamutCatalogItem, ...]
+    visible_cards: int
+
+
+class _CatalogHTMLParser(HTMLParser):
+    def __init__(self, page: int) -> None:
+        super().__init__(convert_charrefs=True)
+        self.page = page
+        self.stack: list[tuple[str, frozenset[str]]] = []
+        self.current: dict[str, object] | None = None
+        self.item_depth = 0
+        self.visible_cards = 0
+        self.items: list[BahamutCatalogItem] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = {key: value or "" for key, value in attrs}
+        classes = frozenset(attributes.get("class", "").split())
+        self.stack.append((tag, classes))
+        if self.current is None and tag == "a" and "theme-list-main" in classes:
+            self.visible_cards += 1
+            self.current = {
+                "href": attributes.get("href", ""),
+                "name": [],
+                "time": [],
+            }
+            self.item_depth = len(self.stack)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        return
+
+    def handle_data(self, data: str) -> None:
+        if self.current is None or not data.strip():
+            return
+        active_classes = {name for _, classes in self.stack for name in classes}
+        if "theme-name" in active_classes:
+            self.current["name"].append(data)  # type: ignore[union-attr]
+        if "theme-time" in active_classes:
+            self.current["time"].append(data)  # type: ignore[union-attr]
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self.stack:
+            return
+        matching = next(
+            (index for index in range(len(self.stack) - 1, -1, -1) if self.stack[index][0] == tag),
+            None,
+        )
+        if matching is None:
+            return
+        closes_item = self.current is not None and matching < self.item_depth
+        self.stack = self.stack[:matching]
+        if closes_item:
+            self._finish_item()
+
+    def _finish_item(self) -> None:
+        assert self.current is not None
+        title = " ".join("".join(self.current["name"]).split())  # type: ignore[arg-type]
+        time_text = " ".join("".join(self.current["time"]).split())  # type: ignore[arg-type]
+        match = _DATE_PATTERN.search(time_text)
+        href = urljoin("https://ani.gamer.com.tw/", str(self.current["href"]))
+        parsed = urlparse(href)
+        if title and match and parsed.hostname == _ALLOWED_HOST and parsed.path == "/animeRef.php":
+            values = parse_qs(parsed.query).get("sn") or []
+            sn = int(values[-1]) if values and values[-1].isdigit() else None
+            self.items.append(
+                BahamutCatalogItem(
+                    title=title,
+                    href=href,
+                    sn=sn,
+                    page=self.page,
+                    year=int(match.group(1)),
+                    month=int(match.group(2)),
+                )
+            )
+        self.current = None
+        self.item_depth = 0
+
+
+def parse_bahamut_catalog_page(html: str, page: int) -> ParsedCatalogPage:
+    parser = _CatalogHTMLParser(page)
+    parser.feed(html)
+    parser.close()
+    if parser.current is not None:
+        parser._finish_item()
+    return ParsedCatalogPage(tuple(parser.items), parser.visible_cards)
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +170,102 @@ class BahamutCatalogExport:
     pages_scanned: int
     complete: bool
     warnings: tuple[str, ...] = ()
+
+
+@dataclass(slots=True)
+class BahamutCatalogClient:
+    """Fetch the public year-sorted catalog without browser or account state."""
+
+    base_url: str = "https://ani.gamer.com.tw/animeList.php"
+    user_agent: str = (
+        f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        f"AppleWebKit/537.36 Chrome/135 Safari/537.36 AnimeBridge/{__version__}"
+    )
+    timeout_seconds: float = 20.0
+    max_pages: int = 20
+    transport: TextTransport | None = None
+
+    def __post_init__(self) -> None:
+        parsed = urlparse(self.base_url)
+        if parsed.scheme != "https" or parsed.hostname != _ALLOWED_HOST:
+            raise ValueError("Bahamut catalog base_url must use the official HTTPS host")
+        if not 1 <= self.max_pages <= 50:
+            raise ValueError("max_pages must be between 1 and 50")
+        if self.transport is None:
+            self.transport = UrlLibTextTransport()
+
+    def page_url(self, page: int) -> str:
+        return f"{self.base_url}?{urlencode({'sort': 1, 'page': page})}"
+
+    def fetch_current_quarter(self, reference_date: date | None = None) -> BahamutCatalogExport:
+        reference = reference_date or date.today()
+        start_month = ((reference.month - 1) // 3) * 3 + 1
+        start_key = reference.year * 12 + start_month
+        end_key = start_key + 3
+        collected: dict[tuple[str, str], BahamutCatalogItem] = {}
+        previous_key: int | None = None
+        pages_scanned = 0
+        boundary_reached = False
+
+        for page in range(1, self.max_pages + 1):
+            assert self.transport is not None
+            html = self.transport.get_text(
+                self.page_url(page),
+                {
+                    "Accept": "text/html,application/xhtml+xml",
+                    "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.7",
+                    "Referer": "https://ani.gamer.com.tw/",
+                    "User-Agent": self.user_agent,
+                },
+                self.timeout_seconds,
+            )
+            parsed_page = parse_bahamut_catalog_page(html, page)
+            pages_scanned += 1
+            if parsed_page.visible_cards != len(parsed_page.items):
+                raise BahamutCatalogError(
+                    f"Bahamut catalog page {page} contains incomplete card metadata; "
+                    "use the browser-helper fallback"
+                )
+            if not parsed_page.items:
+                if page == 1:
+                    raise BahamutCatalogError(
+                        "Bahamut catalog page structure was not recognized; "
+                        "use the browser-helper fallback"
+                    )
+                boundary_reached = True
+                break
+
+            for item in parsed_page.items:
+                assert item.year is not None and item.month is not None
+                key = item.year * 12 + item.month
+                if previous_key is not None and key > previous_key:
+                    raise BahamutCatalogError(
+                        "Bahamut catalog is not in descending year order; "
+                        "safe quarter completion cannot be proven"
+                    )
+                previous_key = key
+                if start_key <= key < end_key:
+                    collected.setdefault((item.title, item.href), item)
+            if any(
+                (item.year or 0) * 12 + (item.month or 0) < start_key
+                for item in parsed_page.items
+            ):
+                boundary_reached = True
+                break
+
+        if not boundary_reached:
+            raise BahamutCatalogError(
+                f"Bahamut catalog did not reach the quarter boundary within {self.max_pages} pages"
+            )
+        return BahamutCatalogExport(
+            items=tuple(collected.values()),
+            exported_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            source_url=self.page_url(1),
+            quarter_year=reference.year,
+            quarter_start_month=start_month,
+            pages_scanned=pages_scanned,
+            complete=True,
+        )
 
 
 def _required_text(value: object, field: str, *, max_length: int = 500) -> str:

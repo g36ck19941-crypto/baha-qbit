@@ -4,6 +4,22 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Direct Bahamut catalog retrieval and 403-safe fallback
+
+- Made the GUI and CLI fetch the public current-quarter Anime Crazy catalog
+  directly by default, so the normal scan does not require opening Bahamut or
+  installing Tampermonkey.
+- Added bounded official-host HTTP retrieval, page parsing, descending-date and
+  quarter-boundary proof, and refusal of incomplete or changed page structures.
+- Reduced catalog requests to the year-sort and page parameters and added
+  ordinary browser-language and referrer headers; no Cookie or account state is
+  read or stored.
+- Fixed the optional Tampermonkey fallback after a user-observed HTTP 403: it
+  parses the already rendered first catalog page and uses the same-origin
+  browser session for later pages without exporting Cookie values.
+- Kept 403, Cloudflare, network, and decoding failures visible. Anime Bridge
+  does not bypass CAPTCHA or silently treat a partial catalog as complete.
+
 ### Public Bahamut current-quarter catalog
 
 - Replaced personal-favorites subtraction with every Anime Crazy catalog title

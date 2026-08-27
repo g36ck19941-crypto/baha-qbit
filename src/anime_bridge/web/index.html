@@ -60,15 +60,15 @@
           <div>
             <h2>生成候选笔记</h2>
             <p>纳入 TV、WEB、剧场版与续作；排除 OVA 和其它类型；要求 Bangumi「日本」标签。</p>
-            <p>浏览器助手会读取动画疯公开“所有动画”目录，自动同步本季度上架作品并执行差集。</p>
+            <p>Anime Bridge 会自行获取动画疯公开“所有动画”分页，筛选本季度上架作品并执行差集，无需打开动画疯。</p>
             <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>动画疯当季目录 JSON</span><input name="bahamut_catalog_path" placeholder="C:/Users/.../bahamut-current-quarter.json"></label></details>
-            <p class="helper-link"><button type="button" id="install-browser-helper">安装自动同步浏览器助手</button></p>
+            <p class="helper-link"><button type="button" id="install-browser-helper">安装备用浏览器助手</button></p>
           </div>
           <button type="submit" class="primary" id="scan-button">筛选并写入候选笔记</button>
         </form>
         <div class="notice warning">
           <strong>边界说明</strong>
-          <p>助手只读取动画疯公开目录中的标题、链接和上架年月，不读取账号、收藏、密码、Cookie 或网页 HTML。首次安装后保持 Anime Bridge 运行，打开“所有动画”即可自动同步。</p>
+          <p>默认请求失败时，界面会明确报错；此时才需要备用助手。两种方式都只处理公开目录中的标题、链接和上架年月，不读取账号、收藏、密码或 Cookie。</p>
         </div>
       </section>
 
@@ -181,7 +181,7 @@
   <dialog id="browser-helper-dialog">
     <form method="dialog" class="helper-guide">
       <p class="eyebrow">BROWSER SETUP</p>
-      <h2>安装自动同步浏览器助手</h2>
+      <h2>安装备用浏览器助手</h2>
       <p>检测到：<strong id="detected-browser">正在判断浏览器</strong></p>
       <ol>
         <li>
@@ -196,8 +196,8 @@
         </li>
         <li>
           <strong>打开目录并验证</strong>
-          <p>保持 Anime Bridge 运行，打开动画疯“所有动画”；助手会自动同步，不要求登录。</p>
-          <a class="button-link" href="https://ani.gamer.com.tw/animeList.php" target="_blank" rel="noopener noreferrer">打开动画疯“所有动画”</a>
+          <p>仅在 Anime Bridge 直接获取失败时使用：保持程序运行，打开动画疯“所有动画”；助手会同步公开目录，不要求登录。</p>
+          <a class="button-link" href="https://ani.gamer.com.tw/animeList.php?sort=1&amp;page=1" target="_blank" rel="noopener noreferrer">打开动画疯“所有动画”</a>
         </li>
       </ol>
       <div class="notice warning"><strong>需要你确认两次</strong><p>浏览器扩展和用户脚本都不能由 Anime Bridge 静默安装。</p></div>

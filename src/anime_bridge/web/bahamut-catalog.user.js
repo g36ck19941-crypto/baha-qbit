@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Anime Bridge - 動畫瘋當季目錄同步
 // @namespace    https://github.com/g36ck19941-crypto/baha-qbit
-// @version      0.3.0
+// @version      0.4.0
 // @description  從動畫瘋公開「所有動畫」目錄同步本季度上架作品；不讀取帳號、Cookie 或收藏。
 // @match        https://ani.gamer.com.tw/
 // @match        https://ani.gamer.com.tw/animeList.php*
@@ -30,17 +30,28 @@
 
   function catalogPageUrl(page) {
     const url = new URL("/animeList.php", location.origin);
-    url.searchParams.set("category", "全部");
     url.searchParams.set("sort", "1");
-    url.searchParams.set("tags", "全部");
-    url.searchParams.set("target", "全部");
     url.searchParams.set("page", String(page));
     return url.href;
   }
 
+  function isFirstCatalogPage() {
+    const params = new URLSearchParams(location.search);
+    return location.pathname === "/animeList.php"
+      && params.get("sort") === "1"
+      && (params.get("page") === null || params.get("page") === "1");
+  }
+
   async function readPage(page) {
+    if (
+      page === 1
+      && isFirstCatalogPage()
+      && document.querySelector(".theme-list-main")
+    ) {
+      return document;
+    }
     const response = await fetch(catalogPageUrl(page), {
-      credentials: "omit",
+      credentials: "include",
       redirect: "follow",
       headers: { Accept: "text/html" },
     });
@@ -168,6 +179,11 @@
   });
 
   async function synchronize({ manual = false } = {}) {
+    if (!isFirstCatalogPage()) {
+      button.textContent = "打开所有动画后同步";
+      if (manual) location.assign(catalogPageUrl(1));
+      return;
+    }
     button.disabled = true;
     button.textContent = "正在讀取公開當季目錄…";
     try {

@@ -1,6 +1,6 @@
 # Agile task board
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 ## Completed — v0.1.0
 
@@ -26,6 +26,8 @@ Last updated: 2026-08-26
   current-quarter catalog workflow.
 - [x] AB-010c Add public catalog pagination, quarter-boundary proof, strict JSON
   validation, automatic loopback handoff, and account-free setup guidance.
+- [x] AB-010d Make bounded backend catalog retrieval the normal GUI/CLI path;
+  retain a session-aware browser helper only for explicit HTTP 403 fallback.
 - [x] AB-011 Add title normalization, Bangumi aliases, and confidence scoring.
 - [x] AB-011b Add deterministic Taiwan/Hong Kong title forms and regional
   translated-name aliases without relaxing automatic-exclusion safety.

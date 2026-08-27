@@ -10,6 +10,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from anime_bridge.adapters.bahamut_catalog import parse_bahamut_catalog_json
 from anime_bridge.gui import AnimeBridgeWebServer, WebGUIController
 
 
@@ -101,6 +102,12 @@ class WebGUITests(unittest.TestCase):
         self.assertIn("quarter_start_month", helper)
         self.assertIn(".theme-time", helper)
         self.assertIn("GM_xmlhttpRequest", helper)
+        self.assertIn("isFirstCatalogPage()", helper)
+        self.assertIn('params.get("sort") === "1"', helper)
+        self.assertIn('document.querySelector(".theme-list-main")', helper)
+        self.assertIn('credentials: "include"', helper)
+        self.assertNotIn('credentials: "omit"', helper)
+        self.assertIn("animeList.php?sort=1&amp;page=1", page)
         self.assertIn(f"127.0.0.1:{self.server.server_port}/api/bahamut/ingest", helper)
         self.assertIn(self.server.controller.browser_bridge_token, helper)
         self.assertNotIn("__ANIME_BRIDGE_BRIDGE_TOKEN__", helper)
@@ -138,6 +145,23 @@ class WebGUITests(unittest.TestCase):
             self.server.controller.latest_bahamut_catalog_path.read_text(encoding="utf-8")
         )
         self.assertEqual(saved["items"][0]["sn"], 123)
+
+    def test_normal_scan_fetches_public_catalog_without_browser_handoff(self):
+        catalog = parse_bahamut_catalog_json(json.dumps(current_catalog_payload()))
+        expected_scan = {"count": 3, "output": "candidate.md"}
+        with (
+            patch("anime_bridge.gui.BahamutCatalogClient") as client_type,
+            patch.object(
+                self.server.controller,
+                "_scan_with_catalog",
+                return_value=expected_scan.copy(),
+            ) as scan,
+        ):
+            client_type.return_value.fetch_current_quarter.return_value = catalog
+            result = self.post("/api/scan", {})
+        self.assertTrue(result["ok"])
+        client_type.return_value.fetch_current_quarter.assert_called_once_with(date.today())
+        scan.assert_called_once_with(catalog)
 
     def test_browser_bridge_refuses_incomplete_export(self):
         payload = current_catalog_payload(complete=False)
