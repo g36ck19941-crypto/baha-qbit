@@ -1,5 +1,14 @@
 # Demonstration record
 
+## v0.16.1.dev0 cross-site date-drift correction
+
+- Live HTML inspection found `THE WORLD IS DANCING 世界在起舞` on the official
+  Bahamut catalog with display month `2026/06`, while its Bangumi subject starts
+  `2026-07-02`. The one-month boundary carry-in now keeps that card available
+  for exact current-quarter matching.
+- Full source regression after the fix: 71 tests passed; JavaScript syntax
+  checks passed.
+
 ## v0.16.0.dev0 direct catalog retrieval and 403 fallback
 
 - A read-only live backend request on 2026-08-27 fetched 45 Anime Crazy titles

@@ -17,6 +17,9 @@ All notable changes are recorded here. The project follows semantic versioning.
 - Fixed the optional Tampermonkey fallback after a user-observed HTTP 403: it
   parses the already rendered first catalog page and uses the same-origin
   browser session for later pages without exporting Cookie values.
+- Added a one-month boundary carry-in because Bahamut's catalog display month
+  can precede Bangumi's first-air month; this keeps entries such as `2026/06`
+  for a Bangumi `2026-07-02` title available for exact matching.
 - Kept 403, Cloudflare, network, and decoding failures visible. Anime Bridge
   does not bypass CAPTCHA or silently treat a partial catalog as complete.
 

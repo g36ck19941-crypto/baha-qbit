@@ -91,11 +91,20 @@ class BahamutCatalogTests(unittest.TestCase):
         result = BahamutCatalogClient(transport=transport).fetch_current_quarter(
             date(2026, 8, 26)
         )
-        self.assertEqual([item.title for item in result.items], ["動畫 A", "動畫 B"])
+        self.assertEqual([item.title for item in result.items], ["動畫 A", "動畫 B", "旧作品"])
         self.assertEqual(result.pages_scanned, 2)
         self.assertTrue(result.complete)
         self.assertIn("page=2", transport.calls[-1])
         self.assertNotIn("category=", transport.calls[-1])
+
+    def test_client_keeps_previous_month_boundary_item_for_cross_site_date_drift(self) -> None:
+        transport = FakeTextTransport(
+            [catalog_html(("当季作品", "2026/07", 42), ("前置月份作品", "2026/06", 41))]
+        )
+        result = BahamutCatalogClient(transport=transport, max_pages=1).fetch_current_quarter(
+            date(2026, 7, 1)
+        )
+        self.assertEqual([item.title for item in result.items], ["当季作品", "前置月份作品"])
 
     def test_client_refuses_incomplete_card_metadata(self) -> None:
         malformed = (

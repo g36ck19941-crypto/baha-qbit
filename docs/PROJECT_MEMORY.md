@@ -16,6 +16,10 @@ Last updated: 2026-08-27
 - After a user-observed first-page 403, helper v0.4 reads the rendered first
   `animeList.php` document and requests later pages with the same-origin browser
   session. Only parsed public metadata is posted to the loopback service.
+- Bahamut display months can be one month earlier than Bangumi first-air dates.
+  The catalog keeps one boundary-month carry-in for exact matching; the
+  Bangumi-side current-quarter filter remains unchanged, and fuzzy matches never
+  auto-exclude.
 
 ## D-019 — Bahamut scope is the public current-quarter catalog
 

@@ -1,4 +1,4 @@
-# User guide — v0.16.0 development
+# User guide — v0.16.1 development
 
 ## Portable Windows build
 
@@ -100,7 +100,8 @@ python launcher.py scan `
 
 The helper transmits title, link, SN, page, and displayed `YYYY/MM` metadata.
 The JSON declares its quarter, and the backend rejects entries outside that
-quarter, personal-favorites JSON, warnings, or incomplete pagination. It never
+quarter (apart from a one-month Bahamut display-date carry-in used to handle
+cross-site premiere-date drift), personal-favorites JSON, warnings, or incomplete pagination. It never
 exports account state, Cookie values, passwords, or raw HTML. A persistent
 random pairing secret is kept in the local application profile and installed
 userscript and is never committed to Git. Exact normalized title matches are

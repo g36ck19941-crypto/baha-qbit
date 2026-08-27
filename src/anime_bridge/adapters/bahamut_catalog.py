@@ -24,6 +24,7 @@ _ALLOWED_HOST = "ani.gamer.com.tw"
 _QUARTER_START_MONTHS = {1, 4, 7, 10}
 _PAGE_BYTE_LIMIT = 5 * 1024 * 1024
 _DATE_PATTERN = re.compile(r"(20\d{2})\s*[/／-]\s*(\d{1,2})")
+_CARRY_IN_MONTHS = 1
 
 
 class BahamutCatalogError(RuntimeError):
@@ -244,7 +245,10 @@ class BahamutCatalogClient:
                         "safe quarter completion cannot be proven"
                     )
                 previous_key = key
-                if start_key <= key < end_key:
+                # Bahamut's display month can precede Bangumi's first-air
+                # month (for example a July premiere listed as 2026/06).
+                # Keep one boundary month for exact cross-site matching.
+                if start_key - _CARRY_IN_MONTHS <= key < end_key:
                     collected.setdefault((item.title, item.href), item)
             if any(
                 (item.year or 0) * 12 + (item.month or 0) < start_key
@@ -329,7 +333,8 @@ def parse_bahamut_catalog_json(text: str) -> BahamutCatalogExport:
     raw_items = payload.get("items")
     if not isinstance(raw_items, list):
         raise ValueError("Bahamut catalog items must be an array")
-    quarter_months = range(quarter_start_month, quarter_start_month + 3)
+    start_key = quarter_year * 12 + quarter_start_month
+    end_key = start_key + 3
     deduplicated: dict[tuple[str, str], BahamutCatalogItem] = {}
     for index, row in enumerate(raw_items):
         if not isinstance(row, dict):
@@ -341,7 +346,8 @@ def parse_bahamut_catalog_json(text: str) -> BahamutCatalogExport:
             raise ValueError(f"Bahamut catalog item #{index + 1} has an invalid href")
         year = _bounded_int(row.get("year"), f"items[{index}].year", 2000, 2100)
         month = _bounded_int(row.get("month"), f"items[{index}].month", 1, 12)
-        if year != quarter_year or month not in quarter_months:
+        item_key = year * 12 + month
+        if not start_key - _CARRY_IN_MONTHS <= item_key < end_key:
             raise ValueError(f"Bahamut catalog item #{index + 1} is outside the declared quarter")
         sn = _optional_int(row.get("sn"), f"items[{index}].sn")
         if sn is None:

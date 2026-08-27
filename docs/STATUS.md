@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-27
 
+## v0.16.1.dev0 cross-site premiere-date correction
+
+- Bahamut rows on the first older-quarter boundary month are retained for
+  exact matching because its catalog display month can precede Bangumi's first
+  air date. This fixes `THE WORLD IS DANCING 世界在起舞` (`2026/06` on Bahamut,
+  `2026-07-02` on Bangumi) without broadening fuzzy exclusion.
+- Full source regression after the correction: 71 tests passed.
+
 ## v0.16.0.dev0 direct public-catalog retrieval milestone
 
 - Normal GUI and CLI scans now request the public year-sorted Anime Crazy

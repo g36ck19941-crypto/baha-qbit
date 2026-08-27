@@ -95,6 +95,7 @@
     const quarter = quarterFor();
     const startKey = quarter.year * 12 + quarter.startMonth;
     const endKey = startKey + 3;
+    const carryInStartKey = startKey - 1;
     const items = new Map();
     const warnings = [];
     let pagesScanned = 0;
@@ -115,7 +116,7 @@
       }
       for (const item of rows) {
         const key = item.year * 12 + item.month;
-        if (key >= startKey && key < endKey) {
+        if (key >= carryInStartKey && key < endKey) {
           items.set(`${item.title}\n${item.href}`, item);
         }
       }
