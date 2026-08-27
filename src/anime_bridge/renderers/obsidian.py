@@ -114,12 +114,10 @@ def render_candidate_markdown(
         header.extend([
             "> [!success] 动画疯当季目录差集已执行",
             f"> 动画疯当季上架：{bahamut_catalog_count}；自动移除精确匹配：{len(bahamut_difference.exact_matches)}；待人工确认：{len(bahamut_difference.review_matches)}。",
-            f"> 目录同步时间：{bahamut_exported_at or '未提供'}。模糊匹配仍保留在下方，不会自动删除。",
+            f"> 目录同步时间：{bahamut_exported_at or '未提供'}。相似度复核条目已移至独立复核笔记，不会自动入库。",
             "",
         ])
-        review_by_subject = {
-            match.subject.bangumi_id: match for match in bahamut_difference.review_matches
-        }
+        review_by_subject = {}
     header.extend([
         f"差集后候选 **{len(result.subjects)}** 个。",
         f"另有 **{len(result.excluded_without_japan_tag)}** 个条目因缺少 `日本` 元标签而未纳入。",
@@ -132,3 +130,66 @@ def render_candidate_markdown(
         header
         + [_render_subject(item, review_by_subject.get(item.bangumi_id)) for item in result.subjects]
     ).rstrip() + "\n"
+
+
+def render_bahamut_review_markdown(
+    result: "CurrentQuarterResult",
+    bahamut_difference: "BahamutDifferenceResult",
+    generated_at: datetime | None = None,
+    *,
+    bahamut_catalog_count: int = 0,
+    bahamut_exported_at: str = "",
+) -> str:
+    """Render fuzzy title matches in a separate, non-importable note."""
+
+    timestamp = generated_at or datetime.now().astimezone()
+    header = [
+        "---",
+        "anime_bridge_document: bahamut-review",
+        f"anime_bridge_version: {_yaml_quote(__version__)}",
+        f"quarter: {_yaml_quote(result.identifier)}",
+        f"generated_at: {_yaml_quote(timestamp.isoformat(timespec='seconds'))}",
+        "formal_imported: false",
+        "tags:",
+        "  - anime-bridge-bahamut-review",
+        "---",
+        "",
+        f"# {result.year} {result.quarter.cn_name}动画疯相似度复核",
+        "",
+        "> [!warning] 需要人工确认",
+        f"> 目录条目：{bahamut_catalog_count}；相似度复核：{len(bahamut_difference.review_matches)}；目录同步时间：{bahamut_exported_at or '未提供'}。",
+        "> 这些条目不会出现在安全候选笔记，也不会自动排除或入库。确认同一作品后，请手动决定后续操作。",
+        "",
+    ]
+    for match in bahamut_difference.review_matches:
+        subject = match.subject
+        favorite = match.favorite
+        favorite_title = " ".join(favorite.title.split()) if favorite is not None else "未知"
+        item_metadata = json.dumps(
+            {"air_date": subject.air_date.isoformat(), "bangumi_id": subject.bangumi_id, "category": subject.category.config_name},
+            ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+        )
+        review_metadata = json.dumps(
+            {
+                "bangumi_id": subject.bangumi_id,
+                "favorite_href": favorite.href if favorite is not None else "",
+                "favorite_title": favorite_title,
+                "score": round(match.score, 6),
+                "subject_title": match.subject_title or subject.display_name,
+            },
+            ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+        )
+        header.extend([
+            f"## ☐ {subject.display_name}",
+            f"<!-- anime-bridge:item {item_metadata} -->",
+            f"- 日文名：{subject.name or '未知'}",
+            f"- 条目：[{subject.bangumi_url}]({subject.bangumi_url})",
+            f"- 巴哈姆特标题：{favorite_title}",
+            f"- 巴哈姆特链接：[{favorite.href if favorite is not None else '未知'}]({favorite.href if favorite is not None else '#'})",
+            f"- 相似度：{match.score:.0%}",
+            f"<!-- anime-bridge:bahamut-review {review_metadata} -->",
+        ])
+        if subject.cover_url:
+            header.append(f"- 封面：![{subject.display_name}|180]({subject.cover_url})")
+        header.extend(["", _blockquote(subject.summary), ""])
+    return "\n".join(header).rstrip() + "\n"

@@ -4,6 +4,14 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Sequel matching and separate fuzzy-review note
+
+- Canonicalized common sequel suffixes such as `Ⅱ`, `第二季`, `2nd Season`,
+  and `2` so `幼女戦記Ⅱ` matches Bahamut's `幼女战记 2` exactly.
+- Moved fuzzy title matches out of the safe candidate Markdown into a separate
+  `*-复核.md` note with cover, summary, links, score, and human-review markers.
+  Fuzzy rows are no longer eligible for Obsidian import or batch RSS by accident.
+
 ### Direct Bahamut catalog retrieval and 403-safe fallback
 
 - Made the GUI and CLI fetch the public current-quarter Anime Crazy catalog

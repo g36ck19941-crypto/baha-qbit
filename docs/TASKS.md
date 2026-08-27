@@ -35,6 +35,8 @@ Last updated: 2026-08-27
 - [x] AB-012b1 Connect validated favorite exports to CLI/GUI seasonal difference.
 - [x] AB-012b2 Removed the real-account dependency; retained fuzzy-match review
   for the public catalog difference.
+- [x] AB-012c Normalize common sequel markers and isolate fuzzy matches in a
+  separate non-importable `*-复核.md` note.
 - [x] AB-020a Parse checked candidates and plan compatible formal notes.
 - [x] AB-020b Refuse batch apply when a target exists or collides.
 - [x] AB-020c1 Add the dependency-free Obsidian desktop command shell.

@@ -61,13 +61,20 @@ class MatchingTests(unittest.TestCase):
         item = BahamutCatalogItem("膽小鬼", "/animeRef.php?sn=14", 14)
         self.assertIs(best_title_match(anime, [item]).kind, MatchKind.NONE)
 
-    def test_fuzzy_match_is_review_only_and_remains_a_candidate(self) -> None:
-        anime = subject(2, "测试动画 第二季", "テストアニメ 2")
+    def test_fuzzy_match_is_review_only_and_leaves_safe_candidates_empty(self) -> None:
+        anime = subject(2, "测试动画 续篇", "テストアニメ 特別編")
         item = BahamutCatalogItem("测试动画 第2季", "/animeRef.php?sn=10", 10)
         result = subtract_bahamut_catalog([anime], [item])
-        self.assertEqual(result.candidates, (anime,))
+        self.assertEqual(result.candidates, ())
         self.assertEqual(result.exact_matches, ())
         self.assertEqual(len(result.review_matches), 1)
+
+    def test_sequel_markers_match_roman_and_chinese_forms(self) -> None:
+        anime = subject(8, "幼女战记 第二季", "幼女戦記Ⅱ")
+        item = BahamutCatalogItem("幼女战记 2", "https://ani.gamer.com.tw/animeRef.php?sn=12", 12)
+        result = subtract_bahamut_catalog([anime], [item])
+        self.assertEqual([item.subject for item in result.exact_matches], [anime])
+        self.assertEqual(result.review_matches, ())
 
     def test_exact_match_is_subtracted_and_unmatched_remains(self) -> None:
         collected = subject(3, "已收藏动画", "収集済み")

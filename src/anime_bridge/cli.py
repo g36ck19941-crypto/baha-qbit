@@ -23,7 +23,7 @@ from anime_bridge.adapters.candidate_markdown import (
 from anime_bridge.adapters.qbittorrent import QBittorrentAPIError, QBittorrentClient
 from anime_bridge.domain import RSSFeedDraft, RSSRuleDraft
 from anime_bridge.migration import MigrationConflict, apply_migration, plan_migration
-from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic
 from anime_bridge.workflows import (
@@ -218,12 +218,19 @@ def _run_scan(args: argparse.Namespace) -> int:
         ):
             raise ValueError("Bahamut catalog does not describe the scan quarter")
         difference = subtract_bahamut_catalog(result.subjects, catalog.items)
+        review_subject_ids = {match.subject.bangumi_id for match in difference.review_matches}
+        review_result = replace(
+            result,
+            subjects=tuple(
+                subject for subject in result.subjects if subject.bangumi_id in review_subject_ids
+            ),
+        )
         result = replace(result, subjects=difference.candidates)
         print(
             f"Bahamut catalog: {len(catalog.items)} current-quarter title(s) from "
             f"{catalog.pages_scanned} page(s); removed "
-            f"{len(difference.exact_matches)} exact match(es); retained "
-            f"{len(difference.review_matches)} fuzzy review match(es)."
+            f"{len(difference.exact_matches)} exact match(es); moved "
+            f"{len(difference.review_matches)} fuzzy review match(es) to a separate note."
         )
         for warning in catalog.warnings:
             print(f"Bahamut catalog warning: {warning}", file=sys.stderr)
@@ -257,6 +264,18 @@ def _run_scan(args: argparse.Namespace) -> int:
         ),
     )
     print(f"Candidate preview written to: {output.resolve()}")
+    if difference is not None and difference.review_matches:
+        review_output = output.with_name(f"{output.stem}-复核{output.suffix}")
+        write_text_atomic(
+            review_output,
+            render_bahamut_review_markdown(
+                review_result,
+                difference,
+                bahamut_catalog_count=len(catalog.items),
+                bahamut_exported_at=catalog.exported_at,
+            ),
+        )
+        print(f"Bahamut review note written to: {review_output.resolve()}")
     return 0
 
 

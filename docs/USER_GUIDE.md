@@ -1,4 +1,4 @@
-# User guide — v0.16.1 development
+# User guide — v0.16.2 development
 
 ## Portable Windows build
 
@@ -107,7 +107,8 @@ random pairing secret is kept in the local application profile and installed
 userscript and is never committed to Git. Exact normalized title matches are
 removed; fuzzy matches remain in the candidate note with a warning.
 
-Title comparison includes literal text plus OpenCC standard-Traditional,
+Title comparison includes literal text plus sequel-marker normalization (for
+example `幼女戦記Ⅱ`, `幼女战记 第二季`, and `幼女战记 2`), OpenCC standard-Traditional,
 Taiwan-with-regional-phrases, and Hong-Kong-to-Simplified forms. Bangumi
 infobox fields for Taiwan/Hong Kong, Traditional-Chinese, and general Chinese
 translated names are also exact aliases. A completely different regional title

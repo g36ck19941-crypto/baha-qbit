@@ -28,7 +28,7 @@ from anime_bridge.adapters.bahamut_catalog import (
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.migration import apply_migration, plan_migration
 from anime_bridge.matching import normalized_title_forms
-from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic, write_text_new_atomic
 from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
@@ -152,6 +152,17 @@ class WebGUIController:
         difference = None
         if catalog is not None:
             difference = subtract_bahamut_catalog(result.subjects, catalog.items)
+            review_subject_ids = {
+                match.subject.bangumi_id for match in difference.review_matches
+            }
+            review_result = replace(
+                result,
+                subjects=tuple(
+                    subject
+                    for subject in result.subjects
+                    if subject.bangumi_id in review_subject_ids
+                ),
+            )
             result = replace(result, subjects=difference.candidates)
         directory = Path(self.settings.vault_path) / self.settings.integration_folder
         output = directory / f"{result.year}-{result.quarter.start_month:02d}-动画候选.md"
@@ -168,10 +179,23 @@ class WebGUIController:
                 ),
             ),
         )
+        review_output = None
+        if difference is not None and difference.review_matches:
+            review_output = output.with_name(f"{output.stem}-复核{output.suffix}")
+            write_text_atomic(
+                review_output,
+                render_bahamut_review_markdown(
+                    review_result,
+                    difference,
+                    bahamut_catalog_count=len(catalog.items),
+                    bahamut_exported_at=catalog.exported_at,
+                ),
+            )
         return {
             "count": len(result.subjects),
             "excluded_without_japan_tag": len(result.excluded_without_japan_tag),
             "output": str(output),
+            "review_output": str(review_output) if review_output is not None else None,
             "bahamut_subtraction": "completed" if difference is not None else "not_run",
             "bahamut_catalog_titles": (
                 len(catalog.items) if catalog is not None else 0

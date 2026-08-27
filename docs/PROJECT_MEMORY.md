@@ -21,6 +21,15 @@ Last updated: 2026-08-27
   Bangumi-side current-quarter filter remains unchanged, and fuzzy matches never
   auto-exclude.
 
+## D-021 — Sequel normalization and fuzzy-review isolation
+
+- Title forms canonicalize common sequel suffixes (`Ⅱ`, `第二季`, `2nd Season`,
+  and numeric `2`) so regional/script variants can become exact matches when the
+  underlying work is the same.
+- Fuzzy matches are not included in the safe candidate note. CLI/GUI scans write
+  a separate `*-复核.md` note containing evidence and links; no formal import or
+  batch RSS path consumes that note automatically.
+
 ## D-019 — Bahamut scope is the public current-quarter catalog
 
 - The subtraction set is every title publicly listed by Anime Crazy with a

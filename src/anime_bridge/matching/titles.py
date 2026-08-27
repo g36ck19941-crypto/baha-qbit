@@ -20,11 +20,24 @@ from anime_bridge.domain import AnimeSubject, BahamutCatalogItem
 
 
 _NON_WORD = re.compile(r"[^\w\u3040-\u30ff\u3400-\u9fff]+", re.UNICODE)
+_SEQUEL_SUFFIXES = (
+    (re.compile(r"(?:第二季|第2季|2ndseason|season2|ii)$"), "2"),
+    (re.compile(r"(?:第三季|第3季|3rdseason|season3|iii)$"), "3"),
+    (re.compile(r"(?:第四季|第4季|4thseason|season4|iv)$"), "4"),
+)
 
 
 def normalize_title(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).casefold()
     return _NON_WORD.sub("", normalized).replace("_", "")
+
+
+def _sequel_forms(normalized: str) -> tuple[str, ...]:
+    forms = [normalized]
+    for suffix, replacement in _SEQUEL_SUFFIXES:
+        if suffix.search(normalized):
+            forms.append(suffix.sub(replacement, normalized))
+    return tuple(dict.fromkeys(forms))
 
 
 @lru_cache(maxsize=3)
@@ -43,7 +56,8 @@ def normalized_title_forms(value: str) -> tuple[str, ...]:
         _converter("tw2sp").convert(text),
         _converter("hk2s").convert(text),
     )
-    return tuple(dict.fromkeys(filter(None, (normalize_title(item) for item in candidates))))
+    normalized = tuple(dict.fromkeys(filter(None, (normalize_title(item) for item in candidates))))
+    return tuple(dict.fromkeys(form for item in normalized for form in _sequel_forms(item)))
 
 
 class MatchKind(Enum):

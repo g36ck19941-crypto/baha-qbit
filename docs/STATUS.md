@@ -2,6 +2,16 @@
 
 Last updated: 2026-08-27
 
+## v0.16.2.dev0 sequel matching and review separation
+
+- Common sequel suffixes now canonicalize across Chinese, Japanese Roman
+  numerals, and English forms. The live Bahamut `幼女战记 2` card matches
+  Bangumi `幼女戦記Ⅱ` exactly.
+- Fuzzy matches are removed from the safe candidate note and written to a
+  separate `*-复核.md` review note. They remain human-review-only and are not
+  importable as checked candidates.
+- Full source regression after the change: 72 tests passed.
+
 ## v0.16.1.dev0 cross-site premiere-date correction
 
 - Bahamut rows on the first older-quarter boundary month are retained for

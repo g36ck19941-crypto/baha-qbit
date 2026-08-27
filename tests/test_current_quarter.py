@@ -5,7 +5,7 @@ from dataclasses import replace
 from datetime import date, datetime, timezone
 
 from anime_bridge.domain import AnimeCategory, AnimeSubject, BahamutFavorite
-from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
 
 
@@ -99,9 +99,21 @@ class CurrentQuarterTests(unittest.TestCase):
         self.assertIn("bahamut_subtraction: true", rendered)
         self.assertNotIn("**当前季度 TV**", rendered)
         self.assertIn("动画疯当季目录差集已执行", rendered)
-        self.assertIn("巴哈标题待人工确认", rendered)
-        self.assertIn("anime-bridge:bahamut-review", rendered)
-        self.assertIn("模糊匹配仍保留", rendered)
+        self.assertNotIn("巴哈标题待人工确认", rendered)
+        self.assertNotIn("anime-bridge:bahamut-review", rendered)
+        review_result = replace(
+            original,
+            subjects=tuple(match.subject for match in difference.review_matches),
+        )
+        review = render_bahamut_review_markdown(
+            review_result,
+            difference,
+            bahamut_catalog_count=2,
+            bahamut_exported_at="2026-08-21T18:00:00Z",
+        )
+        self.assertIn("相似度复核", review)
+        self.assertIn("anime-bridge:bahamut-review", review)
+        self.assertIn("相似度复核", review)
 
 
 if __name__ == "__main__":

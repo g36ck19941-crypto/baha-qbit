@@ -30,9 +30,10 @@ def subtract_bahamut_catalog(
         if match.kind is MatchKind.EXACT:
             exact_matches.append(match)
             continue
-        candidates.append(subject)
         if match.kind is MatchKind.REVIEW:
             review_matches.append(match)
+            continue
+        candidates.append(subject)
 
     return BahamutDifferenceResult(
         candidates=tuple(candidates),
