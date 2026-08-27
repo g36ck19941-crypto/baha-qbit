@@ -163,6 +163,13 @@ without allowing the AI to bypass previews or confirmations.
 
 ## Decisions
 
+### D-023 — Current-date gate for quarter scans (2026-08-27)
+
+Quarter discovery keeps only subjects whose first air date is within the
+current quarter and is not later than the scan reference date. This prevents
+future, not-yet-aired titles from entering candidate notes while preserving
+titles airing today. Per-episode upload times remain a future harness concern.
+
 ### D-001: Quarter boundaries
 
 The application uses four calendar quarters: winter Jan-Mar, spring Apr-Jun,

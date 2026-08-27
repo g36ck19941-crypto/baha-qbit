@@ -33,6 +33,7 @@ class FakeSource:
             ],
             (8, AnimeCategory.MOVIE): [
                 anime(20, date(2026, 8, 9), AnimeCategory.MOVIE, "当前季度剧场版"),
+                anime(21, date(2026, 8, 22), AnimeCategory.MOVIE, "尚未开播"),
             ],
             (9, AnimeCategory.WEB): [
                 anime(30, date(2026, 9, 1), AnimeCategory.WEB, "当前季度续作 WEB"),
@@ -59,8 +60,12 @@ class CurrentQuarterTests(unittest.TestCase):
     def test_scan_filters_dates_and_deduplicates_by_bangumi_id(self) -> None:
         result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
         self.assertEqual(result.identifier, "2026-summer")
-        self.assertEqual([item.bangumi_id for item in result.subjects], [10, 20, 30])
+        self.assertEqual([item.bangumi_id for item in result.subjects], [10, 20])
         self.assertEqual([item.bangumi_id for item in result.excluded_without_japan_tag], [40])
+
+    def test_scan_excludes_subjects_after_reference_date(self) -> None:
+        result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
+        self.assertNotIn(21, [item.bangumi_id for item in result.subjects])
 
     def test_candidate_markdown_has_tasks_cover_summary_and_machine_metadata(self) -> None:
         result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
@@ -83,9 +88,9 @@ class CurrentQuarterTests(unittest.TestCase):
                 "当前季度 TV", "https://ani.gamer.com.tw/animeRef.php?sn=10", 10
             ),
             BahamutFavorite(
-                "当前季度续作 WEB版",
+                "当前季度剧场版特别篇",
                 "https://ani.gamer.com.tw/animeRef.php?sn=30",
-                30,
+                20,
             ),
         )
         difference = subtract_bahamut_catalog(original.subjects, catalog)

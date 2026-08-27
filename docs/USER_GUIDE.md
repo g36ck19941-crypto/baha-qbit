@@ -1,4 +1,4 @@
-# User guide — v0.16.3 development
+# User guide — v0.16.4 development
 
 ## Portable Windows build
 
