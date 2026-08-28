@@ -9,7 +9,7 @@ Last updated: 2026-08-28
 - Checked-candidate RSS drafting accepts multiple providers/templates per anime;
   it creates one feed per source and one title-named rule whose `affectedFeeds`
   contains all source URLs.
-- Source verification: 20 focused RSS/web tests pass. No RSS feed was applied
+- Source verification: 87 automated tests pass. No RSS feed was applied
   to a live qBittorrent instance in this change.
 
 ## v0.16.6.dev0 Obsidian loader compatibility

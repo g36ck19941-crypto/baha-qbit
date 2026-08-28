@@ -391,7 +391,10 @@ class AnimeBridgeAIService:
         if not urls:
             raise ValueError("At least one RSS URL is required")
         feeds = tuple(
-            RSSFeedDraft(url, feed_path if index == 1 else f"{feed_path}/{index}")
+            RSSFeedDraft(
+                url,
+                feed_path if len(urls) == 1 else f"{feed_path}/source-{index}",
+            )
             for index, url in enumerate(urls, start=1)
         )
         rule = RSSRuleDraft(

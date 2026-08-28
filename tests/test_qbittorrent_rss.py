@@ -12,6 +12,7 @@ from anime_bridge.workflows.rss_plan import (
     plan_rss,
     plan_rss_batch,
 )
+from anime_bridge.ai.service import AnimeBridgeAIService
 
 
 class FakeRSSClient:
@@ -88,6 +89,17 @@ class QBittorrentRSSTests(unittest.TestCase):
         plan = plan_rss_bundle(FakeRSSClient(), (feed, second), combined_rule)
         self.assertFalse(plan.has_conflict)
         self.assertEqual(plan.rule.to_qbittorrent_definition()["affectedFeeds"], [feed.url, second.url])
+
+    def test_manual_multi_url_paths_do_not_overlap(self):
+        feeds, rule = AnimeBridgeAIService._rss_drafts(
+            "https://example.invalid/a.xml", "AnimeBridge/Title", "Title",
+            "", "", False, "", False, "", "",
+            ("https://example.invalid/b.xml",),
+        )
+        self.assertEqual([feed.path for feed in feeds], [
+            "AnimeBridge/Title/source-1", "AnimeBridge/Title/source-2"
+        ])
+        self.assertEqual(rule.affected_feeds, tuple(feed.url for feed in feeds))
 
 
 if __name__ == "__main__":
