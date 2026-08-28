@@ -163,6 +163,16 @@ without allowing the AI to bypass previews or confirmations.
 
 ## Decisions
 
+### D-024 — Repair and delete stay preview-confirmed (2026-08-28)
+
+Anime Bridge may repair only a new, empty, exactly current, or manifest-identified
+Anime Bridge plugin directory. Unknown plugin directories remain blocking
+conflicts. Formal-note deletion is recoverable: it is confined to Markdown
+notes tagged `bangumi` below the configured formal root, requires a matching
+preview SHA-256 and confirmation, and moves the note below
+`.trash/anime-bridge`. Candidate checked-first ordering is limited to generated
+item blocks and is stable within checked and unchecked groups.
+
 ### D-023 — Current-date gate for quarter scans (2026-08-27)
 
 Quarter discovery keeps only subjects whose first air date is within the

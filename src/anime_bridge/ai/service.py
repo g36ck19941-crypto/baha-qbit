@@ -11,10 +11,13 @@ from anime_bridge.adapters.qbittorrent import QBittorrentClient
 from anime_bridge.domain import AnimeCategory, RSSFeedDraft, RSSRuleDraft
 from anime_bridge.workflows import (
     apply_import_plan,
+    apply_formal_note_delete,
     apply_rss_batch,
     apply_rss_plan,
     build_candidate_rss_drafts,
+    list_formal_anime_notes,
     plan_checked_import,
+    plan_formal_note_delete,
     plan_rss,
     plan_rss_batch,
 )
@@ -108,6 +111,29 @@ class AnimeBridgeAIService:
         )
         written = apply_import_plan(plans, self.vault_path)
         return {"written_count": len(written), "paths": [str(path) for path in written]}
+
+    def list_obsidian_library(self) -> dict[str, Any]:
+        items = list_formal_anime_notes(self.vault_path, self.formal_root)
+        return {"count": len(items), "items": [item.as_dict() for item in items]}
+
+    def plan_obsidian_delete(self, relative_path: str) -> dict[str, Any]:
+        return plan_formal_note_delete(
+            self.vault_path, self.formal_root, relative_path
+        ).as_dict()
+
+    def apply_obsidian_delete(
+        self, relative_path: str, expected_sha256: str, confirmation: str
+    ) -> dict[str, Any]:
+        self._require_write(confirmation)
+        plan = plan_formal_note_delete(
+            self.vault_path, self.formal_root, relative_path
+        )
+        moved_to = apply_formal_note_delete(plan, self.vault_path, expected_sha256)
+        return {
+            "deleted": plan.relative_path,
+            "moved_to": str(moved_to),
+            "recoverable": True,
+        }
 
     def qbit_status(self) -> dict[str, Any]:
         version, api_version = self.qbit.versions()

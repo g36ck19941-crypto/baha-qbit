@@ -88,6 +88,19 @@
           <strong>动画库.base 无需直接编辑</strong>
           <p>正式 Markdown 笔记通过 <code>tags: bangumi</code> 自动进入现有 Base 视图。</p>
         </div>
+        <div class="section-head subsection-head">
+          <div><p class="eyebrow">LIBRARY MANAGEMENT</p><h2>正式动画库管理</h2></div>
+          <p>新增沿用上方候选入库；删除先预览，再移入 Vault 回收区</p>
+        </div>
+        <form id="obsidian-delete-form" class="form-sheet">
+          <label><span>已归库动画</span><select id="obsidian-library-select" name="relative_path"><option value="">请先读取动画库</option></select></label>
+          <div class="button-row">
+            <button type="button" id="obsidian-library-refresh">读取动画库</button>
+            <button type="button" id="obsidian-delete-plan">预览删除</button>
+            <button type="button" class="danger-outline" id="obsidian-delete-apply">确认后删除</button>
+          </div>
+        </form>
+        <div class="notice warning"><strong>删除可恢复</strong><p>确认删除后，笔记会移至 Vault 的 <code>.trash/anime-bridge</code>，不会永久擦除。若笔记在预览后发生变化，操作会拒绝。</p></div>
       </section>
 
       <section class="view" id="view-rss">
@@ -148,11 +161,12 @@
         <div class="form-sheet migration-sheet">
           <label><span>打包程序路径</span><input id="runner-path" placeholder="C:/.../anime-bridge.exe"></label>
           <div class="button-row">
+            <button type="button" class="primary" id="migration-auto-repair">自动检测并修复 Obsidian 集成</button>
             <button type="button" id="migration-plan">预览迁移安装</button>
             <button type="button" class="danger-outline" id="migration-apply">确认后安装 Obsidian 集成</button>
           </div>
         </div>
-        <div class="notice safe"><strong>迁移安装不会覆盖</strong><p>若目标插件目录已有任何不同文件，整批安装会拒绝。安装后仍需在 Obsidian 中手动启用插件。</p></div>
+        <div class="notice safe"><strong>自动修复仍需确认</strong><p>软件会检测自身运行路径、源码启动路径和 Anime Bridge 插件文件。预览后可修复缺失或旧版受管文件；无法确认身份的插件目录仍会拒绝覆盖。</p></div>
         <div class="notice"><strong>不会保存</strong><p>巴哈姆特 Cookie、qBittorrent 密码、GitHub 凭据和 AI 密钥均不写入此配置。</p></div>
       </section>
     </main>

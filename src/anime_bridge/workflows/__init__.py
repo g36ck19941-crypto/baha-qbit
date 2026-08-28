@@ -11,6 +11,14 @@ from .obsidian_import import (
     apply_import_plan,
     plan_checked_import,
 )
+from .obsidian_library import (
+    ObsidianDeletePlan,
+    ObsidianLibraryConflict,
+    ObsidianLibraryItem,
+    apply_formal_note_delete,
+    list_formal_anime_notes,
+    plan_formal_note_delete,
+)
 from .rss_plan import (
     RSSBatchPlan,
     RSSPlan,
@@ -35,6 +43,12 @@ __all__ = [
     "ObsidianImportConflict",
     "apply_import_plan",
     "plan_checked_import",
+    "ObsidianDeletePlan",
+    "ObsidianLibraryConflict",
+    "ObsidianLibraryItem",
+    "apply_formal_note_delete",
+    "list_formal_anime_notes",
+    "plan_formal_note_delete",
     "RSSPlan",
     "RSSBatchPlan",
     "RSSPlanConflict",

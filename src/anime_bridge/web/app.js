@@ -4,6 +4,7 @@ const TOKEN = document.querySelector('meta[name="anime-bridge-token"]').content;
 const root = document.documentElement;
 const logEl = document.getElementById("activity-log");
 let busyCount = 0;
+let lastObsidianDeletePlan = null;
 
 function setChoice(kind, value) {
   root.dataset[kind] = value;
@@ -143,6 +144,55 @@ document.getElementById("obsidian-apply").addEventListener("click", async () => 
   if (!confirmed) return;
   try { await api("/api/obsidian/apply", { ...formObject(document.getElementById("obsidian-form")), confirmed: true }, "正式归入 Obsidian"); } catch (_) {}
 });
+document.getElementById("obsidian-library-refresh").addEventListener("click", async () => {
+  try {
+    const result = await api("/api/obsidian/library", {}, "读取 Obsidian 动画库");
+    const select = document.getElementById("obsidian-library-select");
+    select.replaceChildren(...result.items.map((item) => {
+      const option = document.createElement("option");
+      option.value = item.relative_path;
+      option.textContent = `${item.title} · ${item.relative_path}`;
+      return option;
+    }));
+    if (!result.items.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "当前没有可管理的 bangumi 笔记";
+      select.append(option);
+    }
+    lastObsidianDeletePlan = null;
+  } catch (_) {}
+});
+document.getElementById("obsidian-delete-plan").addEventListener("click", async () => {
+  try {
+    lastObsidianDeletePlan = await api(
+      "/api/obsidian/delete-plan",
+      formObject(document.getElementById("obsidian-delete-form")),
+      "预览 Obsidian 动画删除",
+    );
+  } catch (_) { lastObsidianDeletePlan = null; }
+});
+document.getElementById("obsidian-delete-apply").addEventListener("click", async () => {
+  const selected = document.getElementById("obsidian-library-select").value;
+  if (!lastObsidianDeletePlan || lastObsidianDeletePlan.relative_path !== selected) {
+    addLog("删除被拒绝", "请先为当前选中的动画生成删除预览。", true);
+    return;
+  }
+  const confirmed = await askConfirmation(
+    `从动画库删除「${lastObsidianDeletePlan.title}」？`,
+    `笔记将移至 ${lastObsidianDeletePlan.trash_relative_path}，可以手动恢复。`,
+  );
+  if (!confirmed) return;
+  try {
+    await api("/api/obsidian/delete-apply", {
+      relative_path: selected,
+      expected_sha256: lastObsidianDeletePlan.sha256,
+      confirmed: true,
+    }, "删除 Obsidian 动画笔记");
+    lastObsidianDeletePlan = null;
+    document.getElementById("obsidian-library-refresh").click();
+  } catch (_) {}
+});
 
 document.getElementById("qbit-check").addEventListener("click", async () => {
   try { await api("/api/qbit/status", {}, "读取 qBittorrent RSS 状态"); } catch (_) {}
@@ -170,6 +220,21 @@ document.getElementById("rss-batch-apply").addEventListener("click", async () =>
 });
 document.getElementById("migration-plan").addEventListener("click", async () => {
   try { await api("/api/migration/plan", { runner_path: document.getElementById("runner-path").value }, "预览迁移安装"); } catch (_) {}
+});
+document.getElementById("migration-auto-repair").addEventListener("click", async () => {
+  try {
+    const plan = await api("/api/migration/plan", {}, "自动检测 Obsidian 集成");
+    if (plan.plugin_state === "current" && plan.repairs.length === 0) {
+      addLog("自动检测结果", "当前运行路径和 Obsidian 插件均有效，无需修复。");
+      return;
+    }
+    const ok = await askConfirmation(
+      "修复 Obsidian 集成？",
+      `将使用当前软件路径修复 ${plan.repairs.length} 个受管文件。不会覆盖无法确认身份的插件目录。`,
+    );
+    if (!ok) return;
+    await api("/api/migration/apply", { confirmed: true }, "自动修复 Obsidian 集成");
+  } catch (_) {}
 });
 document.getElementById("migration-apply").addEventListener("click", async () => {
   const confirmed = await askConfirmation("安装 Obsidian 集成？", "将把 Anime Bridge 插件安装到当前 Vault 并保存非敏感本机设置。已有不同文件时会整批拒绝，安装后仍需在 Obsidian 中手动启用。");

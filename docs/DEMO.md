@@ -1,5 +1,20 @@
 # Demonstration record
 
+## v0.16.5.dev0 — Obsidian repair and library management
+
+- All 83 source tests passed, including automatic runtime/plugin repair,
+  recoverable formal-note deletion, stale-preview refusal, and checked-first
+  candidate ordering.
+- `node --check` passed for the Obsidian plugin, its pure candidate sorter, and
+  the GUI JavaScript.
+- The frozen executable reported `anime-bridge 0.16.5.dev0` and passed the web
+  GUI smoke test.
+- A disposable temporary Vault installation confirmed that the frozen payload
+  includes `candidate-sort.js` and writes `runnerPath`, empty packaged
+  `launcherPath`, `formalRoot`, and `pinCheckedOnOpen` into plugin data.
+- No repair, import, or delete operation was performed against the real Vault;
+  real Obsidian runtime behavior remains pending user-approved verification.
+
 ## v0.16.1.dev0 cross-site date-drift correction
 
 - Live HTML inspection found `THE WORLD IS DANCING 世界在起舞` on the official

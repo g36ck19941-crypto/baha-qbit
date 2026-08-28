@@ -78,6 +78,8 @@ class CurrentQuarterTests(unittest.TestCase):
         self.assertIn("> 第一行。", rendered)
         self.assertIn('<!-- anime-bridge:item {"air_date":"2026-07-05"', rendered)
         self.assertIn("tags:\n  - anime-bridge-candidates", rendered)
+        self.assertIn("<!-- anime-bridge:items-start -->", rendered)
+        self.assertIn("<!-- anime-bridge:items-end -->", rendered)
         self.assertNotIn("\n  - bangumi\n", rendered)
         self.assertIn("因缺少 `日本` 元标签而未纳入", rendered)
 

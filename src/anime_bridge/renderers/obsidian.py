@@ -122,13 +122,15 @@ def render_candidate_markdown(
         f"差集后候选 **{len(result.subjects)}** 个。",
         f"另有 **{len(result.excluded_without_japan_tag)}** 个条目因缺少 `日本` 元标签而未纳入。",
         "",
+        "<!-- anime-bridge:items-start -->",
     ])
     if not result.subjects:
-        header.append("当前没有发现符合规则的条目。\n")
+        header.extend(["当前没有发现符合规则的条目。", "<!-- anime-bridge:items-end -->"])
         return "\n".join(header).rstrip() + "\n"
     return "\n".join(
         header
         + [_render_subject(item, review_by_subject.get(item.bangumi_id)) for item in result.subjects]
+        + ["<!-- anime-bridge:items-end -->"]
     ).rstrip() + "\n"
 
 
