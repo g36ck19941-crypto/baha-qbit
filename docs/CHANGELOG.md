@@ -4,6 +4,12 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Obsidian plugin load compatibility
+
+- Inlined the checked-first candidate sorter into the plugin entry file so
+  Obsidian does not need to resolve a relative CommonJS module while loading.
+  The standalone sorter remains as a testable development artifact.
+
 ### Obsidian self-repair and library management
 
 - Added one-button detection of the current packaged/source runtime and a

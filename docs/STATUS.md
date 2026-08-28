@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-28
 
+## v0.16.6.dev0 Obsidian loader compatibility
+
+- Removed the plugin's load-time dependency on relative `require` resolution by
+  embedding the checked-first sorter in `main.js`.
+- Plugin manifest version is `0.6.1-dev.0`; real-Vault reinstall completed with
+  the self-contained entry and current runner path. Obsidian enable/reload is
+  still required for runtime verification.
+
 ## v0.16.5.dev0 Obsidian management milestone
 
 - The GUI can detect its own runtime and preview/confirm repair the managed

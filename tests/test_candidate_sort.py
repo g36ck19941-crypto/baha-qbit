@@ -9,9 +9,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SORTER = ROOT / "integrations" / "obsidian-plugin" / "candidate-sort.js"
+PLUGIN_MAIN = ROOT / "integrations" / "obsidian-plugin" / "main.js"
 
 
 class CandidateSortTests(unittest.TestCase):
+    def test_plugin_entry_does_not_require_relative_runtime_modules(self):
+        entry = PLUGIN_MAIN.read_text(encoding="utf-8")
+        self.assertNotIn('require("./candidate-sort")', entry)
+        self.assertIn("function reorderCheckedCandidates", entry)
+
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for plugin behavior tests")
     def test_checked_items_move_first_stably_and_non_candidates_are_unchanged(self):
         candidate = """---

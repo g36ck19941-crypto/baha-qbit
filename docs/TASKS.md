@@ -43,6 +43,7 @@ Last updated: 2026-08-28
 - [x] AB-020c1a Add preview-confirm automatic runtime/plugin path repair.
 - [x] AB-020c1b Add formal-library listing and recoverable delete management.
 - [x] AB-020c1c Pin checked candidate blocks on the next Obsidian note open.
+- [x] AB-020c1d Remove relative-module loading from the Obsidian plugin entry.
 - [ ] AB-020c2 Install, enable, and verify the plugin in the real Vault.
 - [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
 - [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.

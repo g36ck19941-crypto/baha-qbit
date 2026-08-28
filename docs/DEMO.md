@@ -1,5 +1,16 @@
 # Demonstration record
 
+## v0.16.6.dev0 — Obsidian plugin reload compatibility
+
+- All 84 source tests and JavaScript syntax checks passed.
+- The frozen executable reported `anime-bridge 0.16.6.dev0` and passed the GUI
+  smoke test.
+- The deleted real-Vault plugin was reinstalled as `0.6.1-dev.0`; inspection
+  confirmed the sorter is embedded in `main.js`, the stale demo runner path is
+  gone, and `pinCheckedOnOpen` defaults to true.
+- `community-plugins.json` does not yet list `anime-bridge`, so actual Obsidian
+  load remains unverified until the user enables the plugin in Obsidian.
+
 ## v0.16.5.dev0 — Obsidian repair and library management
 
 - All 83 source tests passed, including automatic runtime/plugin repair,

@@ -163,6 +163,11 @@ without allowing the AI to bypass previews or confirmations.
 
 ## Decisions
 
+### D-025 — Obsidian plugin entry is self-contained (2026-08-28)
+
+Runtime behavior required during plugin load stays inside `main.js`; pure helper
+files may remain for tests but are not loaded through relative CommonJS imports.
+
 ### D-024 — Repair and delete stay preview-confirmed (2026-08-28)
 
 Anime Bridge may repair only a new, empty, exactly current, or manifest-identified
