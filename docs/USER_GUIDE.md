@@ -1,4 +1,4 @@
-# User guide — v0.16.4 development
+# User guide — v0.16.5 development
 
 ## Portable Windows build
 
@@ -12,10 +12,11 @@ file also provides CLI and MCP modes:
 ```
 
 On another computer, open **本机设置**, update the Vault and loopback
-qBittorrent paths, save them, preview the migration installation, and only then
-confirm installation. Existing different Obsidian plugin files cause full
-refusal; the assistant never silently overwrites them. Obsidian still requires
-manual plugin enablement after installation.
+qBittorrent paths and save them. **自动检测并修复 Obsidian 集成** detects the
+current packaged executable (or source runner plus launcher), previews missing
+or stale managed plugin files, and repairs them only after confirmation. A
+directory that cannot be identified as Anime Bridge still causes full refusal.
+Obsidian still requires manual plugin enablement after installation.
 
 The ZIP also contains `.codex/config.toml`. When the extracted directory is
 opened as a trusted Codex project, this starts the EXE in MCP mode and reads the
@@ -179,6 +180,18 @@ candidate note and run one of these commands from the command palette:
 The second command displays a confirmation dialog. The Python importer still
 refuses the full batch when any target conflicts. This package has passed static
 checks but has not yet been enabled or run in the real Vault.
+
+When a generated candidate note is opened, the plugin moves checked Anime
+Bridge item blocks above unchecked blocks while preserving the order within
+each group. The behavior can be disabled in plugin settings. New candidate
+notes include item-region markers so text outside the generated item region is
+not reordered.
+
+The GUI's **正式动画库管理** section lists Markdown notes tagged `bangumi` under
+the configured formal root. Adding continues to use the checked-candidate
+preview/apply workflow. Deleting requires its own preview and confirmation; the
+note hash is rechecked and the file is moved to `.trash/anime-bridge` rather
+than permanently erased.
 
 ## Preview a qBittorrent RSS feed and rule
 

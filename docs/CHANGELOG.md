@@ -4,6 +4,18 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Obsidian self-repair and library management
+
+- Added one-button detection of the current packaged/source runtime and a
+  preview-confirm repair path for missing, stale, or old Anime Bridge plugin
+  files and plugin runner settings. Unknown plugin directories remain blocked.
+- Added formal-library listing and recoverable delete management. Delete plans
+  are Vault/formal-root constrained, require confirmation, recheck SHA-256, and
+  move notes to `.trash/anime-bridge` instead of permanently erasing them.
+- Added stable checked-first candidate ordering when a candidate note is next
+  opened in Obsidian. New notes delimit the generated item region so user text
+  outside it is preserved.
+
 ### Additional Bahamut regional and franchise aliases
 
 - Added curated official-title equivalences for `我是不才惡女`,

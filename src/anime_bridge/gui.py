@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import secrets
-import sys
 import threading
 import webbrowser
 from dataclasses import replace
@@ -26,7 +25,7 @@ from anime_bridge.adapters.bahamut_catalog import (
     parse_bahamut_catalog_json,
 )
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
-from anime_bridge.migration import apply_migration, plan_migration
+from anime_bridge.migration import apply_migration, current_runtime_command, plan_migration
 from anime_bridge.matching import normalized_title_forms
 from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
@@ -69,10 +68,12 @@ class WebGUIController:
         return token
 
     def public_status(self) -> dict[str, Any]:
+        detected_runner, detected_launcher = current_runtime_command()
         return {
             "version": __version__,
             "settings": self.settings_dict(),
-            "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
+            "runner_path": str(detected_runner),
+            "launcher_path": str(detected_launcher) if detected_launcher else "",
             "bahamut_catalog": {
                 "direct_fetch": True,
                 "has_browser_fallback": self.latest_bahamut_catalog_path.is_file(),
@@ -228,6 +229,22 @@ class WebGUIController:
             _required_text(payload, "candidate_path"), WRITE_CONFIRMATION
         )
 
+    def obsidian_library(self) -> dict[str, Any]:
+        return self._service().list_obsidian_library()
+
+    def obsidian_delete_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._service().plan_obsidian_delete(
+            _required_text(payload, "relative_path")
+        )
+
+    def obsidian_delete_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
+        _require_browser_confirmation(payload)
+        return self._service(allow_writes=True).apply_obsidian_delete(
+            _required_text(payload, "relative_path"),
+            _required_text(payload, "expected_sha256"),
+            WRITE_CONFIRMATION,
+        )
+
     def qbit_status(self) -> dict[str, Any]:
         return self._service().qbit_status()
 
@@ -250,17 +267,32 @@ class WebGUIController:
         )
 
     def migration_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
-        runner = Path(_required_text(payload, "runner_path"))
+        runner, launcher = self._migration_command(payload)
         return plan_migration(
-            self.settings, self.settings_path, runner
+            self.settings, self.settings_path, runner, launcher_path=launcher
         ).as_dict()
 
     def migration_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
         _require_browser_confirmation(payload)
-        runner = Path(_required_text(payload, "runner_path"))
-        plan = plan_migration(self.settings, self.settings_path, runner)
+        runner, launcher = self._migration_command(payload)
+        plan = plan_migration(
+            self.settings, self.settings_path, runner, launcher_path=launcher
+        )
         written = apply_migration(plan, self.settings, self.settings_path)
-        return {"written": [str(path) for path in written]}
+        return {
+            "plugin_state": plan.plugin_state,
+            "repaired": list(plan.repairs),
+            "written": [str(path) for path in written],
+        }
+
+    def _migration_command(
+        self, payload: dict[str, Any]
+    ) -> tuple[Path, Path | None]:
+        runner_text = str(payload.get("runner_path") or "").strip()
+        launcher_text = str(payload.get("launcher_path") or "").strip()
+        if runner_text:
+            return Path(runner_text), Path(launcher_text) if launcher_text else None
+        return current_runtime_command()
 
 
 def _required_text(payload: dict[str, Any], key: str) -> str:
@@ -408,6 +440,9 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/bahamut/ingest": lambda: controller.ingest_bahamut_catalog(payload),
             "/api/obsidian/plan": lambda: controller.obsidian_plan(payload),
             "/api/obsidian/apply": lambda: controller.obsidian_apply(payload),
+            "/api/obsidian/library": lambda: controller.obsidian_library(),
+            "/api/obsidian/delete-plan": lambda: controller.obsidian_delete_plan(payload),
+            "/api/obsidian/delete-apply": lambda: controller.obsidian_delete_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
             "/api/qbit/plan": lambda: controller.qbit_plan(payload),
             "/api/qbit/apply": lambda: controller.qbit_apply(payload),

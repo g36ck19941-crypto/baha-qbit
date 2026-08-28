@@ -1,6 +1,17 @@
 # Project status
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
+
+## v0.16.5.dev0 Obsidian management milestone
+
+- The GUI can detect its own runtime and preview/confirm repair the managed
+  Obsidian plugin payload and stale runner/launcher paths.
+- The Obsidian workspace now supports candidate-based addition plus recoverable
+  formal-note deletion with path confinement and preview hash revalidation.
+- The plugin stably pins checked generated candidate blocks on the next note
+  open. Text outside new item-region markers is not reordered.
+- Source verification: 83 tests pass before packaging; real-Vault repair,
+  deletion, and plugin runtime behavior remain unverified until user approval.
 
 ## v0.16.3.dev0 reported-title alias correction
 

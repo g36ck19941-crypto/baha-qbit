@@ -3,11 +3,13 @@
 const { Plugin, PluginSettingTab, Setting, Notice, Modal } = require("obsidian");
 const { spawn } = require("child_process");
 const path = require("path");
+const { reorderCheckedCandidates } = require("./candidate-sort");
 
 const DEFAULT_SETTINGS = {
   runnerPath: "",
   launcherPath: "",
   formalRoot: "C/bangumi",
+  pinCheckedOnOpen: true,
 };
 
 class ConfirmApplyModal extends Modal {
@@ -44,6 +46,9 @@ class AnimeBridgePlugin extends Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     this.addSettingTab(new AnimeBridgeSettingTab(this.app, this));
+    this.registerEvent(
+      this.app.workspace.on("file-open", (file) => this.pinCheckedCandidates(file)),
+    );
 
     this.addCommand({
       id: "preview-checked-candidates",
@@ -55,6 +60,15 @@ class AnimeBridgePlugin extends Plugin {
       name: "正式归入已勾选动画",
       checkCallback: (checking) => this.candidateCommand(checking, true),
     });
+  }
+
+  async pinCheckedCandidates(file) {
+    if (!this.settings.pinCheckedOnOpen || !file || file.extension !== "md") return;
+    const content = await this.app.vault.read(file);
+    const reordered = reorderCheckedCandidates(content);
+    if (reordered === content) return;
+    await this.app.vault.modify(file, reordered);
+    new Notice("Anime Bridge 已将勾选动画置顶。", 5000);
   }
 
   candidateCommand(checking, apply) {
@@ -144,6 +158,15 @@ class AnimeBridgeSettingTab extends PluginSettingTab {
       .addText((text) =>
         text.setValue(this.plugin.settings.formalRoot).onChange(async (value) => {
           this.plugin.settings.formalRoot = value.trim() || DEFAULT_SETTINGS.formalRoot;
+          await this.plugin.saveData(this.plugin.settings);
+        }),
+      );
+    new Setting(containerEl)
+      .setName("打开候选笔记时将勾选动画置顶")
+      .setDesc("只重排 Anime Bridge 生成的候选条目，保持勾选组和未勾选组各自原有顺序。")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.pinCheckedOnOpen).onChange(async (value) => {
+          this.plugin.settings.pinCheckedOnOpen = value;
           await this.plugin.saveData(this.plugin.settings);
         }),
       );

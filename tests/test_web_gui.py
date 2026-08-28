@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 
 from anime_bridge.adapters.bahamut_catalog import parse_bahamut_catalog_json
 from anime_bridge.gui import AnimeBridgeWebServer, WebGUIController
+from anime_bridge.settings import UserSettings
 
 
 def current_catalog_payload(*, complete: bool = True) -> dict:
@@ -74,6 +75,9 @@ class WebGUITests(unittest.TestCase):
             page = response.read().decode("utf-8")
         self.assertIn('content="test-token"', page)
         self.assertIn('id="migration-plan"', page)
+        self.assertIn('id="migration-auto-repair"', page)
+        self.assertIn('id="obsidian-library-refresh"', page)
+        self.assertIn('id="obsidian-delete-apply"', page)
         self.assertIn('id="rss-batch-plan"', page)
         self.assertIn('id="install-browser-helper"', page)
         self.assertIn('id="browser-helper-dialog"', page)
@@ -87,6 +91,8 @@ class WebGUITests(unittest.TestCase):
         self.assertIn("browser=edge", app_script)
         self.assertIn("browser=chrome", app_script)
         self.assertIn("browser=firefox", app_script)
+        self.assertIn("/api/obsidian/delete-plan", app_script)
+        self.assertIn("/api/migration/apply", app_script)
         with self.assertRaises(HTTPError) as missing_token:
             urlopen(
                 f"http://127.0.0.1:{self.server.server_port}/bahamut-catalog.user.js",
@@ -195,6 +201,57 @@ class WebGUITests(unittest.TestCase):
         with self.assertRaises(HTTPError) as rss_batch:
             self.post("/api/qbit/batch-apply", {"candidate_path": "candidate.md"})
         self.assertEqual(rss_batch.exception.code, 400)
+
+    def test_auto_repair_installs_plugin_with_current_runtime_paths(self):
+        vault = Path(self.temp.name) / "Vault"
+        (vault / ".obsidian").mkdir(parents=True)
+        self.server.controller.settings = UserSettings(vault_path=str(vault))
+
+        preview = self.post("/api/migration/plan", {})["result"]
+        self.assertEqual(preview["plugin_state"], "new")
+        self.assertTrue(Path(preview["runner_path"]).is_file())
+        applied = self.post("/api/migration/apply", {"confirmed": True})["result"]
+        self.assertEqual(applied["plugin_state"], "new")
+        data = json.loads(
+            (vault / ".obsidian" / "plugins" / "anime-bridge" / "data.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(Path(data["runnerPath"]).is_file())
+        self.assertTrue(Path(data["launcherPath"]).is_file())
+
+    def test_obsidian_library_delete_requires_preview_token_and_moves_to_trash(self):
+        vault = Path(self.temp.name) / "Vault"
+        note = vault / "C" / "bangumi" / "2026" / "07月新番" / "测试.md"
+        note.parent.mkdir(parents=True)
+        note.write_text(
+            '---\n中文名: "测试"\ntags: "bangumi"\n---\nprogress\n', encoding="utf-8"
+        )
+        self.server.controller.settings = UserSettings(vault_path=str(vault))
+
+        library = self.post("/api/obsidian/library", {})["result"]
+        self.assertEqual(library["count"], 1)
+        relative = library["items"][0]["relative_path"]
+        preview = self.post(
+            "/api/obsidian/delete-plan", {"relative_path": relative}
+        )["result"]
+        with self.assertRaises(HTTPError) as unconfirmed:
+            self.post(
+                "/api/obsidian/delete-apply",
+                {"relative_path": relative, "expected_sha256": preview["sha256"]},
+            )
+        self.assertEqual(unconfirmed.exception.code, 400)
+        result = self.post(
+            "/api/obsidian/delete-apply",
+            {
+                "relative_path": relative,
+                "expected_sha256": preview["sha256"],
+                "confirmed": True,
+            },
+        )["result"]
+        self.assertTrue(result["recoverable"])
+        self.assertFalse(note.exists())
+        self.assertTrue(Path(result["moved_to"]).is_file())
 
 
 if __name__ == "__main__":

@@ -27,6 +27,7 @@ class MigrationTests(unittest.TestCase):
         self.settings = UserSettings(vault_path=str(self.vault))
         self.settings_path = self.root / "local" / "config.json"
         self.runner = self.root / "anime-bridge.exe"
+        self.runner.write_bytes(b"runner")
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -41,7 +42,7 @@ class MigrationTests(unittest.TestCase):
         written = apply_migration(
             plan, self.settings, self.settings_path, self.source
         )
-        self.assertEqual(len(written), 6)
+        self.assertEqual(len(written), len(PLUGIN_FILES) + 2)
         self.assertTrue((Path(plan.plugin_target) / "manifest.json").is_file())
         data = json.loads(
             (Path(plan.plugin_target) / "data.json").read_text(encoding="utf-8")
@@ -66,6 +67,33 @@ class MigrationTests(unittest.TestCase):
         with self.assertRaises(MigrationConflict):
             apply_migration(plan, self.settings, self.settings_path, self.source)
         self.assertFalse(self.settings_path.exists())
+
+    def test_known_plugin_with_stale_runner_is_repaired_after_confirmation(self):
+        target = self.vault / ".obsidian" / "plugins" / "anime-bridge"
+        target.mkdir(parents=True)
+        (target / "manifest.json").write_text(
+            '{"id":"anime-bridge","version":"old"}', encoding="utf-8"
+        )
+        (target / "data.json").write_text(
+            '{"runnerPath":"C:/missing/anime-bridge.exe"}', encoding="utf-8"
+        )
+        (target / "personal.txt").write_text("preserve me", encoding="utf-8")
+
+        plan = plan_migration(
+            self.settings, self.settings_path, self.runner, self.source
+        )
+        self.assertEqual(plan.plugin_state, "repair")
+        self.assertTrue(plan.repairs)
+
+        apply_migration(plan, self.settings, self.settings_path, self.source)
+        data = json.loads((target / "data.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["runnerPath"], str(self.runner.resolve()))
+        self.assertEqual((target / "personal.txt").read_text(encoding="utf-8"), "preserve me")
+
+    def test_missing_runner_is_reported_before_plugin_changes(self):
+        self.runner.unlink()
+        with self.assertRaisesRegex(ValueError, "runner does not exist"):
+            plan_migration(self.settings, self.settings_path, self.runner, self.source)
 
     def test_non_vault_is_rejected(self):
         empty = self.root / "not-a-vault"

@@ -1,6 +1,6 @@
 # Agile task board
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 ## Completed — v0.1.0
 
@@ -40,6 +40,9 @@ Last updated: 2026-08-27
 - [x] AB-020a Parse checked candidates and plan compatible formal notes.
 - [x] AB-020b Refuse batch apply when a target exists or collides.
 - [x] AB-020c1 Add the dependency-free Obsidian desktop command shell.
+- [x] AB-020c1a Add preview-confirm automatic runtime/plugin path repair.
+- [x] AB-020c1b Add formal-library listing and recoverable delete management.
+- [x] AB-020c1c Pin checked candidate blocks on the next Obsidian note open.
 - [ ] AB-020c2 Install, enable, and verify the plugin in the real Vault.
 - [ ] AB-020d Perform an explicitly approved real-Vault apply demonstration.
 - [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.
