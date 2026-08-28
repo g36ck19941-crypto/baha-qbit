@@ -13,6 +13,7 @@ from anime_bridge.workflows import (
     apply_import_plan,
     apply_formal_note_delete,
     apply_rss_batch,
+    apply_rss_bundle,
     apply_rss_plan,
     build_candidate_rss_drafts,
     list_formal_anime_notes,
@@ -20,6 +21,7 @@ from anime_bridge.workflows import (
     plan_formal_note_delete,
     plan_rss,
     plan_rss_batch,
+    plan_rss_bundle,
 )
 
 
@@ -156,8 +158,9 @@ class AnimeBridgeAIService:
         smart_filter: bool = False,
         category: str = "",
         save_path: str = "",
+        feed_urls: tuple[str, ...] = (),
     ) -> dict[str, Any]:
-        feed, rule = self._rss_drafts(
+        feeds, rule = self._rss_drafts(
             feed_url,
             feed_path,
             rule_name,
@@ -167,13 +170,19 @@ class AnimeBridgeAIService:
             episode_filter,
             smart_filter,
             category,
-            save_path,
+            save_path, feed_urls,
         )
-        plan = plan_rss(self.qbit, feed, rule)
+        if len(feeds) == 1:
+            feed = feeds[0]
+            plan = plan_rss(self.qbit, feed, rule)
+            feed_conflicts = [plan.feed_conflict]
+        else:
+            plan = plan_rss_bundle(self.qbit, feeds, rule)
+            feed_conflicts = list(plan.feed_conflicts)
         return {
-            "feed": {"url": feed.url, "path": feed.path},
+            "feeds": [{"url": feed.url, "path": feed.path} for feed in feeds],
             "rule": {"name": rule.name, **rule.to_qbittorrent_definition()},
-            "feed_conflict": plan.feed_conflict,
+            "feed_conflicts": feed_conflicts,
             "rule_conflict": plan.rule_conflict,
         }
 
@@ -190,9 +199,10 @@ class AnimeBridgeAIService:
         smart_filter: bool = False,
         category: str = "",
         save_path: str = "",
+        feed_urls: tuple[str, ...] = (),
     ) -> dict[str, Any]:
         self._require_write(confirmation)
-        feed, rule = self._rss_drafts(
+        feeds, rule = self._rss_drafts(
             feed_url,
             feed_path,
             rule_name,
@@ -202,13 +212,17 @@ class AnimeBridgeAIService:
             episode_filter,
             smart_filter,
             category,
-            save_path,
+            save_path, feed_urls,
         )
-        plan = plan_rss(self.qbit, feed, rule)
-        apply_rss_plan(self.qbit, plan)
+        if len(feeds) == 1:
+            plan = plan_rss(self.qbit, feeds[0], rule)
+            apply_rss_plan(self.qbit, plan)
+        else:
+            plan = plan_rss_bundle(self.qbit, feeds, rule)
+            apply_rss_bundle(self.qbit, plan)
         return {
             "created": True,
-            "feed_path": feed.path,
+            "feed_paths": [feed.path for feed in feeds],
             "rule_name": rule.name,
             "enabled": False,
             "add_paused": True,
@@ -250,7 +264,7 @@ class AnimeBridgeAIService:
     def plan_candidate_rss(
         self,
         candidate_path: str,
-        provider: str,
+        provider: str | tuple[str, ...],
         extra_terms: tuple[str, ...] = (),
         custom_template: str = "",
         must_contain: str = "",
@@ -273,14 +287,14 @@ class AnimeBridgeAIService:
             save_root=save_root,
         )
         batch = plan_rss_batch(
-            self.qbit, tuple((draft.feed, draft.rule) for draft in drafts)
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in drafts)
         )
         return self._candidate_rss_payload(candidate, drafts, batch)
 
     def apply_candidate_rss(
         self,
         candidate_path: str,
-        provider: str,
+        provider: str | tuple[str, ...],
         confirmation: str,
         extra_terms: tuple[str, ...] = (),
         custom_template: str = "",
@@ -305,12 +319,12 @@ class AnimeBridgeAIService:
             save_root=save_root,
         )
         batch = plan_rss_batch(
-            self.qbit, tuple((draft.feed, draft.rule) for draft in drafts)
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in drafts)
         )
         apply_rss_batch(self.qbit, batch)
         return {
             "created_count": len(drafts),
-            "feed_paths": [draft.feed.path for draft in drafts],
+            "feed_paths": [feed.path for draft in drafts for feed in draft.feeds],
             "rule_names": [draft.rule.name for draft in drafts],
             "enabled": False,
             "add_paused": True,
@@ -329,14 +343,19 @@ class AnimeBridgeAIService:
                 {
                     "bangumi_id": draft.bangumi_id,
                     "title": draft.title,
-                    "provider": draft.provider,
+                    "providers": list(draft.providers),
                     "search_terms": list(draft.search_terms),
-                    "feed": {"url": draft.feed.url, "path": draft.feed.path},
+                    "feeds": [
+                        {"url": feed.url, "path": feed.path} for feed in draft.feeds
+                    ],
                     "rule": {
                         "name": draft.rule.name,
                         **draft.rule.to_qbittorrent_definition(),
                     },
-                    "feed_conflict": plan.feed_conflict,
+                    "feed_conflicts": list(
+                        plan.feed_conflicts if hasattr(plan, "feed_conflicts")
+                        else (plan.feed_conflict,)
+                    ),
                     "rule_conflict": plan.rule_conflict,
                 }
                 for draft, plan in zip(drafts, batch.plans, strict=True)
@@ -366,11 +385,18 @@ class AnimeBridgeAIService:
         smart_filter: bool,
         category: str,
         save_path: str,
-    ) -> tuple[RSSFeedDraft, RSSRuleDraft]:
-        feed = RSSFeedDraft(feed_url, feed_path)
+        feed_urls: tuple[str, ...] = (),
+    ) -> tuple[tuple[RSSFeedDraft, ...], RSSRuleDraft]:
+        urls = tuple(dict.fromkeys(url.strip() for url in (feed_url, *feed_urls) if url.strip()))
+        if not urls:
+            raise ValueError("At least one RSS URL is required")
+        feeds = tuple(
+            RSSFeedDraft(url, feed_path if index == 1 else f"{feed_path}/{index}")
+            for index, url in enumerate(urls, start=1)
+        )
         rule = RSSRuleDraft(
             name=rule_name,
-            affected_feeds=(feed_url,),
+            affected_feeds=tuple(feed.url for feed in feeds),
             must_contain=must_contain,
             must_not_contain=must_not_contain,
             use_regex=use_regex,
@@ -381,5 +407,5 @@ class AnimeBridgeAIService:
             enabled=False,
             add_paused=True,
         )
-        return feed, rule
+        return feeds, rule
     build_candidate_rss_drafts,

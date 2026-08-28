@@ -2,6 +2,16 @@
 
 Last updated: 2026-08-28
 
+## v0.16.7.dev0 Multi-source RSS drafting
+
+- Manual RSS creation accepts multiple URL lines and groups them under one
+  animation-named, disabled/add-paused rule.
+- Checked-candidate RSS drafting accepts multiple providers/templates per anime;
+  it creates one feed per source and one title-named rule whose `affectedFeeds`
+  contains all source URLs.
+- Source verification: 20 focused RSS/web tests pass. No RSS feed was applied
+  to a live qBittorrent instance in this change.
+
 ## v0.16.6.dev0 Obsidian loader compatibility
 
 - Removed the plugin's load-time dependency on relative `require` resolution by

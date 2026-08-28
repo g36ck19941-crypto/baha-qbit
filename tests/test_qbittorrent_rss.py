@@ -8,6 +8,7 @@ from anime_bridge.workflows.rss_plan import (
     RSSPlanConflict,
     apply_rss_batch,
     apply_rss_plan,
+    plan_rss_bundle,
     plan_rss,
     plan_rss_batch,
 )
@@ -79,6 +80,14 @@ class QBittorrentRSSTests(unittest.TestCase):
         with self.assertRaises(RSSPlanConflict):
             apply_rss_batch(client, batch)
         self.assertEqual(client.calls, [])
+
+    def test_bundle_has_multiple_feeds_and_one_rule(self):
+        feed, rule = drafts()
+        second = RSSFeedDraft("https://example.invalid/second.xml", "动画/LV999/dmhy")
+        combined_rule = RSSRuleDraft("LV999", (feed.url, second.url))
+        plan = plan_rss_bundle(FakeRSSClient(), (feed, second), combined_rule)
+        self.assertFalse(plan.has_conflict)
+        self.assertEqual(plan.rule.to_qbittorrent_definition()["affectedFeeds"], [feed.url, second.url])
 
 
 if __name__ == "__main__":

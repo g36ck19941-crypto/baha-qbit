@@ -4,6 +4,18 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Multi-source RSS rules
+
+- RSS manual entry accepts several feed URLs (one per line) and creates one
+  disabled, add-paused qBittorrent rule covering all of them.
+- Candidate batch generation can select Comicat, DMHY, and one or more custom
+  HTTPS templates together. It now creates source-specific subscription paths
+  but one rule named after the anime; only an actual duplicate title receives a
+  visible Bangumi ID suffix.
+- Clarified in the UI and guide that an RSS URL is the remote XML endpoint,
+  whereas a subscription path is only qBittorrent's internal folder hierarchy;
+  neither is the download directory.
+
 ### Obsidian plugin load compatibility
 
 - Inlined the checked-first candidate sorter into the plugin entry file so

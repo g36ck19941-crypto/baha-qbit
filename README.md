@@ -6,7 +6,7 @@ external integration remains replaceable and testable.
 
 Private upstream: `https://github.com/g36ck19941-crypto/baha-qbit`
 
-Current development version: `0.16.6.dev0`. The Windows x64 build is
+Current development version: `0.16.7.dev0`. The Windows x64 build is
 generated as `dist/anime-bridge.exe`; double-clicking it opens the local UI.
 
 ## Confirmed scope
@@ -20,11 +20,12 @@ generated as `dist/anime-bridge.exe`; double-clicking it opens the local UI.
 
 ## Current milestone
 
-`v0.16.6.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
+`v0.16.7.dev0` includes the Bangumi scanner, conservative Bahamut matching core,
 conflict-safe Obsidian import core, and preview-first local qBittorrent RSS
 control, an installable Obsidian command shell, a tested local MCP server, and a
 loopback-only browser interface, self-contained Windows executable, and a
-preview-first migration assistant, batch per-anime RSS source/rule drafts, and
+preview-first migration assistant, multi-source batch per-anime RSS drafts with
+one animation-named qBittorrent rule, and
 account-free direct retrieval of the validated public current-quarter catalog,
 with a session-aware Tampermonkey helper retained only for HTTP 403 fallback,
 plus a read-only MCP candidate-note analyzer for AI-assisted

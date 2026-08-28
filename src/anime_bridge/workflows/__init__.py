@@ -21,12 +21,15 @@ from .obsidian_library import (
 )
 from .rss_plan import (
     RSSBatchPlan,
+    RSSBundlePlan,
     RSSPlan,
     RSSPlanConflict,
     apply_rss_batch,
+    apply_rss_bundle,
     apply_rss_plan,
     plan_rss,
     plan_rss_batch,
+    plan_rss_bundle,
 )
 from .rss_sources import (
     CandidateRSSDraft,
@@ -51,11 +54,14 @@ __all__ = [
     "plan_formal_note_delete",
     "RSSPlan",
     "RSSBatchPlan",
+    "RSSBundlePlan",
     "RSSPlanConflict",
     "apply_rss_plan",
     "apply_rss_batch",
+    "apply_rss_bundle",
     "plan_rss",
     "plan_rss_batch",
+    "plan_rss_bundle",
     "CandidateRSSDraft",
     "RSSSourceProvider",
     "build_candidate_rss_drafts",

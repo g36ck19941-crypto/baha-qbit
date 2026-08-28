@@ -1,4 +1,4 @@
-# User guide — v0.16.6 development
+# User guide — v0.16.7 development
 
 ## Portable Windows build
 
@@ -221,11 +221,26 @@ enabled, add `--username NAME`; the password is prompted and never saved.
 The feed and rule are two WebUI API writes rather than one atomic transaction.
 If the connection fails after feed creation, inspect qBittorrent before retrying.
 
+## RSS URL, subscription path, and download directory
+
+- **RSS URL** is the remote HTTP(S) address qBittorrent refreshes to read an
+  RSS XML feed.
+- **Subscription path** is qBittorrent's internal relative folder used only to
+  organize feeds in its RSS panel. It is not a Windows folder.
+- **Download directory** is the optional local filesystem destination in the
+  RSS rule.
+
+In the GUI's manual form, enter one or more RSS URLs (one per line), provide
+the animation name, and choose a subscription-path root. Anime Bridge creates
+one feed below that root for each URL and one disabled/add-paused rule named
+after the animation.
+
 ## Batch RSS drafts from checked candidates
 
-The GUI's **RSS 下载器 → 从已勾选动画批量生成** section creates one feed
-URL and disabled/add-paused rule draft per checked candidate. Supported source
-templates are:
+The GUI's **RSS 下载器 → 从已勾选动画批量生成** section can select several
+sources for each checked candidate. It creates one source-specific feed URL per
+source and one disabled/add-paused rule named after the animation. Supported
+source templates are:
 
 - `comicat-rsshub`: `/comicat/search/:keyword` through RSSHub;
 - `dmhy`: the DMHY keyword RSS route;
@@ -243,6 +258,7 @@ CLI preview example:
 .\anime-bridge.exe qbittorrent-rss-batch `
   "C:/Path/To/Vault/bangumi1/2026-07-动画候选.md" `
   --vault "C:/Path/To/Vault" `
+  --provider comicat-rsshub `
   --provider dmhy `
   --extra-term 1080P `
   --extra-term CHS `

@@ -109,9 +109,9 @@
           <button id="qbit-check">读取当前状态</button>
         </div>
         <form id="rss-form" class="form-sheet two-column">
-          <label class="wide"><span>RSS URL</span><input name="feed_url" type="url" required placeholder="https://example.com/feed.xml"></label>
-          <label><span>订阅路径</span><input name="feed_path" required value="AnimeBridge/Title"></label>
-          <label><span>规则名称</span><input name="rule_name" required value="Title 1080p"></label>
+          <label class="wide"><span>RSS URL（可多个，每行一个）</span><textarea name="feed_urls" required placeholder="https://example.com/feed-a.xml&#10;https://example.com/feed-b.xml"></textarea></label>
+          <label><span>动画名称（即下载规则名）</span><input name="anime_title" required placeholder="例如：跃动青春 第二季"></label>
+          <label><span>订阅路径根目录</span><input name="feed_path" required value="AnimeBridge"></label>
           <label><span>必须包含</span><input name="must_contain" value="1080"></label>
           <label><span>必须排除</span><input name="must_not_contain"></label>
           <label class="wide"><span>下载目录（可选）</span><input name="save_path" placeholder="C:/localanime/Title"></label>
@@ -126,13 +126,13 @@
         </div>
         <div class="section-head subsection-head">
           <div><p class="eyebrow">BATCH DRAFTS</p><h2>从已勾选动画批量生成</h2></div>
-          <p>每部动画一个搜索 RSS 与规则</p>
+          <p>每部动画可选择多个搜索 RSS，但只创建一条同名下载规则</p>
         </div>
         <form id="rss-batch-form" class="form-sheet two-column">
           <label class="wide"><span>候选笔记路径</span><input name="candidate_path" required placeholder="C:/.../bangumi1/2026-07-动画候选.md"></label>
-          <label><span>RSS 来源</span><select name="provider"><option value="comicat-rsshub">Comicat（经可访问/自建 RSSHub）</option><option value="dmhy">动漫花园</option><option value="custom">自定义 HTTPS 模板</option></select></label>
+          <label><span>RSS 来源（可多选）</span><select name="providers" multiple size="3"><option value="comicat-rsshub" selected>Comicat（经可访问/自建 RSSHub）</option><option value="dmhy">动漫花园</option><option value="custom">自定义 HTTPS 模板（可多行）</option></select></label>
           <label><span>附加搜索词（逗号分隔）</span><input name="extra_terms" placeholder="1080P, CHS"></label>
-          <label class="wide"><span>来源模板覆盖（可选）</span><input name="custom_template" placeholder="https://your-rsshub.example/comicat/search/{query}"></label>
+          <label class="wide"><span>自定义来源模板（可选；每行一个，需含 {query}）</span><textarea name="custom_template" placeholder="https://your-rsshub.example/comicat/search/{query}"></textarea></label>
           <label><span>规则必须包含</span><input name="must_contain"></label>
           <label><span>规则必须排除</span><input name="must_not_contain"></label>
           <label><span>集数过滤</span><input name="episode_filter" placeholder="1-12"></label>

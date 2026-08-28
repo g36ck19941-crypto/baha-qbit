@@ -132,6 +132,10 @@ Last updated: 2026-08-27
   their generated URLs are drafts rather than proven downloader-readable feeds.
 - Batch writes preflight all conflicts but cannot be atomic because the
   qBittorrent WebUI API exposes separate feed and rule writes.
+- A source URL is the remote RSS XML endpoint. A subscription path is only the
+  relative qBittorrent RSS tree location; it is distinct from a rule's optional
+  download save path. Multiple source URLs may be attached to one anime-named
+  rule so either source can produce matching releases.
 
 ## D-007 — Portable distribution policy
 

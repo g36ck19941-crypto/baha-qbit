@@ -64,7 +64,13 @@ async function api(path, payload = {}, label = "执行操作") {
 }
 
 function formObject(form) {
-  return Object.fromEntries(new FormData(form).entries());
+  const data = new FormData(form);
+  const result = Object.fromEntries(data.entries());
+  for (const [name] of data.entries()) {
+    const values = data.getAll(name);
+    if (values.length > 1) result[name] = values;
+  }
+  return result;
 }
 
 function showView(name) {

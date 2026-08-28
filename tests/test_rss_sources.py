@@ -65,7 +65,9 @@ class RSSSourceTests(unittest.TestCase):
         self.assertEqual(len(drafts), 1)
         draft = drafts[0]
         self.assertEqual(draft.bangumi_id, 101)
-        self.assertNotIn("/", draft.feed.path.rsplit("/", 1)[-1])
+        self.assertEqual(draft.rule.name, "跃动青春 _ 第二季")
+        self.assertEqual(len(draft.feeds), 1)
+        self.assertNotIn("/", draft.feeds[0].path.rsplit("/", 1)[-1])
         definition = draft.rule.to_qbittorrent_definition()
         self.assertFalse(definition["enabled"])
         self.assertTrue(definition["addPaused"])
@@ -75,6 +77,17 @@ class RSSSourceTests(unittest.TestCase):
             build_candidate_rss_drafts(
                 self.document(), "dmhy", save_root="relative/path"
             )
+
+    def test_multiple_sources_share_one_title_rule(self):
+        draft = build_candidate_rss_drafts(
+            self.document(), ("comicat-rsshub", "dmhy"), extra_terms=("1080P",)
+        )[0]
+        self.assertEqual(draft.rule.name, "跃动青春 _ 第二季")
+        self.assertEqual(len(draft.feeds), 2)
+        self.assertEqual(
+            draft.rule.affected_feeds, tuple(feed.url for feed in draft.feeds)
+        )
+        self.assertEqual(draft.providers, ("comicat-rsshub", "dmhy"))
 
 
 if __name__ == "__main__":

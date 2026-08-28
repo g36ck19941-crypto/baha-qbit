@@ -152,7 +152,11 @@ def build_parser() -> argparse.ArgumentParser:
     rss_batch.add_argument("candidate", type=Path)
     rss_batch.add_argument("--vault", type=Path, required=True)
     rss_batch.add_argument(
-        "--provider", choices=("comicat-rsshub", "dmhy", "custom"), required=True
+        "--provider",
+        choices=("comicat-rsshub", "dmhy", "custom"),
+        action="append",
+        required=True,
+        help="RSS source; repeat this option to use multiple sources per anime",
     )
     rss_batch.add_argument("--extra-term", action="append", default=[])
     rss_batch.add_argument("--custom-template", default="")
@@ -384,7 +388,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             common = (
                 str(args.candidate),
-                args.provider,
+                tuple(args.provider),
                 tuple(args.extra_term),
                 args.custom_template,
                 args.must_contain,

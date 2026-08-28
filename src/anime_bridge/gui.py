@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import secrets
 import threading
 import webbrowser
@@ -308,10 +309,16 @@ def _require_browser_confirmation(payload: dict[str, Any]) -> None:
 
 
 def _rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
+    urls = _line_values(payload.get("feed_urls"))
+    primary_url = str(payload.get("feed_url") or "").strip()
+    title = str(payload.get("anime_title") or "").strip()
+    feed_root = _required_text(payload, "feed_path")
+    feed_path = f"{feed_root.rstrip('/')}/{_rss_path_component(title)}" if title else feed_root
     return {
-        "feed_url": _required_text(payload, "feed_url"),
-        "feed_path": _required_text(payload, "feed_path"),
-        "rule_name": _required_text(payload, "rule_name"),
+        "feed_url": primary_url or (urls[0] if urls else ""),
+        "feed_urls": tuple(urls[1:] if primary_url else urls[1:]),
+        "feed_path": feed_path,
+        "rule_name": _required_text(payload, "rule_name") if payload.get("rule_name") else title,
         "must_contain": str(payload.get("must_contain") or ""),
         "must_not_contain": str(payload.get("must_not_contain") or ""),
         "use_regex": bool(payload.get("use_regex", False)),
@@ -330,9 +337,16 @@ def _batch_rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
         for term in line.split(",")
         if term.strip()
     )
+    providers = payload.get("providers") or payload.get("provider") or ""
+    if isinstance(providers, str):
+        providers = tuple(value.strip() for value in providers.split(",") if value.strip())
+    elif isinstance(providers, list):
+        providers = tuple(str(value).strip() for value in providers if str(value).strip())
+    else:
+        providers = ()
     return {
         "candidate_path": _required_text(payload, "candidate_path"),
-        "provider": _required_text(payload, "provider"),
+        "provider": providers,
         "extra_terms": terms,
         "custom_template": str(payload.get("custom_template") or ""),
         "must_contain": str(payload.get("must_contain") or ""),
@@ -341,6 +355,19 @@ def _batch_rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
         "category": str(payload.get("category") or "anime"),
         "save_root": str(payload.get("save_root") or ""),
     }
+
+
+def _line_values(value: object) -> tuple[str, ...]:
+    return tuple(
+        line.strip() for line in str(value or "").splitlines() if line.strip()
+    )
+
+
+def _rss_path_component(value: str) -> str:
+    component = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", value).strip(" .")
+    if not component:
+        raise ValueError("anime_title cannot form a safe RSS subscription path")
+    return component[:80]
 
 
 class AnimeBridgeWebServer(ThreadingHTTPServer):

@@ -49,6 +49,7 @@ Last updated: 2026-08-28
 - [x] AB-030a Add loopback-only qBittorrent WebUI version negotiation.
 - [x] AB-030b Add RSS feed/rule preview, safe defaults, and conflict refusal.
 - [x] AB-030c Add replaceable per-anime RSS source adapters and batch rule drafts.
+- [x] AB-030c1 Allow multiple RSS sources per anime and title-named grouped rules.
 - [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
 - [x] AB-040a Add an official-SDK local stdio MCP server.
 - [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.

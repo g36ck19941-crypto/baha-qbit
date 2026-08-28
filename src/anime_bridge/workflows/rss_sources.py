@@ -23,9 +23,9 @@ class RSSSourceProvider:
 class CandidateRSSDraft:
     bangumi_id: int
     title: str
-    provider: str
+    providers: tuple[str, ...]
     search_terms: tuple[str, ...]
-    feed: RSSFeedDraft
+    feeds: tuple[RSSFeedDraft, ...]
     rule: RSSRuleDraft
 
 
@@ -90,7 +90,7 @@ def build_feed_url(
 
 def build_candidate_rss_drafts(
     document: CandidateDocument,
-    provider_key: str,
+    provider_keys: str | tuple[str, ...],
     *,
     extra_terms: tuple[str, ...] = (),
     custom_template: str = "",
@@ -107,31 +107,52 @@ def build_candidate_rss_drafts(
             "Bahamut current-quarter catalog subtraction"
         )
     root = _relative_component(feed_root, allow_slash=True)
+    keys = (provider_keys,) if isinstance(provider_keys, str) else provider_keys
+    keys = tuple(dict.fromkeys(key.strip() for key in keys if key.strip()))
+    if not keys:
+        raise ValueError("At least one RSS source is required")
+    templates = tuple(
+        line.strip() for line in custom_template.splitlines() if line.strip()
+    )
+    if "custom" in keys and not templates:
+        raise ValueError("Custom RSS provider requires at least one HTTPS template")
     result: list[CandidateRSSDraft] = []
-    seen_paths: set[str] = set()
     seen_rules: set[str] = set()
     for selection in document.checked:
         terms = _clean_terms((selection.title, *extra_terms))
-        url = build_feed_url(
-            provider_key, terms, custom_template=custom_template
-        )
         title_component = _relative_component(selection.title)
-        feed_path = f"{root}/{selection.air_date.year}-{selection.air_date.month:02d}/{selection.bangumi_id}-{title_component}"
-        rule_name = f"AnimeBridge {selection.bangumi_id} {title_component}"
-        if feed_path in seen_paths or rule_name in seen_rules:
+        rule_name = title_component
+        if rule_name in seen_rules:
+            rule_name = f"{title_component} [{selection.bangumi_id}]"
+        if rule_name in seen_rules:
             raise ValueError("Candidate RSS drafts contain duplicate targets")
-        seen_paths.add(feed_path)
         seen_rules.add(rule_name)
+        feeds: list[RSSFeedDraft] = []
+        labels: list[str] = []
+        for key in keys:
+            source_templates = templates if key == "custom" else ("",)
+            for index, template in enumerate(source_templates, start=1):
+                url = build_feed_url(key, terms, custom_template=template)
+                label = key if len(source_templates) == 1 else f"{key}-{index}"
+                feeds.append(
+                    RSSFeedDraft(
+                        url=url,
+                        path=(
+                            f"{root}/{selection.air_date.year}-{selection.air_date.month:02d}"
+                            f"/{title_component}/{label}"
+                        ),
+                    )
+                )
+                labels.append(label)
         save_path = ""
         if save_root.strip():
             root_path = Path(save_root).expanduser()
             if not root_path.is_absolute():
                 raise ValueError("RSS batch save root must be an absolute path")
             save_path = str(root_path / title_component)
-        feed = RSSFeedDraft(url=url, path=feed_path)
         rule = RSSRuleDraft(
             name=rule_name,
-            affected_feeds=(url,),
+            affected_feeds=tuple(feed.url for feed in feeds),
             must_contain=must_contain,
             must_not_contain=must_not_contain,
             episode_filter=episode_filter,
@@ -145,9 +166,9 @@ def build_candidate_rss_drafts(
             CandidateRSSDraft(
                 bangumi_id=selection.bangumi_id,
                 title=selection.title,
-                provider=provider_key,
+                providers=tuple(labels),
                 search_terms=terms,
-                feed=feed,
+                feeds=tuple(feeds),
                 rule=rule,
             )
         )
