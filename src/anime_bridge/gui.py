@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import secrets
+import subprocess
 import threading
 import webbrowser
 from dataclasses import replace
@@ -95,12 +97,16 @@ class WebGUIController:
             "integration_folder": self.settings.integration_folder,
             "formal_root": self.settings.formal_root,
             "qbit_base_url": self.settings.qbit_base_url,
+            "qbit_executable_path": self.settings.qbit_executable_path,
         }
 
     def update_settings(self, payload: dict[str, Any]) -> dict[str, Any]:
         values: dict[str, str] = {}
         for key in self.settings_dict():
             value = payload.get(key)
+            if key == "qbit_executable_path":
+                values[key] = str(value or "").strip()
+                continue
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"Setting {key} must be a non-empty string")
             values[key] = value.strip()
@@ -248,6 +254,17 @@ class WebGUIController:
 
     def qbit_status(self) -> dict[str, Any]:
         return self._service().qbit_status()
+
+    def qbit_launch(self) -> dict[str, Any]:
+        candidates = [Path(self.settings.qbit_executable_path)] if self.settings.qbit_executable_path else []
+        for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")):
+            if base:
+                candidates.append(Path(base) / "qBittorrent" / "qbittorrent.exe")
+        executable = next((path for path in candidates if path.is_file()), None)
+        if executable is None:
+            raise ValueError("找不到 qBittorrent。请在本机设置中填写 qbittorrent.exe 路径。")
+        subprocess.Popen([str(executable)], close_fds=True)
+        return {"started": True, "executable": str(executable), "next_step": "请等待 qBittorrent 启动后再次读取状态；首次使用仍需在 qBittorrent 开启 WebUI。"}
 
     def qbit_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
         return self._service().plan_qbit_rss(**_rss_arguments(payload))
@@ -471,6 +488,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             "/api/obsidian/delete-plan": lambda: controller.obsidian_delete_plan(payload),
             "/api/obsidian/delete-apply": lambda: controller.obsidian_delete_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
+            "/api/qbit/launch": lambda: controller.qbit_launch(),
             "/api/qbit/plan": lambda: controller.qbit_plan(payload),
             "/api/qbit/apply": lambda: controller.qbit_apply(payload),
             "/api/qbit/batch-plan": lambda: controller.qbit_batch_plan(payload),

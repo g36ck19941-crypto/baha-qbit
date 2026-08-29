@@ -1,3 +1,3 @@
 """Anime Bridge public package metadata."""
 
-__version__ = "0.16.9.dev0"
+__version__ = "0.16.10.dev0"

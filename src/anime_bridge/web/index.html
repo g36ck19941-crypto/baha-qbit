@@ -106,7 +106,7 @@
       <section class="view" id="view-rss">
         <div class="section-head">
           <div><p class="eyebrow">LOCAL WEBUI API</p><h1>qBittorrent RSS</h1></div>
-          <button id="qbit-check">读取当前状态</button>
+          <div class="button-row"><button id="rss-auto-jump" class="primary">自动发现 RSS</button><button id="qbit-launch">启动 qBittorrent</button><button id="qbit-check">读取当前状态</button></div>
         </div>
         <form id="rss-form" class="form-sheet two-column">
           <label class="wide"><span>RSS URL（可多个，每行一个）</span><textarea name="feed_urls" required placeholder="https://example.com/feed-a.xml&#10;https://example.com/feed-b.xml"></textarea></label>
@@ -156,6 +156,7 @@
           <label><span>候选笔记目录</span><input name="integration_folder" required></label>
           <label><span>正式动画目录</span><input name="formal_root" required></label>
           <label><span>qBittorrent WebUI</span><input name="qbit_base_url" type="url" required></label>
+          <label class="wide"><span>qBittorrent 程序路径（可选）</span><input name="qbit_executable_path" placeholder="C:/Program Files/qBittorrent/qbittorrent.exe"><small>为空时会尝试常见安装位置；仅用于“启动 qBittorrent”按钮。</small></label>
           <div class="button-row"><button type="submit" class="primary">保存设置</button></div>
         </form>
         <div class="form-sheet migration-sheet">

@@ -4,6 +4,14 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### qBittorrent launch and RSS discovery access
+
+- Added a visible **自动发现 RSS** shortcut at the top of the RSS page, which
+  scrolls directly to the checked-candidate automatic-discovery form.
+- Added a user-triggered **启动 qBittorrent** button. It uses the configured
+  executable path or common Windows installation paths and never starts a
+  shell. Starting the app does not bypass or configure its WebUI.
+
 ### Verified automatic RSS discovery
 
 - Batch RSS generation now probes each generated public source URL with bounded,

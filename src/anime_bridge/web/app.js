@@ -203,6 +203,13 @@ document.getElementById("obsidian-delete-apply").addEventListener("click", async
 document.getElementById("qbit-check").addEventListener("click", async () => {
   try { await api("/api/qbit/status", {}, "读取 qBittorrent RSS 状态"); } catch (_) {}
 });
+document.getElementById("qbit-launch").addEventListener("click", async () => {
+  try { await api("/api/qbit/launch", {}, "启动 qBittorrent"); } catch (_) {}
+});
+document.getElementById("rss-auto-jump").addEventListener("click", () => {
+  document.getElementById("rss-batch-form").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("rss-batch-form").querySelector("input").focus();
+});
 document.getElementById("rss-plan").addEventListener("click", async () => {
   try { await api("/api/qbit/plan", formObject(document.getElementById("rss-form")), "预览 RSS 规则"); } catch (_) {}
 });

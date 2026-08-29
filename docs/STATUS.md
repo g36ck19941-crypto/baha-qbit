@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-28
 
+## v0.16.10.dev0 qBittorrent launch and RSS discovery access
+
+- The RSS page now has a top-level automatic-discovery shortcut and a
+  user-triggered qBittorrent launcher using a configured or common install path.
+- Starting qBittorrent remains separate from enabling its local WebUI.
+- Source verification: 91 automated tests and frozen package version/GUI smoke
+  test pass; qBittorrent was not launched by the test suite.
+
 ## v0.16.9.dev0 Verified automatic RSS discovery
 
 - Checked-candidate RSS previews now probe each selected public source URL and

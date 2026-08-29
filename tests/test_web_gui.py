@@ -65,6 +65,15 @@ class WebGUITests(unittest.TestCase):
         self.assertEqual(values["feed_path"], "AnimeBridge/测试动画")
         self.assertEqual(values["rule_name"], "测试动画")
 
+    def test_qbit_launch_uses_configured_executable_without_shell(self):
+        executable = Path(self.temp.name) / "qbittorrent.exe"
+        executable.touch()
+        self.server.controller.settings.qbit_executable_path = str(executable)
+        with patch("anime_bridge.gui.subprocess.Popen") as popen:
+            result = self.server.controller.qbit_launch()
+        self.assertTrue(result["started"])
+        popen.assert_called_once_with([str(executable)], close_fds=True)
+
     def post(self, path, payload, token="test-token", bridge_token=None):
         headers = {"Content-Type": "application/json"}
         if bridge_token is None:

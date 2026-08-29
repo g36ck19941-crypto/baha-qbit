@@ -16,6 +16,7 @@ class UserSettings:
     integration_folder: str = "bangumi1"
     formal_root: str = "C/bangumi"
     qbit_base_url: str = "http://127.0.0.1:8080"
+    qbit_executable_path: str = ""
 
     @classmethod
     def load(cls, path: Path) -> "UserSettings":
