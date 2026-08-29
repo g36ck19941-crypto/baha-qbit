@@ -8,6 +8,7 @@ from typing import Any
 from anime_bridge.adapters.bangumi import BangumiClient
 from anime_bridge.adapters.candidate_markdown import parse_candidate_markdown
 from anime_bridge.adapters.qbittorrent import QBittorrentClient
+from anime_bridge.adapters.rss_probe import HTTPRSSProbe
 from anime_bridge.domain import AnimeCategory, RSSFeedDraft, RSSRuleDraft
 from anime_bridge.workflows import (
     apply_import_plan,
@@ -16,6 +17,7 @@ from anime_bridge.workflows import (
     apply_rss_bundle,
     apply_rss_plan,
     build_candidate_rss_drafts,
+    discover_candidate_rss,
     list_formal_anime_notes,
     plan_checked_import,
     plan_formal_note_delete,
@@ -42,12 +44,14 @@ class AnimeBridgeAIService:
         allow_writes: bool = False,
         bangumi: Any | None = None,
         qbit: Any | None = None,
+        rss_probe: Any | None = None,
     ) -> None:
         self.vault_path = vault_path.resolve()
         self.formal_root = formal_root
         self.allow_writes = allow_writes
         self.bangumi = bangumi or BangumiClient()
         self.qbit = qbit or QBittorrentClient(qbit_base_url)
+        self.rss_probe = rss_probe or HTTPRSSProbe()
 
     def _vault_markdown(self, candidate_path: str) -> Path:
         path = Path(candidate_path)
@@ -286,10 +290,12 @@ class AnimeBridgeAIService:
             category=category,
             save_root=save_root,
         )
+        discoveries = discover_candidate_rss(drafts, self.rss_probe)
+        available = tuple(item.draft for item in discoveries if item.draft is not None)
         batch = plan_rss_batch(
-            self.qbit, tuple((draft.feeds, draft.rule) for draft in drafts)
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in available)
         )
-        return self._candidate_rss_payload(candidate, drafts, batch)
+        return self._candidate_rss_payload(candidate, available, batch, discoveries)
 
     def apply_candidate_rss(
         self,
@@ -318,21 +324,25 @@ class AnimeBridgeAIService:
             category=category,
             save_root=save_root,
         )
+        discoveries = discover_candidate_rss(drafts, self.rss_probe)
+        available = tuple(item.draft for item in discoveries if item.draft is not None)
+        if not available:
+            raise ValueError("No checked animation has a verified RSS source")
         batch = plan_rss_batch(
-            self.qbit, tuple((draft.feeds, draft.rule) for draft in drafts)
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in available)
         )
         apply_rss_batch(self.qbit, batch)
         return {
-            "created_count": len(drafts),
-            "feed_paths": [feed.path for draft in drafts for feed in draft.feeds],
-            "rule_names": [draft.rule.name for draft in drafts],
+            "created_count": len(available),
+            "feed_paths": [feed.path for draft in available for feed in draft.feeds],
+            "rule_names": [draft.rule.name for draft in available],
             "enabled": False,
             "add_paused": True,
             "atomic": False,
         }
 
     @staticmethod
-    def _candidate_rss_payload(candidate: Path, drafts: Any, batch: Any) -> dict[str, Any]:
+    def _candidate_rss_payload(candidate: Path, drafts: Any, batch: Any, discoveries: Any) -> dict[str, Any]:
         return {
             "candidate": str(candidate),
             "draft_count": len(drafts),
@@ -361,6 +371,17 @@ class AnimeBridgeAIService:
                 for draft, plan in zip(drafts, batch.plans, strict=True)
             ],
             "safe_defaults": {"enabled": False, "add_paused": True},
+            "discovery": [
+                {
+                    "title": item.title,
+                    "usable": item.draft is not None,
+                    "sources": [
+                        {"url": result.url, "available": result.available, "detail": result.detail}
+                        for result in item.results
+                    ],
+                }
+                for item in discoveries
+            ],
         }
 
     def _require_write(self, confirmation: str) -> None:

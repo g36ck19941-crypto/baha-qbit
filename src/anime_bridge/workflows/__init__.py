@@ -38,6 +38,7 @@ from .rss_sources import (
     build_feed_url,
     provider_catalog,
 )
+from .rss_discovery import CandidateRSSDiscovery, discover_candidate_rss
 
 __all__ = [
     "BahamutDifferenceResult",
@@ -67,6 +68,8 @@ __all__ = [
     "build_candidate_rss_drafts",
     "build_feed_url",
     "provider_catalog",
+    "CandidateRSSDiscovery",
+    "discover_candidate_rss",
     "subtract_bahamut_catalog",
     "subtract_bahamut_favorites",
 ]

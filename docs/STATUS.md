@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-28
 
+## v0.16.9.dev0 Verified automatic RSS discovery
+
+- Checked-candidate RSS previews now probe each selected public source URL and
+  only retain responses confirmed as RSS/Atom XML. Per-source unavailable
+  reasons are returned in the preview; writes still require confirmation.
+- Comicat human-verification responses are treated as unavailable, never
+  bypassed. Source verification: 90 automated tests and frozen package
+  version/GUI smoke test pass; no live RSS source was subscribed.
+
 ## v0.16.8.dev0 Simplified RSS setup
 
 - The optional qBittorrent RSS-panel grouping path is now collapsed under

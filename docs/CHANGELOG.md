@@ -4,6 +4,14 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Verified automatic RSS discovery
+
+- Batch RSS generation now probes each generated public source URL with bounded,
+  credential-free reads and only includes verified RSS/Atom responses in a
+  qBittorrent preview. Source failures such as HTTP 403 remain visible.
+- The automatic discovery path never bypasses Comicat's human verification;
+  unavailable providers are skipped rather than guessed or silently applied.
+
 ### Simplified RSS subscription setup
 
 - Moved the qBittorrent RSS-panel grouping path into a collapsed advanced

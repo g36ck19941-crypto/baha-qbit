@@ -125,8 +125,8 @@
           <p>界面创建的规则始终保持禁用，匹配的下载始终暂停。此界面不提供删除订阅、规则或任务的入口。</p>
         </div>
         <div class="section-head subsection-head">
-          <div><p class="eyebrow">BATCH DRAFTS</p><h2>从已勾选动画批量生成</h2></div>
-          <p>每部动画可选择多个搜索 RSS，但只创建一条同名下载规则</p>
+          <div><p class="eyebrow">AUTO RSS DISCOVERY</p><h2>自动查找已勾选动画的可用 RSS</h2></div>
+          <p>先验证各来源是否返回 RSS；仅可用来源进入预览，每部动画只创建一条同名规则</p>
         </div>
         <form id="rss-batch-form" class="form-sheet two-column">
           <label class="wide"><span>候选笔记路径</span><input name="candidate_path" required placeholder="C:/.../bangumi1/2026-07-动画候选.md"></label>
@@ -139,7 +139,7 @@
           <label><span>qBittorrent 分类</span><input name="category" value="anime"></label>
           <label class="wide"><span>下载根目录（可选）</span><input name="save_root" placeholder="C:/localanime"></label>
           <div class="button-row wide">
-            <button type="button" id="rss-batch-plan">预览批量草案</button>
+            <button type="button" id="rss-batch-plan">自动查找并预览</button>
             <button type="button" class="danger-outline" id="rss-batch-apply">确认后批量创建</button>
           </div>
         </form>

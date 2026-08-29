@@ -51,6 +51,7 @@ Last updated: 2026-08-28
 - [x] AB-030c Add replaceable per-anime RSS source adapters and batch rule drafts.
 - [x] AB-030c1 Allow multiple RSS sources per anime and title-named grouped rules.
 - [x] AB-030c2 Hide optional RSS-panel grouping behind automatic defaults.
+- [x] AB-030c3 Add verified public RSS auto-discovery with visible source failures.
 - [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
 - [x] AB-040a Add an official-SDK local stdio MCP server.
 - [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.

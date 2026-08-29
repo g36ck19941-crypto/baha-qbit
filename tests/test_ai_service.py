@@ -7,6 +7,7 @@ from pathlib import Path
 
 from anime_bridge.ai.service import AnimeBridgeAIService, WritePermissionError
 from anime_bridge.domain import AnimeCategory, AnimeSubject
+from anime_bridge.adapters.rss_probe import RSSProbeResult
 
 
 class FakeBangumi:
@@ -29,6 +30,12 @@ class FakeQbit:
     def rss_rules(self): return {}
     def add_feed(self, url, path): self.calls.append(("feed", url, path))
     def set_rule(self, name, definition): self.calls.append(("rule", name, definition))
+
+
+class FakeRSSProbe:
+    def __init__(self, available=True): self.available = available
+    def probe(self, url):
+        return RSSProbeResult(url, self.available, "RSS/Atom 已验证" if self.available else "HTTP 403")
 
 
 class AIServiceTests(unittest.TestCase):
@@ -123,13 +130,13 @@ class AIServiceTests(unittest.TestCase):
             vault = Path(directory)
             candidate = self.write_candidate(vault)
             qbit = FakeQbit()
-            preview_service = AnimeBridgeAIService(vault, qbit=qbit)
+            preview_service = AnimeBridgeAIService(vault, qbit=qbit, rss_probe=FakeRSSProbe())
             preview = preview_service.plan_candidate_rss(
                 str(candidate), "comicat-rsshub", ("1080P", "CHS")
             )
             self.assertEqual(preview["draft_count"], 1)
             self.assertEqual(qbit.calls, [])
-            enabled = AnimeBridgeAIService(vault, allow_writes=True, qbit=qbit)
+            enabled = AnimeBridgeAIService(vault, allow_writes=True, qbit=qbit, rss_probe=FakeRSSProbe())
             result = enabled.apply_candidate_rss(
                 str(candidate),
                 "comicat-rsshub",
@@ -140,6 +147,7 @@ class AIServiceTests(unittest.TestCase):
             self.assertEqual([call[0] for call in qbit.calls], ["feed", "rule"])
             self.assertFalse(qbit.calls[1][2]["enabled"])
             self.assertTrue(qbit.calls[1][2]["addPaused"])
+            self.assertTrue(preview["discovery"][0]["usable"])
 
 
 if __name__ == "__main__":
