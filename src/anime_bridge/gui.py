@@ -312,7 +312,7 @@ def _rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
     urls = _line_values(payload.get("feed_urls"))
     primary_url = str(payload.get("feed_url") or "").strip()
     title = str(payload.get("anime_title") or "").strip()
-    feed_root = _required_text(payload, "feed_path")
+    feed_root = str(payload.get("feed_path") or "AnimeBridge").strip()
     feed_path = f"{feed_root.rstrip('/')}/{_rss_path_component(title)}" if title else feed_root
     return {
         "feed_url": primary_url or (urls[0] if urls else ""),

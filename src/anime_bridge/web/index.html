@@ -110,8 +110,8 @@
         </div>
         <form id="rss-form" class="form-sheet two-column">
           <label class="wide"><span>RSS URL（可多个，每行一个）</span><textarea name="feed_urls" required placeholder="https://example.com/feed-a.xml&#10;https://example.com/feed-b.xml"></textarea></label>
-          <label><span>动画名称（即下载规则名）</span><input name="anime_title" required placeholder="例如：跃动青春 第二季"></label>
-          <label><span>订阅路径根目录</span><input name="feed_path" required value="AnimeBridge"></label>
+          <label class="wide"><span>动画名称（即下载规则名）</span><input name="anime_title" required placeholder="例如：跃动青春 第二季"></label>
+          <details class="wide"><summary>高级：RSS 面板分组（通常无需修改）</summary><label><span>订阅路径根目录</span><input name="feed_path" value="AnimeBridge"></label><p>仅用于 qBittorrent RSS 面板内分类，不会改变下载目录或下载规则。</p></details>
           <label><span>必须包含</span><input name="must_contain" value="1080"></label>
           <label><span>必须排除</span><input name="must_not_contain"></label>
           <label class="wide"><span>下载目录（可选）</span><input name="save_path" placeholder="C:/localanime/Title"></label>

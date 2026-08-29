@@ -2,6 +2,13 @@
 
 Last updated: 2026-08-28
 
+## v0.16.8.dev0 Simplified RSS setup
+
+- The optional qBittorrent RSS-panel grouping path is now collapsed under
+  advanced settings and defaults to `AnimeBridge/<动画名>` automatically.
+- Source verification: 88 automated tests plus frozen package version/GUI smoke
+  test pass; no RSS feed was applied.
+
 ## v0.16.7.dev0 Multi-source RSS drafting
 
 - Manual RSS creation accepts multiple URL lines and groups them under one

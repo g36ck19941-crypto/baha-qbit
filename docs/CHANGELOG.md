@@ -4,6 +4,12 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Simplified RSS subscription setup
+
+- Moved the qBittorrent RSS-panel grouping path into a collapsed advanced
+  section. Normal setup now generates `AnimeBridge/<动画名>` automatically;
+  users only supply the RSS URL(s) and animation name.
+
 ### Multi-source RSS rules
 
 - RSS manual entry accepts several feed URLs (one per line) and creates one

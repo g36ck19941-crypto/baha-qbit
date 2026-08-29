@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from anime_bridge.adapters.bahamut_catalog import parse_bahamut_catalog_json
-from anime_bridge.gui import AnimeBridgeWebServer, WebGUIController
+from anime_bridge.gui import AnimeBridgeWebServer, WebGUIController, _rss_arguments
 from anime_bridge.settings import UserSettings
 
 
@@ -54,6 +54,16 @@ class WebGUITests(unittest.TestCase):
         self.server.server_close()
         self.thread.join(timeout=5)
         self.temp.cleanup()
+
+    def test_rss_path_defaults_to_internal_animebridge_group(self):
+        values = _rss_arguments(
+            {
+                "feed_urls": "https://example.invalid/feed.xml",
+                "anime_title": "测试动画",
+            }
+        )
+        self.assertEqual(values["feed_path"], "AnimeBridge/测试动画")
+        self.assertEqual(values["rule_name"], "测试动画")
 
     def post(self, path, payload, token="test-token", bridge_token=None):
         headers = {"Content-Type": "application/json"}
