@@ -53,7 +53,7 @@ Last updated: 2026-08-28
 - [x] AB-030c2 Hide optional RSS-panel grouping behind automatic defaults.
 - [x] AB-030c3 Add verified public RSS auto-discovery with visible source failures.
 - [x] AB-030c4 Add a visible auto-discovery entry and safe local qBittorrent launcher.
-- [ ] AB-030d Perform an explicitly approved RSS apply demonstration.
+- [x] AB-030d Perform an explicitly approved RSS apply demonstration (user-reported verified 2026-08-29).
 - [x] AB-040a Add an official-SDK local stdio MCP server.
 - [x] AB-040b Expose Bangumi, Obsidian plan, and qBittorrent read/plan tools.
 - [x] AB-040c Gate Obsidian/qBittorrent write tools at startup and per call.

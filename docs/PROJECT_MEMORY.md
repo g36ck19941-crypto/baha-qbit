@@ -136,6 +136,9 @@ Last updated: 2026-08-27
   relative qBittorrent RSS tree location; it is distinct from a rule's optional
   download save path. Multiple source URLs may be attached to one anime-named
   rule so either source can produce matching releases.
+- On 2026-08-29 the user reported that the current RSS subscriptions passed
+  qBittorrent verification. Treat this as accepted live evidence for the tested
+  setup, not a guarantee that every external source is continuously available.
 
 ## D-007 — Portable distribution policy
 

@@ -1,6 +1,15 @@
 # Project status
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
+
+## 2026-08-29 user acceptance — live RSS subscription verification
+
+- The user reports that the current RSS subscriptions have all passed their
+  qBittorrent verification. This is user-provided live-integration evidence;
+  source availability may still vary by network and provider.
+- The next implementation/verification target is AB-040d: connect the existing
+  MCP server to Codex Desktop and exercise read/preview tools before any
+  confirmation-gated write operation.
 
 ## v0.16.10.dev0 qBittorrent launch and RSS discovery access
 
