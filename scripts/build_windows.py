@@ -38,6 +38,7 @@ def main() -> int:
             f"--paths={ROOT / 'src'}",
             f"--add-data={ROOT / 'src' / 'anime_bridge' / 'web'}:anime_bridge/web",
             f"--add-data={ROOT / 'integrations' / 'obsidian-plugin'}:integrations/obsidian-plugin",
+            "--collect-data=opencc",
         ]
     )
     if not executable.is_file():

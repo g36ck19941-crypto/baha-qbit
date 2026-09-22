@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import secrets
-import sys
+import subprocess
 import threading
 import webbrowser
+from dataclasses import replace
 from datetime import date
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -18,34 +21,69 @@ from urllib.request import Request, urlopen
 
 from anime_bridge import __version__
 from anime_bridge.adapters.bangumi import BangumiClient
+from anime_bridge.adapters.bahamut_catalog import (
+    BahamutCatalogClient,
+    BahamutCatalogExport,
+    load_bahamut_catalog,
+    parse_bahamut_catalog_json,
+)
 from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
-from anime_bridge.migration import apply_migration, plan_migration
-from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.migration import apply_migration, current_runtime_command, plan_migration
+from anime_bridge.matching import normalized_title_forms
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
-from anime_bridge.storage import write_text_atomic
-from anime_bridge.workflows import CurrentQuarterScanner
+from anime_bridge.storage import write_text_atomic, write_text_new_atomic
+from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
 
 
 WEB_ROOT = Path(__file__).with_name("web")
 MAX_REQUEST_BYTES = 1024 * 1024
+DEFAULT_GUI_PORT = 18765
 
 
 class WebGUIController:
     def __init__(self, settings_path: Path | None = None) -> None:
         self.settings_path = settings_path or default_settings_path()
+        self.browser_bridge_token_path = self.settings_path.with_name(
+            "browser-bridge-token.txt"
+        )
+        self.latest_bahamut_catalog_path = self.settings_path.with_name(
+            "bahamut-current-quarter-latest.json"
+        )
+        self.browser_bridge_token = self._load_or_create_browser_bridge_token()
+        self._ingest_lock = threading.Lock()
         try:
             self.settings = UserSettings.load(self.settings_path)
         except (OSError, ValueError, json.JSONDecodeError):
             self.settings = UserSettings()
 
+    def _load_or_create_browser_bridge_token(self) -> str:
+        try:
+            token = self.browser_bridge_token_path.read_text(encoding="utf-8").strip()
+        except FileNotFoundError:
+            token = secrets.token_urlsafe(32)
+            try:
+                write_text_new_atomic(self.browser_bridge_token_path, token + "\n")
+            except FileExistsError:
+                token = self.browser_bridge_token_path.read_text(encoding="utf-8").strip()
+        if len(token) < 32:
+            raise ValueError("Browser bridge pairing token is invalid")
+        return token
+
     def public_status(self) -> dict[str, Any]:
+        detected_runner, detected_launcher = current_runtime_command()
         return {
             "version": __version__,
             "settings": self.settings_dict(),
-            "runner_path": str(Path(sys.executable).resolve()) if getattr(sys, "frozen", False) else "",
+            "runner_path": str(detected_runner),
+            "launcher_path": str(detected_launcher) if detected_launcher else "",
+            "bahamut_catalog": {
+                "direct_fetch": True,
+                "has_browser_fallback": self.latest_bahamut_catalog_path.is_file(),
+            },
             "milestones": [
                 {"name": "Bangumi 当季扫描", "state": "ready"},
-                {"name": "巴哈姆特实时收藏", "state": "waiting_login"},
+                {"name": "动画疯公开目录自动获取", "state": "ready"},
                 {"name": "Obsidian 入库核心", "state": "ready"},
                 {"name": "qBittorrent RSS 核心", "state": "ready"},
                 {"name": "GitHub 私有远端", "state": "ready"},
@@ -59,12 +97,16 @@ class WebGUIController:
             "integration_folder": self.settings.integration_folder,
             "formal_root": self.settings.formal_root,
             "qbit_base_url": self.settings.qbit_base_url,
+            "qbit_executable_path": self.settings.qbit_executable_path,
         }
 
     def update_settings(self, payload: dict[str, Any]) -> dict[str, Any]:
         values: dict[str, str] = {}
         for key in self.settings_dict():
             value = payload.get(key)
+            if key == "qbit_executable_path":
+                values[key] = str(value or "").strip()
+                continue
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"Setting {key} must be a non-empty string")
             values[key] = value.strip()
@@ -76,16 +118,105 @@ class WebGUIController:
         self.settings = candidate
         return {"saved": True, "path": str(self.settings_path)}
 
-    def scan_current(self) -> dict[str, Any]:
+    def scan_current(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        payload = payload or {}
+        catalog_path_text = str(payload.get("bahamut_catalog_path") or "").strip()
+        if catalog_path_text:
+            catalog = load_bahamut_catalog(Path(catalog_path_text))
+        else:
+            catalog = BahamutCatalogClient().fetch_current_quarter(date.today())
+        return self._scan_with_catalog(catalog)
+
+    def ingest_bahamut_catalog(self, payload: dict[str, Any]) -> dict[str, Any]:
+        serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        catalog = parse_bahamut_catalog_json(serialized)
+        if not catalog.complete or catalog.warnings:
+            details = "; ".join(catalog.warnings) or "catalog marked incomplete"
+            raise ValueError(
+                "Bahamut catalog is incomplete and cannot prove safe subtraction: "
+                + details
+            )
+        today = date.today()
+        expected_start_month = ((today.month - 1) // 3) * 3 + 1
+        if (catalog.quarter_year, catalog.quarter_start_month) != (
+            today.year,
+            expected_start_month,
+        ):
+            raise ValueError("Bahamut catalog does not describe the current quarter")
+        with self._ingest_lock:
+            write_text_atomic(
+                self.latest_bahamut_catalog_path,
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            )
+            result = self._scan_with_catalog(catalog)
+        result["automatic_sync"] = True
+        result["pages_scanned"] = catalog.pages_scanned
+        return result
+
+    def _scan_with_catalog(
+        self, catalog: BahamutCatalogExport | None
+    ) -> dict[str, Any]:
         result = CurrentQuarterScanner(BangumiClient()).scan(date.today())
+        difference = None
+        if catalog is not None:
+            difference = subtract_bahamut_catalog(result.subjects, catalog.items)
+            review_subject_ids = {
+                match.subject.bangumi_id for match in difference.review_matches
+            }
+            review_result = replace(
+                result,
+                subjects=tuple(
+                    subject
+                    for subject in result.subjects
+                    if subject.bangumi_id in review_subject_ids
+                ),
+            )
+            result = replace(result, subjects=difference.candidates)
         directory = Path(self.settings.vault_path) / self.settings.integration_folder
         output = directory / f"{result.year}-{result.quarter.start_month:02d}-动画候选.md"
-        write_text_atomic(output, render_candidate_markdown(result))
+        write_text_atomic(
+            output,
+            render_candidate_markdown(
+                result,
+                bahamut_difference=difference,
+                bahamut_catalog_count=(
+                    len(catalog.items) if catalog is not None else 0
+                ),
+                bahamut_exported_at=(
+                    catalog.exported_at if catalog is not None else ""
+                ),
+            ),
+        )
+        review_output = None
+        if difference is not None and difference.review_matches:
+            review_output = output.with_name(f"{output.stem}-复核{output.suffix}")
+            write_text_atomic(
+                review_output,
+                render_bahamut_review_markdown(
+                    review_result,
+                    difference,
+                    bahamut_catalog_count=len(catalog.items),
+                    bahamut_exported_at=catalog.exported_at,
+                ),
+            )
         return {
             "count": len(result.subjects),
             "excluded_without_japan_tag": len(result.excluded_without_japan_tag),
             "output": str(output),
-            "bahamut_subtraction": "not_run",
+            "review_output": str(review_output) if review_output is not None else None,
+            "bahamut_subtraction": "completed" if difference is not None else "not_run",
+            "bahamut_catalog_titles": (
+                len(catalog.items) if catalog is not None else 0
+            ),
+            "bahamut_exact_removed": (
+                len(difference.exact_matches) if difference is not None else 0
+            ),
+            "bahamut_review_matches": (
+                len(difference.review_matches) if difference is not None else 0
+            ),
+            "bahamut_export_warnings": (
+                list(catalog.warnings) if catalog is not None else []
+            ),
         }
 
     def _service(self, *, allow_writes: bool = False) -> AnimeBridgeAIService:
@@ -105,8 +236,35 @@ class WebGUIController:
             _required_text(payload, "candidate_path"), WRITE_CONFIRMATION
         )
 
+    def obsidian_library(self) -> dict[str, Any]:
+        return self._service().list_obsidian_library()
+
+    def obsidian_delete_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._service().plan_obsidian_delete(
+            _required_text(payload, "relative_path")
+        )
+
+    def obsidian_delete_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
+        _require_browser_confirmation(payload)
+        return self._service(allow_writes=True).apply_obsidian_delete(
+            _required_text(payload, "relative_path"),
+            _required_text(payload, "expected_sha256"),
+            WRITE_CONFIRMATION,
+        )
+
     def qbit_status(self) -> dict[str, Any]:
         return self._service().qbit_status()
+
+    def qbit_launch(self) -> dict[str, Any]:
+        candidates = [Path(self.settings.qbit_executable_path)] if self.settings.qbit_executable_path else []
+        for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")):
+            if base:
+                candidates.append(Path(base) / "qBittorrent" / "qbittorrent.exe")
+        executable = next((path for path in candidates if path.is_file()), None)
+        if executable is None:
+            raise ValueError("找不到 qBittorrent。请在本机设置中填写 qbittorrent.exe 路径。")
+        subprocess.Popen([str(executable)], close_fds=True)
+        return {"started": True, "executable": str(executable), "next_step": "请等待 qBittorrent 启动后再次读取状态；首次使用仍需在 qBittorrent 开启 WebUI。"}
 
     def qbit_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
         return self._service().plan_qbit_rss(**_rss_arguments(payload))
@@ -117,18 +275,42 @@ class WebGUIController:
             **_rss_arguments(payload), confirmation=WRITE_CONFIRMATION
         )
 
+    def qbit_batch_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._service().plan_candidate_rss(**_batch_rss_arguments(payload))
+
+    def qbit_batch_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
+        _require_browser_confirmation(payload)
+        return self._service(allow_writes=True).apply_candidate_rss(
+            **_batch_rss_arguments(payload), confirmation=WRITE_CONFIRMATION
+        )
+
     def migration_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
-        runner = Path(_required_text(payload, "runner_path"))
+        runner, launcher = self._migration_command(payload)
         return plan_migration(
-            self.settings, self.settings_path, runner
+            self.settings, self.settings_path, runner, launcher_path=launcher
         ).as_dict()
 
     def migration_apply(self, payload: dict[str, Any]) -> dict[str, Any]:
         _require_browser_confirmation(payload)
-        runner = Path(_required_text(payload, "runner_path"))
-        plan = plan_migration(self.settings, self.settings_path, runner)
+        runner, launcher = self._migration_command(payload)
+        plan = plan_migration(
+            self.settings, self.settings_path, runner, launcher_path=launcher
+        )
         written = apply_migration(plan, self.settings, self.settings_path)
-        return {"written": [str(path) for path in written]}
+        return {
+            "plugin_state": plan.plugin_state,
+            "repaired": list(plan.repairs),
+            "written": [str(path) for path in written],
+        }
+
+    def _migration_command(
+        self, payload: dict[str, Any]
+    ) -> tuple[Path, Path | None]:
+        runner_text = str(payload.get("runner_path") or "").strip()
+        launcher_text = str(payload.get("launcher_path") or "").strip()
+        if runner_text:
+            return Path(runner_text), Path(launcher_text) if launcher_text else None
+        return current_runtime_command()
 
 
 def _required_text(payload: dict[str, Any], key: str) -> str:
@@ -144,10 +326,16 @@ def _require_browser_confirmation(payload: dict[str, Any]) -> None:
 
 
 def _rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
+    urls = _line_values(payload.get("feed_urls"))
+    primary_url = str(payload.get("feed_url") or "").strip()
+    title = str(payload.get("anime_title") or "").strip()
+    feed_root = str(payload.get("feed_path") or "AnimeBridge").strip()
+    feed_path = f"{feed_root.rstrip('/')}/{_rss_path_component(title)}" if title else feed_root
     return {
-        "feed_url": _required_text(payload, "feed_url"),
-        "feed_path": _required_text(payload, "feed_path"),
-        "rule_name": _required_text(payload, "rule_name"),
+        "feed_url": primary_url or (urls[0] if urls else ""),
+        "feed_urls": tuple(urls[1:] if primary_url else urls[1:]),
+        "feed_path": feed_path,
+        "rule_name": _required_text(payload, "rule_name") if payload.get("rule_name") else title,
         "must_contain": str(payload.get("must_contain") or ""),
         "must_not_contain": str(payload.get("must_not_contain") or ""),
         "use_regex": bool(payload.get("use_regex", False)),
@@ -156,6 +344,47 @@ def _rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
         "category": str(payload.get("category") or ""),
         "save_path": str(payload.get("save_path") or ""),
     }
+
+
+def _batch_rss_arguments(payload: dict[str, Any]) -> dict[str, Any]:
+    raw_terms = str(payload.get("extra_terms") or "")
+    terms = tuple(
+        term.strip()
+        for line in raw_terms.splitlines()
+        for term in line.split(",")
+        if term.strip()
+    )
+    providers = payload.get("providers") or payload.get("provider") or ""
+    if isinstance(providers, str):
+        providers = tuple(value.strip() for value in providers.split(",") if value.strip())
+    elif isinstance(providers, list):
+        providers = tuple(str(value).strip() for value in providers if str(value).strip())
+    else:
+        providers = ()
+    return {
+        "candidate_path": _required_text(payload, "candidate_path"),
+        "provider": providers,
+        "extra_terms": terms,
+        "custom_template": str(payload.get("custom_template") or ""),
+        "must_contain": str(payload.get("must_contain") or ""),
+        "must_not_contain": str(payload.get("must_not_contain") or ""),
+        "episode_filter": str(payload.get("episode_filter") or ""),
+        "category": str(payload.get("category") or "anime"),
+        "save_root": str(payload.get("save_root") or ""),
+    }
+
+
+def _line_values(value: object) -> tuple[str, ...]:
+    return tuple(
+        line.strip() for line in str(value or "").splitlines() if line.strip()
+    )
+
+
+def _rss_path_component(value: str) -> str:
+    component = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", value).strip(" .")
+    if not component:
+        raise ValueError("anime_title cannot form a safe RSS subscription path")
+    return component[:80]
 
 
 class AnimeBridgeWebServer(ThreadingHTTPServer):
@@ -185,6 +414,23 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             html = html.replace("__ANIME_BRIDGE_TOKEN__", self.server.token)
             self._bytes(HTTPStatus.OK, html.encode("utf-8"), "text/html; charset=utf-8")
             return
+        if parsed.path in {"/bahamut-catalog.user.js", "/bahamut-export.user.js"}:
+            supplied = parse_qs(parsed.query).get("token", [""])[0]
+            if supplied != self.server.token:
+                self._error(HTTPStatus.FORBIDDEN, "Invalid local session token")
+                return
+            helper = (WEB_ROOT / "bahamut-catalog.user.js").read_text(encoding="utf-8")
+            helper = helper.replace(
+                "__ANIME_BRIDGE_ENDPOINT__",
+                f"http://127.0.0.1:{self.server.server_port}/api/bahamut/ingest",
+            ).replace(
+                "__ANIME_BRIDGE_BRIDGE_TOKEN__",
+                self.server.controller.browser_bridge_token,
+            )
+            self._bytes(
+                HTTPStatus.OK, helper.encode("utf-8"), "text/javascript; charset=utf-8"
+            )
+            return
         if parsed.path in {"/app.css", "/app.js"}:
             filename = parsed.path.lstrip("/")
             content_type = (
@@ -200,7 +446,14 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
         self._error(HTTPStatus.NOT_FOUND, "Not found")
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.headers.get("X-Anime-Bridge-Token") != self.server.token:
+        path = urlparse(self.path).path
+        if path == "/api/bahamut/ingest":
+            expected = self.server.controller.browser_bridge_token
+            supplied = self.headers.get("X-Anime-Bridge-Bridge-Token")
+            if not supplied or not secrets.compare_digest(supplied, expected):
+                self._error(HTTPStatus.FORBIDDEN, "Invalid browser bridge pairing token")
+                return
+        elif self.headers.get("X-Anime-Bridge-Token") != self.server.token:
             self._error(HTTPStatus.FORBIDDEN, "Invalid local session token")
             return
         try:
@@ -216,7 +469,7 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
             payload = json.loads(body.decode("utf-8")) if body else {}
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
-            result = self._dispatch(urlparse(self.path).path, payload)
+            result = self._dispatch(path, payload)
         except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
             self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
             return
@@ -227,12 +480,19 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
         routes = {
             "/api/status": lambda: controller.public_status(),
             "/api/settings": lambda: controller.update_settings(payload),
-            "/api/scan": lambda: controller.scan_current(),
+            "/api/scan": lambda: controller.scan_current(payload),
+            "/api/bahamut/ingest": lambda: controller.ingest_bahamut_catalog(payload),
             "/api/obsidian/plan": lambda: controller.obsidian_plan(payload),
             "/api/obsidian/apply": lambda: controller.obsidian_apply(payload),
+            "/api/obsidian/library": lambda: controller.obsidian_library(),
+            "/api/obsidian/delete-plan": lambda: controller.obsidian_delete_plan(payload),
+            "/api/obsidian/delete-apply": lambda: controller.obsidian_delete_apply(payload),
             "/api/qbit/status": lambda: controller.qbit_status(),
+            "/api/qbit/launch": lambda: controller.qbit_launch(),
             "/api/qbit/plan": lambda: controller.qbit_plan(payload),
             "/api/qbit/apply": lambda: controller.qbit_apply(payload),
+            "/api/qbit/batch-plan": lambda: controller.qbit_batch_plan(payload),
+            "/api/qbit/batch-apply": lambda: controller.qbit_batch_apply(payload),
             "/api/migration/plan": lambda: controller.migration_plan(payload),
             "/api/migration/apply": lambda: controller.migration_apply(payload),
         }
@@ -271,12 +531,21 @@ class AnimeBridgeRequestHandler(BaseHTTPRequestHandler):
 
 
 def _smoke_test(server: AnimeBridgeWebServer) -> None:
+    if "网络胜利组" not in normalized_title_forms("網路勝利組"):
+        raise RuntimeError("Regional title dictionaries were not packaged")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     with urlopen(server.url, timeout=5) as response:
         page = response.read().decode("utf-8")
     if "Anime Bridge" not in page:
         raise RuntimeError("Web GUI page did not render")
+    with urlopen(
+        f"http://127.0.0.1:{server.server_port}/bahamut-catalog.user.js?token={server.token}",
+        timeout=5,
+    ) as response:
+        helper = response.read().decode("utf-8")
+    if "anime-bridge-bahamut-current-quarter" not in helper:
+        raise RuntimeError("Bahamut browser helper was not packaged")
     request = Request(
         f"http://127.0.0.1:{server.server_port}/api/status",
         data=b"{}",
@@ -299,7 +568,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--no-browser", action="store_true")
     parser.add_argument("--settings", type=Path, default=None)
-    parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--port", type=int, default=DEFAULT_GUI_PORT)
     args = parser.parse_args(argv)
     server = AnimeBridgeWebServer(
         WebGUIController(args.settings), secrets.token_urlsafe(24), args.port

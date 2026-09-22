@@ -50,6 +50,11 @@ class CurrentQuarterScanner:
                         continue
                     if not (start <= subject.air_date < end):
                         continue
+                    # A quarter scan is a "currently started" list. Keep the
+                    # quarter window, but never stage a subject whose first
+                    # air date is later than the run/reference date.
+                    if subject.air_date > effective_date:
+                        continue
                     if not self.policy.includes_subject(subject):
                         excluded_without_japan_tag.setdefault(subject.bangumi_id, subject)
                         continue

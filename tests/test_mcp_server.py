@@ -8,7 +8,8 @@ from pathlib import Path
 
 from anime_bridge.ai import AnimeBridgeAIService
 from anime_bridge.domain import AnimeSubject
-from anime_bridge.mcp_server import build_mcp_server
+from anime_bridge.mcp_server import build_mcp_server, resolve_runtime_settings
+from anime_bridge.settings import UserSettings
 
 
 MCP_AVAILABLE = importlib.util.find_spec("mcp") is not None
@@ -36,7 +37,20 @@ class FakeQbit:
 
 @unittest.skipUnless(MCP_AVAILABLE, "official MCP SDK optional dependency not installed")
 class MCPServerTests(unittest.IsolatedAsyncioTestCase):
-    async def test_read_only_server_lists_and_calls_four_tools(self):
+    async def test_runtime_settings_follow_saved_portable_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile_path = root / "config.json"
+            vault = root / "Moved Vault"
+            UserSettings(
+                vault_path=str(vault),
+                formal_root="Library/anime",
+                qbit_base_url="http://localhost:9090",
+            ).save(profile_path)
+            resolved = resolve_runtime_settings(None, profile_path, None, None)
+            self.assertEqual(resolved, (vault, "Library/anime", "http://localhost:9090"))
+
+    async def test_read_only_server_lists_and_calls_six_tools(self):
         from mcp import Client
 
         with tempfile.TemporaryDirectory() as directory:
@@ -51,9 +65,11 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                     names,
                     {
                         "bangumi_get_subject",
+                        "obsidian_analyze_candidate_note",
                         "obsidian_plan_checked_import",
                         "qbittorrent_get_rss_status",
                         "qbittorrent_plan_rss",
+                        "qbittorrent_plan_candidate_rss",
                     },
                 )
                 result = await client.call_tool(
@@ -78,7 +94,8 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                 names = {tool.name for tool in tools.tools}
                 self.assertIn("obsidian_apply_checked_import", names)
                 self.assertIn("qbittorrent_apply_rss", names)
-                self.assertEqual(len(names), 6)
+                self.assertIn("qbittorrent_apply_candidate_rss", names)
+                self.assertEqual(len(names), 9)
 
 
 if __name__ == "__main__":

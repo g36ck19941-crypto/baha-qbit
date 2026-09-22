@@ -1,13 +1,44 @@
 """Application workflows composed from domain rules and adapters."""
 
 from .current_quarter import CurrentQuarterResult, CurrentQuarterScanner
-from .bahamut_difference import BahamutDifferenceResult, subtract_bahamut_favorites
+from .bahamut_difference import (
+    BahamutDifferenceResult,
+    subtract_bahamut_catalog,
+    subtract_bahamut_favorites,
+)
 from .obsidian_import import (
     ObsidianImportConflict,
     apply_import_plan,
     plan_checked_import,
 )
-from .rss_plan import RSSPlan, RSSPlanConflict, apply_rss_plan, plan_rss
+from .obsidian_library import (
+    ObsidianDeletePlan,
+    ObsidianLibraryConflict,
+    ObsidianLibraryItem,
+    apply_formal_note_delete,
+    list_formal_anime_notes,
+    plan_formal_note_delete,
+)
+from .rss_plan import (
+    RSSBatchPlan,
+    RSSBundlePlan,
+    RSSPlan,
+    RSSPlanConflict,
+    apply_rss_batch,
+    apply_rss_bundle,
+    apply_rss_plan,
+    plan_rss,
+    plan_rss_batch,
+    plan_rss_bundle,
+)
+from .rss_sources import (
+    CandidateRSSDraft,
+    RSSSourceProvider,
+    build_candidate_rss_drafts,
+    build_feed_url,
+    provider_catalog,
+)
+from .rss_discovery import CandidateRSSDiscovery, discover_candidate_rss
 
 __all__ = [
     "BahamutDifferenceResult",
@@ -16,9 +47,29 @@ __all__ = [
     "ObsidianImportConflict",
     "apply_import_plan",
     "plan_checked_import",
+    "ObsidianDeletePlan",
+    "ObsidianLibraryConflict",
+    "ObsidianLibraryItem",
+    "apply_formal_note_delete",
+    "list_formal_anime_notes",
+    "plan_formal_note_delete",
     "RSSPlan",
+    "RSSBatchPlan",
+    "RSSBundlePlan",
     "RSSPlanConflict",
     "apply_rss_plan",
+    "apply_rss_batch",
+    "apply_rss_bundle",
     "plan_rss",
+    "plan_rss_batch",
+    "plan_rss_bundle",
+    "CandidateRSSDraft",
+    "RSSSourceProvider",
+    "build_candidate_rss_drafts",
+    "build_feed_url",
+    "provider_catalog",
+    "CandidateRSSDiscovery",
+    "discover_candidate_rss",
+    "subtract_bahamut_catalog",
     "subtract_bahamut_favorites",
 ]

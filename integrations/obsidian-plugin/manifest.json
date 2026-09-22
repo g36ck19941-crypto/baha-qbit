@@ -1,9 +1,9 @@
 {
   "id": "anime-bridge",
   "name": "Anime Bridge",
-  "version": "0.5.0-dev.0",
+  "version": "0.6.1-dev.0",
   "minAppVersion": "1.5.0",
-  "description": "Preview and import checked seasonal anime through Anime Bridge.",
+  "description": "Preview, import, organize, and manage seasonal anime through Anime Bridge.",
   "author": "g36ck19941-crypto",
   "isDesktopOnly": true
 }

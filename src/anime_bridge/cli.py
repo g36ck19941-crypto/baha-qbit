@@ -6,13 +6,16 @@ import argparse
 import getpass
 import json
 import sys
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import Sequence
 
 from anime_bridge import __version__
+from anime_bridge.ai.service import AnimeBridgeAIService, WRITE_CONFIRMATION
 from anime_bridge.adapters.bangumi import BangumiAPIError, BangumiClient
 from anime_bridge.adapters.bahamut_html import parse_mygather_html
+from anime_bridge.adapters.bahamut_catalog import BahamutCatalogClient, load_bahamut_catalog
 from anime_bridge.adapters.candidate_markdown import (
     CandidateParseError,
     parse_candidate_markdown,
@@ -20,7 +23,7 @@ from anime_bridge.adapters.candidate_markdown import (
 from anime_bridge.adapters.qbittorrent import QBittorrentAPIError, QBittorrentClient
 from anime_bridge.domain import RSSFeedDraft, RSSRuleDraft
 from anime_bridge.migration import MigrationConflict, apply_migration, plan_migration
-from anime_bridge.renderers import render_candidate_markdown
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
 from anime_bridge.settings import UserSettings, default_settings_path
 from anime_bridge.storage import write_text_atomic
 from anime_bridge.workflows import (
@@ -31,6 +34,7 @@ from anime_bridge.workflows import (
     plan_checked_import,
     plan_rss,
     RSSPlanConflict,
+    subtract_bahamut_catalog,
 )
 
 
@@ -71,6 +75,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--user-agent",
         default=f"AnimeBridge/{__version__} (local application)",
         help="identifiable User-Agent sent to Bangumi",
+    )
+    scan.add_argument(
+        "--bahamut-catalog",
+        "--bahamut-export",
+        dest="bahamut_catalog",
+        type=Path,
+        default=None,
+        help="current-quarter JSON exported from Bahamut's public catalog",
+    )
+    scan.add_argument(
+        "--skip-bahamut-catalog",
+        action="store_true",
+        help="diagnostic only: create a gated Bangumi-only preview",
     )
     parse_bahamut = subparsers.add_parser(
         "parse-bahamut-html",
@@ -127,6 +144,30 @@ def build_parser() -> argparse.ArgumentParser:
     rss.add_argument("--plan-output", type=Path, default=None)
     rss.add_argument("--apply", action="store_true")
 
+    rss_batch = subparsers.add_parser(
+        "qbittorrent-rss-batch",
+        help="preview or apply per-anime RSS drafts from checked candidates",
+    )
+    _add_qbittorrent_connection_args(rss_batch)
+    rss_batch.add_argument("candidate", type=Path)
+    rss_batch.add_argument("--vault", type=Path, required=True)
+    rss_batch.add_argument(
+        "--provider",
+        choices=("comicat-rsshub", "dmhy", "custom"),
+        action="append",
+        required=True,
+        help="RSS source; repeat this option to use multiple sources per anime",
+    )
+    rss_batch.add_argument("--extra-term", action="append", default=[])
+    rss_batch.add_argument("--custom-template", default="")
+    rss_batch.add_argument("--must-contain", default="")
+    rss_batch.add_argument("--must-not-contain", default="")
+    rss_batch.add_argument("--episode-filter", default="")
+    rss_batch.add_argument("--category", default="anime")
+    rss_batch.add_argument("--save-root", default="")
+    rss_batch.add_argument("--plan-output", type=Path, default=None)
+    rss_batch.add_argument("--apply", action="store_true")
+
     migrate = subparsers.add_parser(
         "migrate", help="preview or install the portable Obsidian integration"
     )
@@ -164,8 +205,40 @@ def _qbit_client(args: argparse.Namespace) -> QBittorrentClient:
 
 def _run_scan(args: argparse.Namespace) -> int:
     reference_date = args.date or date.today()
+    if args.skip_bahamut_catalog and args.bahamut_catalog is not None:
+        raise ValueError("--skip-bahamut-catalog cannot be combined with --bahamut-catalog")
     scanner = CurrentQuarterScanner(BangumiClient(user_agent=args.user_agent))
     result = scanner.scan(reference_date)
+    difference = None
+    catalog = None
+    if not args.skip_bahamut_catalog and args.bahamut_catalog is not None:
+        catalog = load_bahamut_catalog(args.bahamut_catalog)
+    elif not args.skip_bahamut_catalog:
+        catalog = BahamutCatalogClient().fetch_current_quarter(reference_date)
+    if catalog is not None:
+        if (catalog.quarter_year, catalog.quarter_start_month) != (
+            result.year,
+            result.quarter.start_month,
+        ):
+            raise ValueError("Bahamut catalog does not describe the scan quarter")
+        difference = subtract_bahamut_catalog(result.subjects, catalog.items)
+        review_subject_ids = {match.subject.bangumi_id for match in difference.review_matches}
+        review_result = replace(
+            result,
+            subjects=tuple(
+                subject for subject in result.subjects if subject.bangumi_id in review_subject_ids
+            ),
+        )
+        result = replace(result, subjects=difference.candidates)
+        print(
+            f"Bahamut catalog: {len(catalog.items)} current-quarter title(s) from "
+            f"{catalog.pages_scanned} page(s); removed "
+            f"{len(difference.exact_matches)} exact match(es); moved "
+            f"{len(difference.review_matches)} fuzzy review match(es) to a separate note."
+        )
+        for warning in catalog.warnings:
+            print(f"Bahamut catalog warning: {warning}", file=sys.stderr)
+
     output = args.output or Path("out") / (
         f"{result.year}-{result.quarter.start_month:02d}-candidates.md"
     )
@@ -183,8 +256,30 @@ def _run_scan(args: argparse.Namespace) -> int:
         print("Dry run: no file written.")
         return 0
 
-    write_text_atomic(output, render_candidate_markdown(result))
+    write_text_atomic(
+        output,
+        render_candidate_markdown(
+            result,
+            bahamut_difference=difference,
+            bahamut_catalog_count=(len(catalog.items) if catalog is not None else 0),
+            bahamut_exported_at=(
+                catalog.exported_at if catalog is not None else ""
+            ),
+        ),
+    )
     print(f"Candidate preview written to: {output.resolve()}")
+    if difference is not None and difference.review_matches:
+        review_output = output.with_name(f"{output.stem}-复核{output.suffix}")
+        write_text_atomic(
+            review_output,
+            render_bahamut_review_markdown(
+                review_result,
+                difference,
+                bahamut_catalog_count=len(catalog.items),
+                bahamut_exported_at=catalog.exported_at,
+            ),
+        )
+        print(f"Bahamut review note written to: {review_output.resolve()}")
     return 0
 
 
@@ -284,6 +379,39 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return 0
             apply_rss_plan(client, plan)
             print("RSS feed and rule created.")
+            return 0
+        if args.command == "qbittorrent-rss-batch":
+            service = AnimeBridgeAIService(
+                args.vault,
+                allow_writes=args.apply,
+                qbit=_qbit_client(args),
+            )
+            common = (
+                str(args.candidate),
+                tuple(args.provider),
+                tuple(args.extra_term),
+                args.custom_template,
+                args.must_contain,
+                args.must_not_contain,
+                args.episode_filter,
+                args.category,
+                args.save_root,
+            )
+            preview = service.plan_candidate_rss(*common)
+            print(json.dumps(preview, ensure_ascii=False, indent=2))
+            if args.plan_output is not None:
+                write_text_atomic(
+                    args.plan_output,
+                    json.dumps(preview, ensure_ascii=False, indent=2) + "\n",
+                )
+                print(f"RSS batch preview written to: {args.plan_output.resolve()}")
+            if not args.apply:
+                print("Preview only: qBittorrent was not changed. Use --apply explicitly.")
+                return 0
+            result = service.apply_candidate_rss(
+                common[0], common[1], WRITE_CONFIRMATION, *common[2:]
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0
         if args.command == "migrate":
             settings_path = args.settings or default_settings_path()

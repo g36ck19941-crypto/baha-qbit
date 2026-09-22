@@ -22,6 +22,10 @@ SOURCE_FILES = (
     (ROOT / "README.md", "README.md"),
     (ROOT / "docs" / "USER_GUIDE.md", "docs/USER_GUIDE.md"),
     (ROOT / "docs" / "MCP_GUIDE.md", "docs/MCP_GUIDE.md"),
+    (
+        ROOT / "config" / "portable-codex-config.toml",
+        ".codex/config.toml",
+    ),
 )
 
 

@@ -1,6 +1,144 @@
 # Project memory
 
-Last updated: 2026-08-21
+Last updated: 2026-08-27
+
+## D-020 — Direct catalog retrieval is default; browser helper is fallback
+
+- GUI and CLI scans fetch `animeList.php` directly from the official HTTPS host
+  by default. Users do not open Bahamut or install Tampermonkey for the normal
+  path, and no account state is needed.
+- The client uses only year-sort and page parameters, enforces host redirects,
+  size/page bounds, complete card metadata, descending dates, and proof of the
+  older-quarter boundary. Any uncertainty refuses subtraction.
+- Anime Crazy can reject non-browser traffic with HTTP 403 or Cloudflare. The
+  app reports this honestly; it does not automate CAPTCHA or import browser
+  cookies. The optional helper is the recovery path.
+- After a user-observed first-page 403, helper v0.4 reads the rendered first
+  `animeList.php` document and requests later pages with the same-origin browser
+  session. Only parsed public metadata is posted to the loopback service.
+- Bahamut display months can be one month earlier than Bangumi first-air dates.
+  The catalog keeps one boundary-month carry-in for exact matching; the
+  Bangumi-side current-quarter filter remains unchanged, and fuzzy matches never
+  auto-exclude.
+
+## D-021 — Sequel normalization and fuzzy-review isolation
+
+- Title forms canonicalize common sequel suffixes (`Ⅱ`, `第二季`, `2nd Season`,
+  and numeric `2`) so regional/script variants can become exact matches when the
+  underlying work is the same.
+- Fuzzy matches are not included in the safe candidate note. CLI/GUI scans write
+  a separate `*-复核.md` note containing evidence and links; no formal import or
+  batch RSS path consumes that note automatically.
+
+## D-022 — Curated official Bahamut title aliases
+
+- A small, reviewable alias table covers official regional/franchise naming
+  where a Bahamut card intentionally omits a season suffix or episode subtitle.
+  It currently includes the three user-reported works and is tested as exact
+  matching; it does not turn general fuzzy similarity into automatic exclusion.
+
+## D-019 — Bahamut scope is the public current-quarter catalog
+
+- The subtraction set is every title publicly listed by Anime Crazy with a
+  displayed start month inside the current four-season quarter, not the user's
+  favorites.
+- The paired userscript reads year-sorted `animeList.php` pages without login
+  until it proves the older-quarter boundary. Any missing card metadata,
+  request failure, or page-limit exhaustion makes the export incomplete.
+- The backend rejects the old favorites schema for this workflow, cross-quarter
+  items, incorrect source paths, warnings, and incomplete exports. Fuzzy title
+  matches remain visible for human review and never auto-exclude.
+- The prior `mygather.php` parser/export modules remain only as historical
+  diagnostics; normal GUI and CLI scans no longer consume personal favorites.
+
+## D-018 — Taiwan and Hong Kong title equivalence
+
+- Cross-site matching canonicalizes every Bangumi and Bahamut title through
+  OpenCC standard Traditional, Taiwan-with-phrases, and Hong Kong conversions.
+- Bangumi infobox aliases explicitly accept Taiwan, Hong Kong, Traditional
+  Chinese, and general Chinese translated-name keys in both scripts.
+- Only exact equality after deterministic conversion or an explicit alias may
+  auto-exclude. A completely different regional translation missing from the
+  source aliases remains a review candidate; fuzzy thresholds are unchanged.
+- A read-only audit of the user's 2026 summer note and 515-title local export
+  found 13 additional exact title matches from normalization alone. This did
+  not rewrite the Vault or claim a fresh full scan.
+
+## D-017 — Browser-helper installation guide
+
+- Anime Bridge provides a browser-aware three-step guide: open the appropriate
+  official Tampermonkey page, install the session-gated paired userscript, then
+  open the Bahamut collection page.
+- Edge, Chrome/Chromium, and Firefox are recognized from the current browser;
+  unknown browsers use Tampermonkey's generic official page.
+- Extension and userscript confirmation remain user-controlled. The app does
+  not use registry external-install entries, enterprise force-install policy,
+  page overlays, or simulated confirmation clicks.
+
+## D-016 — Automatic Bahamut JSON handoff
+
+- The installed userscript detects a rendered authenticated collection and
+  sends its validated JSON directly to `127.0.0.1:18765`; users do not download
+  or select the interchange file in the normal workflow.
+- The ingest endpoint uses a persistent random browser-pairing token distinct
+  from the GUI session token. The installer itself is session-gated. Neither
+  token is committed, placed in portable archives, or treated as an account
+  credential.
+- Complete data is atomically retained as the latest local export and directly
+  triggers current-quarter subtraction and candidate-note generation. Warnings
+  or incomplete pagination refuse the workflow before replacement or scanning.
+- Login and Cloudflare verification remain visible user actions; Anime Bridge
+  does not automate CAPTCHA or receive the Bahamut Cookie/password.
+
+## D-015 — AI candidate-note review boundary
+
+- Fuzzy Bahamut matches are stored as machine-readable comments alongside the
+  visible warning, including Bangumi ID, both titles, score, and Bahamut link.
+- `obsidian_analyze_candidate_note` is read-only and returns checkbox state,
+  subtraction proof, and fuzzy evidence to the AI.
+- Its policy is always `human_review_required_never_auto_exclude`. AI may explain
+  evidence and fetch Bangumi details, but only the user decides checkboxes and
+  fuzzy-match disposition.
+
+## D-014 — Portable Codex MCP profile
+
+- MCP defaults to the GUI's locally saved non-secret profile; explicit
+  `--vault`, `--formal-root`, `--qbit-base-url`, and `--settings` remain valid.
+- The source checkout config points to `./dist/anime-bridge.exe`; the release
+  ZIP contains `.codex/config.toml` pointing to `./anime-bridge.exe`.
+- A moved installation therefore needs one GUI settings save plus a Codex
+  restart, not manual editing of an absolute TOML path.
+
+## D-013 — Bahamut authenticated browser bridge
+
+- Authentication stays in the user's browser. A same-origin userscript reads
+  `mygather.php` after the user completes login/CAPTCHA and follows only visible
+  pagination links, with a 50-page ceiling.
+- Its JSON contains title, canonical Anime Crazy link, SN, page number, export
+  time, and warnings. It excludes passwords, cookies, tokens, and raw HTML.
+- Imports accept only schema v1 HTTPS URLs on `ani.gamer.com.tw` and are capped
+  at 5 MiB. Any pagination/parser warning marks the export incomplete and blocks
+  subtraction. Exact normalized matches are removed; fuzzy matches remain visible.
+- Obsidian formal import and candidate-driven RSS refuse notes whose frontmatter
+  does not prove `bahamut_subtraction: true`.
+
+## D-008 — RSS source adapters and availability evidence
+
+- Source discovery is a replaceable URL-template layer, separate from the
+  qBittorrent adapter and batch conflict planner.
+- Built-in providers are Comicat via RSSHub and DMHY; custom templates must be
+  credential-free HTTPS and contain `{query}`.
+- Public Comicat/RSSHub endpoints currently show Cloudflare verification, so
+  their generated URLs are drafts rather than proven downloader-readable feeds.
+- Batch writes preflight all conflicts but cannot be atomic because the
+  qBittorrent WebUI API exposes separate feed and rule writes.
+- A source URL is the remote RSS XML endpoint. A subscription path is only the
+  relative qBittorrent RSS tree location; it is distinct from a rule's optional
+  download save path. Multiple source URLs may be attached to one anime-named
+  rule so either source can produce matching releases.
+- On 2026-08-29 the user reported that the current RSS subscriptions passed
+  qBittorrent verification. Treat this as accepted live evidence for the tested
+  setup, not a guarantee that every external source is continuously available.
 
 ## D-007 — Portable distribution policy
 
@@ -31,6 +169,28 @@ without allowing the AI to bypass previews or confirmations.
 - Keep only the newest three packaged snapshots, while retaining Git history.
 
 ## Decisions
+
+### D-025 — Obsidian plugin entry is self-contained (2026-08-28)
+
+Runtime behavior required during plugin load stays inside `main.js`; pure helper
+files may remain for tests but are not loaded through relative CommonJS imports.
+
+### D-024 — Repair and delete stay preview-confirmed (2026-08-28)
+
+Anime Bridge may repair only a new, empty, exactly current, or manifest-identified
+Anime Bridge plugin directory. Unknown plugin directories remain blocking
+conflicts. Formal-note deletion is recoverable: it is confined to Markdown
+notes tagged `bangumi` below the configured formal root, requires a matching
+preview SHA-256 and confirmation, and moves the note below
+`.trash/anime-bridge`. Candidate checked-first ordering is limited to generated
+item blocks and is stable within checked and unchecked groups.
+
+### D-023 — Current-date gate for quarter scans (2026-08-27)
+
+Quarter discovery keeps only subjects whose first air date is within the
+current quarter and is not later than the scan reference date. This prevents
+future, not-yet-aired titles from entering candidate notes while preserving
+titles airing today. Per-episode upload times remain a future harness concern.
 
 ### D-001: Quarter boundaries
 
@@ -71,9 +231,9 @@ Formal notes must remain compatible with these frontmatter keys:
 
 ### D-005: Authentication and secrets
 
-Bahamut login happens interactively in a dedicated browser profile. Passwords
-are never captured. Raw cookies, qBittorrent credentials, and AI keys are never
-committed. Portable exports exclude authenticated state.
+Bahamut login happens interactively in the user's browser. Passwords and cookies
+are never captured; the browser helper exports only validated favorite metadata.
+Raw cookies, qBittorrent credentials, and AI keys are never committed.
 
 ### D-006: GitHub and releases
 
@@ -130,7 +290,7 @@ qBittorrent access, or disabled/add-paused RSS defaults.
 
 The operational GUI uses a local web interface instead of Tkinter because the
 available bundled Python failed a real Tcl/Tk startup smoke test. It binds only
-to `127.0.0.1`, chooses a random port, and requires a high-entropy per-process
+to `127.0.0.1:18765` and requires a high-entropy per-process
 token for the page and API calls. Browser write actions require a visible dialog
 and remain subject to service-layer gates. Static assets have no CDN dependency
 and are included as Python package data.
@@ -141,7 +301,6 @@ and are included as Python package data.
 - Obsidian vault: `C:\PersonalBlog\Obsidian Vault`.
 - Existing integration folder: `bangumi1`; existing QuickAdd, Dataview, and
   Templater plugins are installed.
-- qBittorrent 4.5.5 is installed and was observed running; WebUI availability
-  has not yet been established.
+- qBittorrent 4.5.5 is installed; loopback WebUI API 2.8.19 was read successfully.
 - System Python is absent. Development verification uses the bundled Codex
   Python runtime; the eventual package must include its own runtime.

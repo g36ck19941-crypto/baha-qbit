@@ -7,6 +7,7 @@ from pathlib import Path
 
 from anime_bridge.ai.service import AnimeBridgeAIService, WritePermissionError
 from anime_bridge.domain import AnimeCategory, AnimeSubject
+from anime_bridge.adapters.rss_probe import RSSProbeResult
 
 
 class FakeBangumi:
@@ -31,7 +32,46 @@ class FakeQbit:
     def set_rule(self, name, definition): self.calls.append(("rule", name, definition))
 
 
+class FakeRSSProbe:
+    def __init__(self, available=True): self.available = available
+    def probe(self, url):
+        return RSSProbeResult(url, self.available, "RSS/Atom 已验证" if self.available else "HTTP 403")
+
+
 class AIServiceTests(unittest.TestCase):
+    @staticmethod
+    def write_candidate(vault: Path) -> Path:
+        candidate = vault / "candidate.md"
+        candidate.write_text(
+            "---\nbahamut_subtraction: true\n---\n"
+            "- [x] **测试动画**\n"
+            "  <!-- anime-bridge:item {\"bangumi_id\":10,\"category\":\"tv\",\"air_date\":\"2026-07-01\"} -->\n",
+            encoding="utf-8",
+        )
+        return candidate
+
+    def test_candidate_analysis_is_read_only_and_surfaces_review_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            candidate = vault / "candidate.md"
+            candidate.write_text(
+                "---\nbahamut_subtraction: true\n---\n"
+                "- [ ] **测试动画**\n"
+                "  <!-- anime-bridge:item {\"bangumi_id\":10,\"category\":\"tv\",\"air_date\":\"2026-07-01\"} -->\n"
+                "  <!-- anime-bridge:bahamut-review {\"bangumi_id\":10,\"favorite_href\":\"https://ani.gamer.com.tw/animeRef.php?sn=10\",\"favorite_title\":\"测试动画 第二季\",\"score\":0.8,\"subject_title\":\"测试动画\"} -->\n",
+                encoding="utf-8",
+            )
+            before = candidate.read_bytes()
+            service = AnimeBridgeAIService(vault, bangumi=FakeBangumi(), qbit=FakeQbit())
+            result = service.analyze_candidate_note("candidate.md")
+            self.assertTrue(result["bahamut_subtracted"])
+            self.assertEqual(result["selection_count"], 1)
+            self.assertEqual(
+                result["fuzzy_reviews"][0]["policy"],
+                "human_review_required_never_auto_exclude",
+            )
+            self.assertEqual(candidate.read_bytes(), before)
+
     def test_subject_details_are_structured(self):
         with tempfile.TemporaryDirectory() as directory:
             service = AnimeBridgeAIService(
@@ -84,6 +124,30 @@ class AIServiceTests(unittest.TestCase):
             definition = qbit.calls[1][2]
             self.assertFalse(definition["enabled"])
             self.assertTrue(definition["addPaused"])
+
+    def test_candidate_rss_batch_is_preview_first_and_safely_applied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            candidate = self.write_candidate(vault)
+            qbit = FakeQbit()
+            preview_service = AnimeBridgeAIService(vault, qbit=qbit, rss_probe=FakeRSSProbe())
+            preview = preview_service.plan_candidate_rss(
+                str(candidate), "comicat-rsshub", ("1080P", "CHS")
+            )
+            self.assertEqual(preview["draft_count"], 1)
+            self.assertEqual(qbit.calls, [])
+            enabled = AnimeBridgeAIService(vault, allow_writes=True, qbit=qbit, rss_probe=FakeRSSProbe())
+            result = enabled.apply_candidate_rss(
+                str(candidate),
+                "comicat-rsshub",
+                "CONFIRM_LOCAL_WRITE",
+                ("1080P", "CHS"),
+            )
+            self.assertEqual(result["created_count"], 1)
+            self.assertEqual([call[0] for call in qbit.calls], ["feed", "rule"])
+            self.assertFalse(qbit.calls[1][2]["enabled"])
+            self.assertTrue(qbit.calls[1][2]["addPaused"])
+            self.assertTrue(preview["discovery"][0]["usable"])
 
 
 if __name__ == "__main__":

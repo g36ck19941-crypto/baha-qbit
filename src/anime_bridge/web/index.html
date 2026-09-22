@@ -56,16 +56,19 @@
           <p>四季边界：1–3 / 4–6 / 7–9 / 10–12 月</p>
         </div>
         <div class="milestone-list" id="milestones"></div>
-        <div class="action-band">
+        <form id="scan-form" class="action-band">
           <div>
             <h2>生成候选笔记</h2>
             <p>纳入 TV、WEB、剧场版与续作；排除 OVA 和其它类型；要求 Bangumi「日本」标签。</p>
+            <p>Anime Bridge 会自行获取动画疯公开“所有动画”分页，筛选本季度上架作品并执行差集，无需打开动画疯。</p>
+            <details><summary>高级备用：手动 JSON 路径</summary><label class="inline-field"><span>动画疯当季目录 JSON</span><input name="bahamut_catalog_path" placeholder="C:/Users/.../bahamut-current-quarter.json"></label></details>
+            <p class="helper-link"><button type="button" id="install-browser-helper">安装备用浏览器助手</button></p>
           </div>
-          <button class="primary" id="scan-button">扫描并写入 Vault</button>
-        </div>
+          <button type="submit" class="primary" id="scan-button">筛选并写入候选笔记</button>
+        </form>
         <div class="notice warning">
           <strong>边界说明</strong>
-          <p>巴哈姆特实时收藏尚未接通。候选笔记会明确标记差集未执行，不会被当作最终列表。</p>
+          <p>默认请求失败时，界面会明确报错；此时才需要备用助手。两种方式都只处理公开目录中的标题、链接和上架年月，不读取账号、收藏、密码或 Cookie。</p>
         </div>
       </section>
 
@@ -85,17 +88,30 @@
           <strong>动画库.base 无需直接编辑</strong>
           <p>正式 Markdown 笔记通过 <code>tags: bangumi</code> 自动进入现有 Base 视图。</p>
         </div>
+        <div class="section-head subsection-head">
+          <div><p class="eyebrow">LIBRARY MANAGEMENT</p><h2>正式动画库管理</h2></div>
+          <p>新增沿用上方候选入库；删除先预览，再移入 Vault 回收区</p>
+        </div>
+        <form id="obsidian-delete-form" class="form-sheet">
+          <label><span>已归库动画</span><select id="obsidian-library-select" name="relative_path"><option value="">请先读取动画库</option></select></label>
+          <div class="button-row">
+            <button type="button" id="obsidian-library-refresh">读取动画库</button>
+            <button type="button" id="obsidian-delete-plan">预览删除</button>
+            <button type="button" class="danger-outline" id="obsidian-delete-apply">确认后删除</button>
+          </div>
+        </form>
+        <div class="notice warning"><strong>删除可恢复</strong><p>确认删除后，笔记会移至 Vault 的 <code>.trash/anime-bridge</code>，不会永久擦除。若笔记在预览后发生变化，操作会拒绝。</p></div>
       </section>
 
       <section class="view" id="view-rss">
         <div class="section-head">
           <div><p class="eyebrow">LOCAL WEBUI API</p><h1>qBittorrent RSS</h1></div>
-          <button id="qbit-check">读取当前状态</button>
+          <div class="button-row"><button id="rss-auto-jump" class="primary">自动发现 RSS</button><button id="qbit-launch">启动 qBittorrent</button><button id="qbit-check">读取当前状态</button></div>
         </div>
         <form id="rss-form" class="form-sheet two-column">
-          <label class="wide"><span>RSS URL</span><input name="feed_url" type="url" required placeholder="https://example.com/feed.xml"></label>
-          <label><span>订阅路径</span><input name="feed_path" required value="AnimeBridge/Title"></label>
-          <label><span>规则名称</span><input name="rule_name" required value="Title 1080p"></label>
+          <label class="wide"><span>RSS URL（可多个，每行一个）</span><textarea name="feed_urls" required placeholder="https://example.com/feed-a.xml&#10;https://example.com/feed-b.xml"></textarea></label>
+          <label class="wide"><span>动画名称（即下载规则名）</span><input name="anime_title" required placeholder="例如：跃动青春 第二季"></label>
+          <details class="wide"><summary>高级：RSS 面板分组（通常无需修改）</summary><label><span>订阅路径根目录</span><input name="feed_path" value="AnimeBridge"></label><p>仅用于 qBittorrent RSS 面板内分类，不会改变下载目录或下载规则。</p></details>
           <label><span>必须包含</span><input name="must_contain" value="1080"></label>
           <label><span>必须排除</span><input name="must_not_contain"></label>
           <label class="wide"><span>下载目录（可选）</span><input name="save_path" placeholder="C:/localanime/Title"></label>
@@ -108,6 +124,26 @@
           <strong>强制安全默认值</strong>
           <p>界面创建的规则始终保持禁用，匹配的下载始终暂停。此界面不提供删除订阅、规则或任务的入口。</p>
         </div>
+        <div class="section-head subsection-head">
+          <div><p class="eyebrow">AUTO RSS DISCOVERY</p><h2>自动查找已勾选动画的可用 RSS</h2></div>
+          <p>先验证各来源是否返回 RSS；仅可用来源进入预览，每部动画只创建一条同名规则</p>
+        </div>
+        <form id="rss-batch-form" class="form-sheet two-column">
+          <label class="wide"><span>候选笔记路径</span><input name="candidate_path" required placeholder="C:/.../bangumi1/2026-07-动画候选.md"></label>
+          <label><span>RSS 来源（可多选）</span><select name="providers" multiple size="3"><option value="comicat-rsshub" selected>Comicat（经可访问/自建 RSSHub）</option><option value="dmhy">动漫花园</option><option value="custom">自定义 HTTPS 模板（可多行）</option></select></label>
+          <label><span>附加搜索词（逗号分隔）</span><input name="extra_terms" placeholder="1080P, CHS"></label>
+          <label class="wide"><span>自定义来源模板（可选；每行一个，需含 {query}）</span><textarea name="custom_template" placeholder="https://your-rsshub.example/comicat/search/{query}"></textarea></label>
+          <label><span>规则必须包含</span><input name="must_contain"></label>
+          <label><span>规则必须排除</span><input name="must_not_contain"></label>
+          <label><span>集数过滤</span><input name="episode_filter" placeholder="1-12"></label>
+          <label><span>qBittorrent 分类</span><input name="category" value="anime"></label>
+          <label class="wide"><span>下载根目录（可选）</span><input name="save_root" placeholder="C:/localanime"></label>
+          <div class="button-row wide">
+            <button type="button" id="rss-batch-plan">自动查找并预览</button>
+            <button type="button" class="danger-outline" id="rss-batch-apply">确认后批量创建</button>
+          </div>
+        </form>
+        <div class="notice warning"><strong>批量写入不是原子事务</strong><p>执行前会整批复查冲突，但 qBittorrent API 无事务；中途网络失败时需检查已创建项目后再重试。</p></div>
       </section>
 
       <section class="view" id="view-settings">
@@ -120,16 +156,18 @@
           <label><span>候选笔记目录</span><input name="integration_folder" required></label>
           <label><span>正式动画目录</span><input name="formal_root" required></label>
           <label><span>qBittorrent WebUI</span><input name="qbit_base_url" type="url" required></label>
+          <label class="wide"><span>qBittorrent 程序路径（可选）</span><input name="qbit_executable_path" placeholder="C:/Program Files/qBittorrent/qbittorrent.exe"><small>为空时会尝试常见安装位置；仅用于“启动 qBittorrent”按钮。</small></label>
           <div class="button-row"><button type="submit" class="primary">保存设置</button></div>
         </form>
         <div class="form-sheet migration-sheet">
           <label><span>打包程序路径</span><input id="runner-path" placeholder="C:/.../anime-bridge.exe"></label>
           <div class="button-row">
+            <button type="button" class="primary" id="migration-auto-repair">自动检测并修复 Obsidian 集成</button>
             <button type="button" id="migration-plan">预览迁移安装</button>
             <button type="button" class="danger-outline" id="migration-apply">确认后安装 Obsidian 集成</button>
           </div>
         </div>
-        <div class="notice safe"><strong>迁移安装不会覆盖</strong><p>若目标插件目录已有任何不同文件，整批安装会拒绝。安装后仍需在 Obsidian 中手动启用插件。</p></div>
+        <div class="notice safe"><strong>自动修复仍需确认</strong><p>软件会检测自身运行路径、源码启动路径和 Anime Bridge 插件文件。预览后可修复缺失或旧版受管文件；无法确认身份的插件目录仍会拒绝覆盖。</p></div>
         <div class="notice"><strong>不会保存</strong><p>巴哈姆特 Cookie、qBittorrent 密码、GitHub 凭据和 AI 密钥均不写入此配置。</p></div>
       </section>
     </main>
@@ -153,6 +191,32 @@
         <button value="cancel">取消</button>
         <button value="confirm" class="danger">确认执行</button>
       </div>
+    </form>
+  </dialog>
+  <dialog id="browser-helper-dialog">
+    <form method="dialog" class="helper-guide">
+      <p class="eyebrow">BROWSER SETUP</p>
+      <h2>安装备用浏览器助手</h2>
+      <p>检测到：<strong id="detected-browser">正在判断浏览器</strong></p>
+      <ol>
+        <li>
+          <strong>安装 Tampermonkey</strong>
+          <p>在官方页面点击商店安装，并完成浏览器自己的确认。</p>
+          <a id="open-tampermonkey" class="button-link" href="https://www.tampermonkey.net/" target="_blank" rel="noopener noreferrer">打开 Tampermonkey 官方安装页</a>
+        </li>
+        <li>
+          <strong>安装 Anime Bridge 脚本</strong>
+          <p>完成上一步后返回这里，再点击下面按钮并在 Tampermonkey 中确认安装。</p>
+          <a id="open-browser-helper" class="button-link" href="/bahamut-catalog.user.js?token=__ANIME_BRIDGE_TOKEN__" target="_blank" rel="noopener noreferrer">继续安装自动同步脚本</a>
+        </li>
+        <li>
+          <strong>打开目录并验证</strong>
+          <p>仅在 Anime Bridge 直接获取失败时使用：保持程序运行，打开动画疯“所有动画”；助手会同步公开目录，不要求登录。</p>
+          <a class="button-link" href="https://ani.gamer.com.tw/animeList.php?sort=1&amp;page=1" target="_blank" rel="noopener noreferrer">打开动画疯“所有动画”</a>
+        </li>
+      </ol>
+      <div class="notice warning"><strong>需要你确认两次</strong><p>浏览器扩展和用户脚本都不能由 Anime Bridge 静默安装。</p></div>
+      <div class="button-row"><button value="close">完成或稍后继续</button></div>
     </form>
   </dialog>
   <script src="/app.js"></script>

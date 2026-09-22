@@ -45,7 +45,7 @@
   * { box-sizing: border-box; }
   html, body { min-height: 100%; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: var(--step-0)/1.55 var(--font-body); }
-  button, input { font: inherit; }
+  button, input, select { font: inherit; }
   button { color: inherit; }
   h1, h2, p { margin-top: 0; }
   h1 { margin-bottom: 0; font: 700 var(--step-3)/1.05 var(--font-display); letter-spacing: -.025em; }
@@ -90,9 +90,13 @@
   .milestone .index { font-family: var(--font-mono); color: var(--muted); }
   .state { padding: 3px 8px; border: 1px solid var(--line); font-size: var(--step--1); }
   .state.ready { color: var(--safe); border-color: var(--safe); }
+  .state.bridge_ready { color: var(--accent); border-color: var(--accent); }
   .state.waiting_login { color: #866500; border-color: var(--signal); }
   .action-band { display: flex; justify-content: space-between; align-items: center; gap: var(--space-5); padding: var(--space-5) 0; }
   .action-band p { margin-bottom: 0; max-width: 600px; color: var(--muted); }
+  .inline-field { margin-top: var(--space-3); max-width: 680px; }
+  .helper-link { margin-top: var(--space-2); font-size: var(--step--1); }
+  .helper-link a { color: var(--accent); }
   button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 2px; background: transparent; cursor: pointer; }
   button:hover { border-color: var(--ink); }
   button:disabled { opacity: .5; cursor: wait; }
@@ -105,10 +109,11 @@
   .notice.warning { border-left-color: var(--signal); }
   .notice.safe { border-left-color: var(--safe); }
   .form-sheet { display: grid; gap: var(--space-4); margin-top: var(--space-5); max-width: 840px; }
+  .subsection-head { margin-top: var(--space-5); }
   label { display: grid; gap: var(--space-2); }
   label span { font-size: var(--step--1); color: var(--muted); }
-  input { width: 100%; min-height: 44px; padding: 9px 11px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 2px; }
-  input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; border-color: var(--accent); }
+  input, select { width: 100%; min-height: 44px; padding: 9px 11px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 2px; }
+  input:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; border-color: var(--accent); }
   .button-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
   .ledger-head { display: flex; align-items: end; justify-content: space-between; padding-bottom: var(--space-3); border-bottom: 2px solid var(--ink); }
   .ledger-head h2 { margin: 0; }
@@ -120,6 +125,13 @@
   .shutdown { width: 100%; margin-top: var(--space-3); color: var(--muted); }
   dialog { width: min(520px, calc(100vw - 32px)); padding: var(--space-5); color: var(--ink); background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius); box-shadow: 0 24px 80px rgba(0,0,0,.25); }
   dialog::backdrop { background: rgba(0,0,0,.55); }
+  #browser-helper-dialog { width: min(680px, calc(100vw - 32px)); }
+  .helper-guide > p { color: var(--muted); }
+  .helper-guide ol { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; padding-left: 24px; }
+  .helper-guide li { padding-left: var(--space-2); }
+  .helper-guide li p { margin: 4px 0 var(--space-2); color: var(--muted); }
+  .button-link { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; color: var(--accent); text-decoration: none; border: 1px solid var(--accent); border-radius: 2px; }
+  .button-link:hover { color: var(--accent-ink); background: var(--accent); }
 }
 
 @layer states {

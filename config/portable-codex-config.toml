@@ -1,0 +1,10 @@
+# This file is packaged as .codex/config.toml at the portable package root.
+# Anime Bridge reads the Vault/qBittorrent paths saved by its local GUI.
+[mcp_servers.anime_bridge]
+command = "./anime-bridge.exe"
+args = ["mcp", "--allow-writes"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+default_tools_approval_mode = "writes"

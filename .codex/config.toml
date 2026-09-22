@@ -1,0 +1,12 @@
+# Project-scoped Codex MCP connection. Codex loads this only for a trusted project.
+[mcp_servers.anime_bridge]
+command = "./dist/anime-bridge.exe"
+args = [
+  "mcp",
+  "--allow-writes",
+]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+default_tools_approval_mode = "writes"

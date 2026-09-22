@@ -1,4 +1,4 @@
-# User guide — v0.8.0 development
+# User guide — v0.16.7 development
 
 ## Portable Windows build
 
@@ -12,10 +12,16 @@ file also provides CLI and MCP modes:
 ```
 
 On another computer, open **本机设置**, update the Vault and loopback
-qBittorrent paths, save them, preview the migration installation, and only then
-confirm installation. Existing different Obsidian plugin files cause full
-refusal; the assistant never silently overwrites them. Obsidian still requires
-manual plugin enablement after installation.
+qBittorrent paths and save them. **自动检测并修复 Obsidian 集成** detects the
+current packaged executable (or source runner plus launcher), previews missing
+or stale managed plugin files, and repairs them only after confirmation. A
+directory that cannot be identified as Anime Bridge still causes full refusal.
+Obsidian still requires manual plugin enablement after installation.
+
+The ZIP also contains `.codex/config.toml`. When the extracted directory is
+opened as a trusted Codex project, this starts the EXE in MCP mode and reads the
+same GUI-saved paths. Restart Codex after saving the new machine profile; no
+absolute Vault path is embedded in the portable MCP file.
 
 ## Runtime note
 
@@ -30,7 +36,7 @@ In the project development environment:
 .\.venv\Scripts\python.exe gui_launcher.py
 ```
 
-Anime Bridge binds to `127.0.0.1` on a random port and opens the session-token
+Anime Bridge binds to `127.0.0.1:18765` and opens the session-token
 URL in the default browser. The interface provides current-quarter scanning,
 Obsidian plan/confirmed apply, qBittorrent status, RSS plan/confirmed apply, and
 non-secret settings. Use **结束本机界面服务** before closing the page.
@@ -53,26 +59,97 @@ python launcher.py scan --date 2026-08-21 --output out/2026-07-candidates.md
 
 Use `--dry-run` to fetch and report the count without writing a file.
 
-## Important limitation
+## Synchronize Bahamut's public current-quarter catalog
 
-v0.1.0 is the Bangumi discovery slice only. Its candidate file has not yet had
-the user's Bahamut favorites removed. The note says this explicitly and is not
-tagged for the formal animation Base.
+Anime Bridge no longer reads your personal favorites and does not require a
+Bahamut login. In the normal workflow, select **扫描当季差集**: Anime Bridge
+directly reads the public year-sorted catalog, proves the current-quarter page
+boundary, and subtracts those titles. You do not need to open Bahamut or install
+Tampermonkey.
+
+Anime Crazy may return HTTP 403 or a Cloudflare verification page to a local
+non-browser client. Anime Bridge reports that failure instead of accepting an
+incomplete catalog. Only then use **安装备用浏览器助手**. The guide detects Edge,
+Chrome/Chromium, or Firefox and opens the matching official Tampermonkey page:
+
+1. Confirm Tampermonkey installation in the browser's own store UI.
+2. Return to the guide and select **继续安装自动同步脚本**, then confirm the
+   userscript in Tampermonkey.
+3. Open `https://ani.gamer.com.tw/animeList.php`; no account login is required.
+4. Helper v0.4 reads the already rendered first page, then uses the browser's
+   same-origin session for later public catalog pages until it reaches the
+   current quarter boundary, then sends only current-quarter rows to Anime Bridge.
+5. Anime Bridge validates and retains the latest JSON internally, performs the
+   current-quarter difference, and writes the candidate note automatically.
+6. If automatic sync is skipped within its six-hour cooldown, select **同步
+   Anime Bridge 当季目录** in the lower-right corner to force a retry.
+
+If an older catalog/favorites helper is installed, reinstall the helper from
+the v0.16 guide and disable or remove the old script. This update is required
+for the first-page HTTP 403 fix.
+
+Browser security requires both confirmations. Anime Bridge never changes
+enterprise policy, registry extension lists, or the browser's extension UI.
+
+No file selection or browser is required in the normal workflow. The advanced
+manual JSON path and CLI remain recovery/diagnostic options:
+
+```powershell
+python launcher.py scan `
+  --bahamut-catalog "C:/Users/you/Downloads/bahamut-current-quarter.json"
+```
+
+The helper transmits title, link, SN, page, and displayed `YYYY/MM` metadata.
+The JSON declares its quarter, and the backend rejects entries outside that
+quarter (apart from a one-month Bahamut display-date carry-in used to handle
+cross-site premiere-date drift), personal-favorites JSON, warnings, or incomplete pagination. It never
+exports account state, Cookie values, passwords, or raw HTML. A persistent
+random pairing secret is kept in the local application profile and installed
+userscript and is never committed to Git. Exact normalized title matches are
+removed; fuzzy matches remain in the candidate note with a warning.
+
+Title comparison includes literal text plus sequel-marker normalization (for
+example `幼女戦記Ⅱ`, `幼女战记 第二季`, and `幼女战记 2`), OpenCC standard-Traditional,
+Taiwan-with-regional-phrases, and Hong-Kong-to-Simplified forms. Bangumi
+infobox fields for Taiwan/Hong Kong, Traditional-Chinese, and general Chinese
+translated names are also exact aliases. A completely different regional title
+missing from Bangumi's aliases remains visible for manual review; Anime Bridge
+does not lower the fuzzy threshold or guess a silent exclusion.
+
+Keep Anime Bridge running on port `18765` while opening the catalog page.
+If another process occupies that port, close the older Anime Bridge instance
+before starting the new one; the installed helper deliberately uses a stable
+loopback address.
+
+If no catalog is supplied, Anime Bridge may still create a Bangumi-only preview,
+but `bahamut_subtraction: false` makes both formal import and batch RSS refuse it.
 
 ## Offline Bahamut parser diagnostic
 
-Until interactive login is implemented, a UTF-8 HTML file exported from the
-logged-in `mygather.php` page can be parsed without transmitting credentials:
+For parser diagnostics, a UTF-8 HTML file saved from `mygather.php` can still be
+parsed without transmitting credentials:
 
 ```powershell
 python launcher.py parse-bahamut-html mygather.html `
   --json-output out/bahamut-favorites.json
 ```
 
-This command proves the parser interface only. It does not claim that the
-application has connected to the user's account.
+This older command proves the HTML parser only; use the browser-helper JSON for
+the actual seasonal difference workflow.
 
 ## Preview checked Obsidian imports
+
+### AI candidate-note analysis
+
+The MCP tool `obsidian_analyze_candidate_note` reads an Anime Bridge candidate
+file inside the configured Vault and returns checkbox counts, item metadata,
+the Bahamut-subtraction gate, and machine-readable fuzzy-match evidence. It is
+read-only. Every fuzzy row carries the policy
+`human_review_required_never_auto_exclude`; the AI may explain or compare the
+titles, but cannot silently remove the candidate or approve it as collected.
+
+The AI can then call `bangumi_get_subject` for refreshed detail and use the
+existing preview/apply tools only after the user has made checkbox decisions.
 
 After checking candidate tasks, build a JSON plan without writing to the Vault:
 
@@ -104,6 +181,18 @@ The second command displays a confirmation dialog. The Python importer still
 refuses the full batch when any target conflicts. This package has passed static
 checks but has not yet been enabled or run in the real Vault.
 
+When a generated candidate note is opened, the plugin moves checked Anime
+Bridge item blocks above unchecked blocks while preserving the order within
+each group. The behavior can be disabled in plugin settings. New candidate
+notes include item-region markers so text outside the generated item region is
+not reordered.
+
+The GUI's **正式动画库管理** section lists Markdown notes tagged `bangumi` under
+the configured formal root. Adding continues to use the checked-candidate
+preview/apply workflow. Deleting requires its own preview and confirmation; the
+note hash is rechecked and the file is moved to `.trash/anime-bridge` rather
+than permanently erased.
+
 ## Preview a qBittorrent RSS feed and rule
 
 In qBittorrent, enable Web User Interface under `Tools > Options > Web UI` and
@@ -131,6 +220,55 @@ enabled, add `--username NAME`; the password is prompted and never saved.
 
 The feed and rule are two WebUI API writes rather than one atomic transaction.
 If the connection fails after feed creation, inspect qBittorrent before retrying.
+
+## RSS URL, subscription path, and download directory
+
+- **RSS URL** is the remote HTTP(S) address qBittorrent refreshes to read an
+  RSS XML feed.
+- **Subscription path** is qBittorrent's internal relative folder used only to
+  organize feeds in its RSS panel. It is not a Windows folder.
+- **Download directory** is the optional local filesystem destination in the
+  RSS rule.
+
+In the GUI's manual form, enter one or more RSS URLs (one per line), provide
+the animation name, and choose a subscription-path root. Anime Bridge creates
+one feed below that root for each URL and one disabled/add-paused rule named
+after the animation.
+
+## Batch RSS drafts from checked candidates
+
+The GUI's **RSS 下载器 → 从已勾选动画批量生成** section can select several
+sources for each checked candidate. It creates one source-specific feed URL per
+source and one disabled/add-paused rule named after the animation. Supported
+source templates are:
+
+- `comicat-rsshub`: `/comicat/search/:keyword` through RSSHub;
+- `dmhy`: the DMHY keyword RSS route;
+- `custom`: a credential-free HTTPS template containing `{query}`.
+
+The public Comicat and `rsshub.app` pages currently present Cloudflare human
+verification on this computer. A generated URL is therefore a draft, not proof
+that qBittorrent can refresh it. For Comicat, provide an accessible or
+self-hosted RSSHub template such as
+`https://your-rsshub.example/comicat/search/{query}`.
+
+CLI preview example:
+
+```powershell
+.\anime-bridge.exe qbittorrent-rss-batch `
+  "C:/Path/To/Vault/bangumi1/2026-07-动画候选.md" `
+  --vault "C:/Path/To/Vault" `
+  --provider comicat-rsshub `
+  --provider dmhy `
+  --extra-term 1080P `
+  --extra-term CHS `
+  --must-not-contain 720P `
+  --plan-output rss-batch-plan.json
+```
+
+Without `--apply`, qBittorrent is read only. Batch apply rechecks every target
+before the first write, but the WebUI API has no multi-item transaction; a
+network failure can leave a partial batch that must be inspected before retry.
 
 ## Troubleshooting
 

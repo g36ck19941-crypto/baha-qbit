@@ -9,6 +9,6 @@ build/
 out/
 backups/*.zip
 release/
-config.toml
+/config.toml
 *.log
 .env

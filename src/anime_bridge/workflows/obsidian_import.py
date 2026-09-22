@@ -29,6 +29,11 @@ def plan_checked_import(
     vault_path: Path,
     formal_root: str = "C/bangumi",
 ) -> tuple[FormalNotePlan, ...]:
+    if not document.bahamut_subtracted:
+        raise ObsidianImportConflict(
+            "Import refused because this candidate note has not completed "
+            "Bahamut current-quarter catalog subtraction"
+        )
     plans: list[FormalNotePlan] = []
     seen_targets: set[str] = set()
     for selection in document.checked:

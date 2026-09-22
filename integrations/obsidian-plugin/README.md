@@ -12,3 +12,7 @@ enable **Anime Bridge** under Community plugins. Configure either:
 
 The preview command never applies changes. The apply command shows a second
 confirmation, and the CLI still performs its own full conflict check.
+
+On the next open of an Anime Bridge candidate note, checked generated item
+blocks are moved above unchecked blocks. Ordering within both groups is stable,
+and the behavior can be disabled in plugin settings.

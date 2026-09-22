@@ -8,12 +8,22 @@ from typing import Any
 from anime_bridge.adapters.bangumi import BangumiClient
 from anime_bridge.adapters.candidate_markdown import parse_candidate_markdown
 from anime_bridge.adapters.qbittorrent import QBittorrentClient
+from anime_bridge.adapters.rss_probe import HTTPRSSProbe
 from anime_bridge.domain import AnimeCategory, RSSFeedDraft, RSSRuleDraft
 from anime_bridge.workflows import (
     apply_import_plan,
+    apply_formal_note_delete,
+    apply_rss_batch,
+    apply_rss_bundle,
     apply_rss_plan,
+    build_candidate_rss_drafts,
+    discover_candidate_rss,
+    list_formal_anime_notes,
     plan_checked_import,
+    plan_formal_note_delete,
     plan_rss,
+    plan_rss_batch,
+    plan_rss_bundle,
 )
 
 
@@ -34,12 +44,14 @@ class AnimeBridgeAIService:
         allow_writes: bool = False,
         bangumi: Any | None = None,
         qbit: Any | None = None,
+        rss_probe: Any | None = None,
     ) -> None:
         self.vault_path = vault_path.resolve()
         self.formal_root = formal_root
         self.allow_writes = allow_writes
         self.bangumi = bangumi or BangumiClient()
         self.qbit = qbit or QBittorrentClient(qbit_base_url)
+        self.rss_probe = rss_probe or HTTPRSSProbe()
 
     def _vault_markdown(self, candidate_path: str) -> Path:
         path = Path(candidate_path)
@@ -106,6 +118,29 @@ class AnimeBridgeAIService:
         written = apply_import_plan(plans, self.vault_path)
         return {"written_count": len(written), "paths": [str(path) for path in written]}
 
+    def list_obsidian_library(self) -> dict[str, Any]:
+        items = list_formal_anime_notes(self.vault_path, self.formal_root)
+        return {"count": len(items), "items": [item.as_dict() for item in items]}
+
+    def plan_obsidian_delete(self, relative_path: str) -> dict[str, Any]:
+        return plan_formal_note_delete(
+            self.vault_path, self.formal_root, relative_path
+        ).as_dict()
+
+    def apply_obsidian_delete(
+        self, relative_path: str, expected_sha256: str, confirmation: str
+    ) -> dict[str, Any]:
+        self._require_write(confirmation)
+        plan = plan_formal_note_delete(
+            self.vault_path, self.formal_root, relative_path
+        )
+        moved_to = apply_formal_note_delete(plan, self.vault_path, expected_sha256)
+        return {
+            "deleted": plan.relative_path,
+            "moved_to": str(moved_to),
+            "recoverable": True,
+        }
+
     def qbit_status(self) -> dict[str, Any]:
         version, api_version = self.qbit.versions()
         return {
@@ -127,8 +162,9 @@ class AnimeBridgeAIService:
         smart_filter: bool = False,
         category: str = "",
         save_path: str = "",
+        feed_urls: tuple[str, ...] = (),
     ) -> dict[str, Any]:
-        feed, rule = self._rss_drafts(
+        feeds, rule = self._rss_drafts(
             feed_url,
             feed_path,
             rule_name,
@@ -138,13 +174,19 @@ class AnimeBridgeAIService:
             episode_filter,
             smart_filter,
             category,
-            save_path,
+            save_path, feed_urls,
         )
-        plan = plan_rss(self.qbit, feed, rule)
+        if len(feeds) == 1:
+            feed = feeds[0]
+            plan = plan_rss(self.qbit, feed, rule)
+            feed_conflicts = [plan.feed_conflict]
+        else:
+            plan = plan_rss_bundle(self.qbit, feeds, rule)
+            feed_conflicts = list(plan.feed_conflicts)
         return {
-            "feed": {"url": feed.url, "path": feed.path},
+            "feeds": [{"url": feed.url, "path": feed.path} for feed in feeds],
             "rule": {"name": rule.name, **rule.to_qbittorrent_definition()},
-            "feed_conflict": plan.feed_conflict,
+            "feed_conflicts": feed_conflicts,
             "rule_conflict": plan.rule_conflict,
         }
 
@@ -161,9 +203,10 @@ class AnimeBridgeAIService:
         smart_filter: bool = False,
         category: str = "",
         save_path: str = "",
+        feed_urls: tuple[str, ...] = (),
     ) -> dict[str, Any]:
         self._require_write(confirmation)
-        feed, rule = self._rss_drafts(
+        feeds, rule = self._rss_drafts(
             feed_url,
             feed_path,
             rule_name,
@@ -173,16 +216,172 @@ class AnimeBridgeAIService:
             episode_filter,
             smart_filter,
             category,
-            save_path,
+            save_path, feed_urls,
         )
-        plan = plan_rss(self.qbit, feed, rule)
-        apply_rss_plan(self.qbit, plan)
+        if len(feeds) == 1:
+            plan = plan_rss(self.qbit, feeds[0], rule)
+            apply_rss_plan(self.qbit, plan)
+        else:
+            plan = plan_rss_bundle(self.qbit, feeds, rule)
+            apply_rss_bundle(self.qbit, plan)
         return {
             "created": True,
-            "feed_path": feed.path,
+            "feed_paths": [feed.path for feed in feeds],
             "rule_name": rule.name,
             "enabled": False,
             "add_paused": True,
+        }
+
+    def analyze_candidate_note(self, candidate_path: str) -> dict[str, Any]:
+        """Return deterministic note state and fuzzy evidence without editing it."""
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        return {
+            "candidate": str(candidate),
+            "bahamut_subtracted": document.bahamut_subtracted,
+            "selection_count": len(document.selections),
+            "checked_count": len(document.checked),
+            "unchecked_count": len(document.selections) - len(document.checked),
+            "selections": [
+                {
+                    "bangumi_id": item.bangumi_id,
+                    "title": item.title,
+                    "category": item.category.config_name,
+                    "air_date": item.air_date.isoformat(),
+                    "checked": item.checked,
+                }
+                for item in document.selections
+            ],
+            "fuzzy_reviews": [
+                {
+                    "bangumi_id": review.bangumi_id,
+                    "subject_title": review.subject_title,
+                    "favorite_title": review.favorite_title,
+                    "favorite_href": review.favorite_href,
+                    "score": review.score,
+                    "policy": "human_review_required_never_auto_exclude",
+                }
+                for review in document.reviews
+            ],
+        }
+
+    def plan_candidate_rss(
+        self,
+        candidate_path: str,
+        provider: str | tuple[str, ...],
+        extra_terms: tuple[str, ...] = (),
+        custom_template: str = "",
+        must_contain: str = "",
+        must_not_contain: str = "",
+        episode_filter: str = "",
+        category: str = "anime",
+        save_root: str = "",
+    ) -> dict[str, Any]:
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        drafts = build_candidate_rss_drafts(
+            document,
+            provider,
+            extra_terms=extra_terms,
+            custom_template=custom_template,
+            must_contain=must_contain,
+            must_not_contain=must_not_contain,
+            episode_filter=episode_filter,
+            category=category,
+            save_root=save_root,
+        )
+        discoveries = discover_candidate_rss(drafts, self.rss_probe)
+        available = tuple(item.draft for item in discoveries if item.draft is not None)
+        batch = plan_rss_batch(
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in available)
+        )
+        return self._candidate_rss_payload(candidate, available, batch, discoveries)
+
+    def apply_candidate_rss(
+        self,
+        candidate_path: str,
+        provider: str | tuple[str, ...],
+        confirmation: str,
+        extra_terms: tuple[str, ...] = (),
+        custom_template: str = "",
+        must_contain: str = "",
+        must_not_contain: str = "",
+        episode_filter: str = "",
+        category: str = "anime",
+        save_root: str = "",
+    ) -> dict[str, Any]:
+        self._require_write(confirmation)
+        candidate = self._vault_markdown(candidate_path)
+        document = parse_candidate_markdown(candidate.read_text(encoding="utf-8"))
+        drafts = build_candidate_rss_drafts(
+            document,
+            provider,
+            extra_terms=extra_terms,
+            custom_template=custom_template,
+            must_contain=must_contain,
+            must_not_contain=must_not_contain,
+            episode_filter=episode_filter,
+            category=category,
+            save_root=save_root,
+        )
+        discoveries = discover_candidate_rss(drafts, self.rss_probe)
+        available = tuple(item.draft for item in discoveries if item.draft is not None)
+        if not available:
+            raise ValueError("No checked animation has a verified RSS source")
+        batch = plan_rss_batch(
+            self.qbit, tuple((draft.feeds, draft.rule) for draft in available)
+        )
+        apply_rss_batch(self.qbit, batch)
+        return {
+            "created_count": len(available),
+            "feed_paths": [feed.path for draft in available for feed in draft.feeds],
+            "rule_names": [draft.rule.name for draft in available],
+            "enabled": False,
+            "add_paused": True,
+            "atomic": False,
+        }
+
+    @staticmethod
+    def _candidate_rss_payload(candidate: Path, drafts: Any, batch: Any, discoveries: Any) -> dict[str, Any]:
+        return {
+            "candidate": str(candidate),
+            "draft_count": len(drafts),
+            "conflict_count": sum(plan.has_conflict for plan in batch.plans)
+            + len(batch.duplicate_targets),
+            "duplicate_targets": list(batch.duplicate_targets),
+            "items": [
+                {
+                    "bangumi_id": draft.bangumi_id,
+                    "title": draft.title,
+                    "providers": list(draft.providers),
+                    "search_terms": list(draft.search_terms),
+                    "feeds": [
+                        {"url": feed.url, "path": feed.path} for feed in draft.feeds
+                    ],
+                    "rule": {
+                        "name": draft.rule.name,
+                        **draft.rule.to_qbittorrent_definition(),
+                    },
+                    "feed_conflicts": list(
+                        plan.feed_conflicts if hasattr(plan, "feed_conflicts")
+                        else (plan.feed_conflict,)
+                    ),
+                    "rule_conflict": plan.rule_conflict,
+                }
+                for draft, plan in zip(drafts, batch.plans, strict=True)
+            ],
+            "safe_defaults": {"enabled": False, "add_paused": True},
+            "discovery": [
+                {
+                    "title": item.title,
+                    "usable": item.draft is not None,
+                    "sources": [
+                        {"url": result.url, "available": result.available, "detail": result.detail}
+                        for result in item.results
+                    ],
+                }
+                for item in discoveries
+            ],
         }
 
     def _require_write(self, confirmation: str) -> None:
@@ -207,11 +406,21 @@ class AnimeBridgeAIService:
         smart_filter: bool,
         category: str,
         save_path: str,
-    ) -> tuple[RSSFeedDraft, RSSRuleDraft]:
-        feed = RSSFeedDraft(feed_url, feed_path)
+        feed_urls: tuple[str, ...] = (),
+    ) -> tuple[tuple[RSSFeedDraft, ...], RSSRuleDraft]:
+        urls = tuple(dict.fromkeys(url.strip() for url in (feed_url, *feed_urls) if url.strip()))
+        if not urls:
+            raise ValueError("At least one RSS URL is required")
+        feeds = tuple(
+            RSSFeedDraft(
+                url,
+                feed_path if len(urls) == 1 else f"{feed_path}/source-{index}",
+            )
+            for index, url in enumerate(urls, start=1)
+        )
         rule = RSSRuleDraft(
             name=rule_name,
-            affected_feeds=(feed_url,),
+            affected_feeds=tuple(feed.url for feed in feeds),
             must_contain=must_contain,
             must_not_contain=must_not_contain,
             use_regex=use_regex,
@@ -222,4 +431,5 @@ class AnimeBridgeAIService:
             enabled=False,
             add_paused=True,
         )
-        return feed, rule
+        return feeds, rule
+    build_candidate_rss_drafts,

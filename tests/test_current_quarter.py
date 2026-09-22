@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import date, datetime, timezone
 
-from anime_bridge.domain import AnimeCategory, AnimeSubject
-from anime_bridge.renderers import render_candidate_markdown
-from anime_bridge.workflows import CurrentQuarterScanner
+from anime_bridge.domain import AnimeCategory, AnimeSubject, BahamutFavorite
+from anime_bridge.renderers import render_bahamut_review_markdown, render_candidate_markdown
+from anime_bridge.workflows import CurrentQuarterScanner, subtract_bahamut_catalog
 
 
 def anime(subject_id: int, air_date: date, category: AnimeCategory, title: str) -> AnimeSubject:
@@ -32,6 +33,7 @@ class FakeSource:
             ],
             (8, AnimeCategory.MOVIE): [
                 anime(20, date(2026, 8, 9), AnimeCategory.MOVIE, "当前季度剧场版"),
+                anime(21, date(2026, 8, 22), AnimeCategory.MOVIE, "尚未开播"),
             ],
             (9, AnimeCategory.WEB): [
                 anime(30, date(2026, 9, 1), AnimeCategory.WEB, "当前季度续作 WEB"),
@@ -58,8 +60,12 @@ class CurrentQuarterTests(unittest.TestCase):
     def test_scan_filters_dates_and_deduplicates_by_bangumi_id(self) -> None:
         result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
         self.assertEqual(result.identifier, "2026-summer")
-        self.assertEqual([item.bangumi_id for item in result.subjects], [10, 20, 30])
+        self.assertEqual([item.bangumi_id for item in result.subjects], [10, 20])
         self.assertEqual([item.bangumi_id for item in result.excluded_without_japan_tag], [40])
+
+    def test_scan_excludes_subjects_after_reference_date(self) -> None:
+        result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
+        self.assertNotIn(21, [item.bangumi_id for item in result.subjects])
 
     def test_candidate_markdown_has_tasks_cover_summary_and_machine_metadata(self) -> None:
         result = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
@@ -72,8 +78,49 @@ class CurrentQuarterTests(unittest.TestCase):
         self.assertIn("> 第一行。", rendered)
         self.assertIn('<!-- anime-bridge:item {"air_date":"2026-07-05"', rendered)
         self.assertIn("tags:\n  - anime-bridge-candidates", rendered)
+        self.assertIn("<!-- anime-bridge:items-start -->", rendered)
+        self.assertIn("<!-- anime-bridge:items-end -->", rendered)
         self.assertNotIn("\n  - bangumi\n", rendered)
         self.assertIn("因缺少 `日本` 元标签而未纳入", rendered)
+
+    def test_filtered_candidate_records_gate_and_review_match(self) -> None:
+        original = CurrentQuarterScanner(FakeSource()).scan(date(2026, 8, 21))
+        catalog = (
+            BahamutFavorite(
+                "当前季度 TV", "https://ani.gamer.com.tw/animeRef.php?sn=10", 10
+            ),
+            BahamutFavorite(
+                "当前季度剧场版特别篇",
+                "https://ani.gamer.com.tw/animeRef.php?sn=30",
+                20,
+            ),
+        )
+        difference = subtract_bahamut_catalog(original.subjects, catalog)
+        filtered = replace(original, subjects=difference.candidates)
+        rendered = render_candidate_markdown(
+            filtered,
+            bahamut_difference=difference,
+            bahamut_catalog_count=2,
+            bahamut_exported_at="2026-08-21T18:00:00Z",
+        )
+        self.assertIn("bahamut_subtraction: true", rendered)
+        self.assertNotIn("**当前季度 TV**", rendered)
+        self.assertIn("动画疯当季目录差集已执行", rendered)
+        self.assertNotIn("巴哈标题待人工确认", rendered)
+        self.assertNotIn("anime-bridge:bahamut-review", rendered)
+        review_result = replace(
+            original,
+            subjects=tuple(match.subject for match in difference.review_matches),
+        )
+        review = render_bahamut_review_markdown(
+            review_result,
+            difference,
+            bahamut_catalog_count=2,
+            bahamut_exported_at="2026-08-21T18:00:00Z",
+        )
+        self.assertIn("相似度复核", review)
+        self.assertIn("anime-bridge:bahamut-review", review)
+        self.assertIn("相似度复核", review)
 
 
 if __name__ == "__main__":

@@ -27,19 +27,35 @@ can be replaced without changing quarter or safety rules.
    summary, source link, and machine-readable marker per subject.
 5. Write atomically so an interrupted run does not leave a partial candidate.
 
-The v0.1.0 output carries an explicit warning because Bahamut subtraction is a
-later milestone. It is deliberately tagged `anime-bridge-candidates`, not
-`bangumi`, so it cannot enter the existing formal Base accidentally.
+Bangumi-only output carries an explicit warning and `bahamut_subtraction: false`.
+Formal import and batch RSS reject that state. A validated public-catalog export
+changes the gate to true after exact-only subtraction; candidate notes remain
+tagged `anime-bridge-candidates`, not `bangumi`.
 
 ## Integration boundaries
 
-- `bahamut_html`: implemented pure parser for `mygather.php`; interactive browser
-  session acquisition and paginated live reads remain pending.
+- `bahamut_catalog`: the backend normally reads public `animeList.php` pages
+  directly from the official HTTPS host in year order until it proves the older
+  quarter boundary. Requests have host, redirect, size, timeout, and page bounds;
+  incomplete card metadata or unexpected ordering refuses subtraction. A
+  session-aware userscript is retained only as an HTTP 403/Cloudflare fallback:
+  it parses the rendered first page, fetches later same-origin pages, and posts
+  public metadata rather than Cookie or account state. The backend independently
+  validates either path's quarter, dates, host, paths, and completeness.
+- `browser_helper_guide`: a static, browser-aware dialog routes Edge,
+  Chrome/Chromium, and Firefox to Tampermonkey's official browser-specific page,
+  then exposes the session-gated paired userscript URL. It cannot and does not
+  bypass either browser confirmation or write browser management policy.
+- `bahamut_html`: retained as a pure offline diagnostic parser.
 - `TitleMatcher`: implemented deterministic aliases and confidence scores.
-  Exact normalized equality is the only automatic exclusion; AI may later
+  Each title expands into literal, OpenCC `t2s`, `tw2sp`, and `hk2s` forms;
+  flexible Bangumi infobox aliases include explicit Taiwan/Hong Kong translated
+  name fields. Exact equality across these proven forms is the only automatic
+  exclusion; AI may later
   suggest low-confidence matches but cannot silently approve them.
-- `BahamutDifference`: implemented safe core that retains fuzzy review matches
-  in the candidate list; live favorites are not wired yet.
+- `BahamutDifference`: wired into CLI and GUI scans. Exact matches are removed;
+  fuzzy review matches are removed from the safe candidate list and rendered in
+  a separate non-importable review note.
 - `ObsidianImporter`: implemented checked-marker parser, detail refresh, formal
   renderer, preview plan, and conflict-safe apply core. A dependency-free
   desktop Obsidian command shell delegates to the same CLI and adds a second
@@ -48,13 +64,24 @@ later milestone. It is deliberately tagged `anime-bridge-candidates`, not
 - `QbittorrentRSS`: implemented loopback-only Web API client, version probe,
   existing-state reader, feed/rule preview, conflict refusal, and explicit
   apply. Rules default disabled and add matches paused. RSS-source discovery
-  and higher-level per-anime rule generation remain pending.
+  and checked-candidate batch rule generation. RSS source URL construction is
+  isolated in `rss_sources`, with built-in Comicat/RSSHub and DMHY templates
+  plus a credential-free custom HTTPS template. Endpoint availability remains
+  an external precondition and is reported separately from URL construction.
 - MCP uses the official SDK v2 over local stdio and exposes the same workflows.
-  The default server registers four read-only tools. Two write tools are absent
+  The default server registers six read-only tools. Three write tools are absent
   unless the process starts with `--allow-writes`; individual write calls still
   require confirmation and retain all underlying conflict/safe-default gates.
-- The desktop UX is a dependency-free local web server bound to `127.0.0.1` on
-  a random port. A high-entropy session token gates the page and every API call;
+  With no explicit CLI overrides, MCP reads the same local non-secret profile
+  as the GUI. The release ZIP carries a project-scoped config whose EXE path is
+  relative to the extracted package root.
+- Review notes carry machine-readable fuzzy-review markers. The read-only AI
+  analyzer exposes evidence with a fixed human-review policy; it cannot edit the
+  note or turn similarity into automatic exclusion.
+- The desktop UX is a dependency-free local web server bound to
+  `127.0.0.1:18765`. A high-entropy per-process token gates the page and normal
+  API calls. The userscript installer is session-gated and embeds a separate
+  persistent random pairing token; only that token authorizes catalog ingest.
   CSP/no-store headers reduce browser attack surface. The browser UI delegates
   to the same service layer and adds a visible dialog before write requests.
 - `app_launcher.py` is the single frozen entry point: no arguments select the

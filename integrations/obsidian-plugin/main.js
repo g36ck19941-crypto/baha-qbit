@@ -4,10 +4,46 @@ const { Plugin, PluginSettingTab, Setting, Notice, Modal } = require("obsidian")
 const { spawn } = require("child_process");
 const path = require("path");
 
+// Keep the runtime sorter in this entry file. Obsidian's plugin loader does
+// not consistently resolve relative CommonJS modules on every desktop build.
+const CANDIDATE_TASK = /^- \[([ xX])\] \*\*.+?\*\*\s*$/gm;
+const CANDIDATE_ITEM_MARKER = /<!-- anime-bridge:item \{.*?\} -->/;
+
+function reorderCheckedCandidates(markdown) {
+  if (!markdown.includes("anime_bridge_document: candidates")) return markdown;
+  const startMarker = "<!-- anime-bridge:items-start -->";
+  const endMarker = "<!-- anime-bridge:items-end -->";
+  const start = markdown.indexOf(startMarker);
+  const end = markdown.indexOf(endMarker, start + startMarker.length);
+  const regionStart = start >= 0 && end > start ? start + startMarker.length : 0;
+  const regionEnd = start >= 0 && end > start ? end : markdown.length;
+  const region = markdown.slice(regionStart, regionEnd);
+  const matches = [...region.matchAll(CANDIDATE_TASK)];
+  if (matches.length < 2) return markdown;
+  const blocks = matches.map((match, index) => {
+    const blockStart = match.index;
+    const blockEnd = index + 1 < matches.length ? matches[index + 1].index : region.length;
+    return {
+      checked: match[1].toLowerCase() === "x",
+      content: region.slice(blockStart, blockEnd),
+      originalIndex: index,
+    };
+  });
+  if (blocks.some((block) => !CANDIDATE_ITEM_MARKER.test(block.content))) return markdown;
+  const sorted = [...blocks].sort((left, right) => {
+    if (left.checked !== right.checked) return left.checked ? -1 : 1;
+    return left.originalIndex - right.originalIndex;
+  });
+  if (sorted.every((block, index) => block.originalIndex === index)) return markdown;
+  const sortedRegion = region.slice(0, matches[0].index) + sorted.map((block) => block.content).join("");
+  return markdown.slice(0, regionStart) + sortedRegion + markdown.slice(regionEnd);
+}
+
 const DEFAULT_SETTINGS = {
   runnerPath: "",
   launcherPath: "",
   formalRoot: "C/bangumi",
+  pinCheckedOnOpen: true,
 };
 
 class ConfirmApplyModal extends Modal {
@@ -44,6 +80,9 @@ class AnimeBridgePlugin extends Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     this.addSettingTab(new AnimeBridgeSettingTab(this.app, this));
+    this.registerEvent(
+      this.app.workspace.on("file-open", (file) => this.pinCheckedCandidates(file)),
+    );
 
     this.addCommand({
       id: "preview-checked-candidates",
@@ -55,6 +94,15 @@ class AnimeBridgePlugin extends Plugin {
       name: "正式归入已勾选动画",
       checkCallback: (checking) => this.candidateCommand(checking, true),
     });
+  }
+
+  async pinCheckedCandidates(file) {
+    if (!this.settings.pinCheckedOnOpen || !file || file.extension !== "md") return;
+    const content = await this.app.vault.read(file);
+    const reordered = reorderCheckedCandidates(content);
+    if (reordered === content) return;
+    await this.app.vault.modify(file, reordered);
+    new Notice("Anime Bridge 已将勾选动画置顶。", 5000);
   }
 
   candidateCommand(checking, apply) {
@@ -144,6 +192,15 @@ class AnimeBridgeSettingTab extends PluginSettingTab {
       .addText((text) =>
         text.setValue(this.plugin.settings.formalRoot).onChange(async (value) => {
           this.plugin.settings.formalRoot = value.trim() || DEFAULT_SETTINGS.formalRoot;
+          await this.plugin.saveData(this.plugin.settings);
+        }),
+      );
+    new Setting(containerEl)
+      .setName("打开候选笔记时将勾选动画置顶")
+      .setDesc("只重排 Anime Bridge 生成的候选条目，保持勾选组和未勾选组各自原有顺序。")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.pinCheckedOnOpen).onChange(async (value) => {
+          this.plugin.settings.pinCheckedOnOpen = value;
           await this.plugin.saveData(this.plugin.settings);
         }),
       );
